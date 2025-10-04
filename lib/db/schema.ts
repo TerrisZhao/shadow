@@ -99,6 +99,22 @@ export const sentences = pgTable("sentences", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+// 录音记录表
+export const recordings = pgTable("recordings", {
+  id: serial("id").primaryKey(),
+  sentenceId: serial("sentence_id")
+    .notNull()
+    .references(() => sentences.id, { onDelete: "cascade" }),
+  userId: serial("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  audioUrl: text("audio_url").notNull(), // 录音文件 URL
+  duration: varchar("duration", { length: 20 }), // 录音时长（秒）
+  fileSize: varchar("file_size", { length: 20 }), // 文件大小（字节）
+  mimeType: varchar("mime_type", { length: 50 }).default("audio/webm"), // MIME类型
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 // 导出所有表
 export const schema = {
   users,
@@ -107,4 +123,5 @@ export const schema = {
   verificationTokens,
   categories,
   sentences,
+  recordings,
 };
