@@ -42,3 +42,5 @@ bun.lockb
 .vscode
 .idea/
 .env
+app.log
+app-error.log
