@@ -19,7 +19,8 @@ import { usePathname } from "next/navigation";
 import { siteConfig } from "@/config/site";
 import { ThemeSwitch } from "@/components/theme-switch";
 import { AuthButton } from "@/components/auth-button";
-import { GithubIcon, Logo } from "@/components/icons";
+import { GithubIcon } from "@/components/icons";
+import { Logo } from "@/components/logo";
 
 interface NavbarProps {
   minimal?: boolean;
