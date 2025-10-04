@@ -4,29 +4,20 @@ import { db } from '@/lib/db/drizzle';
 import { sentences, categories, users } from '@/lib/db/schema';
 import { eq, and, desc, or, inArray } from 'drizzle-orm';
 import { authOptions } from '@/lib/auth/config';
+import { generateTTS } from '@/lib/tts/generator';
 
 // 异步生成文字转语音
 async function generateTTSAsync(text: string, sentenceId: number) {
   try {
-    const response = await fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/tts`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        text: text,
-        voice: 'af_alloy'
-      })
-    });
+    const result = await generateTTS(text, 'af_alloy');
 
-    if (response.ok) {
-      const result = await response.json();
+    if (result.success && result.url) {
       console.log(`TTS generated successfully for sentence ${sentenceId}:`, result.url);
       
       // 保存音频 URL 到数据库
       await db.update(sentences).set({ audioUrl: result.url }).where(eq(sentences.id, sentenceId));
     } else {
-      console.error(`TTS generation failed for sentence ${sentenceId}:`, response.status);
+      console.error(`TTS generation failed for sentence ${sentenceId}:`, result.error);
     }
   } catch (error) {
     console.error(`TTS generation error for sentence ${sentenceId}:`, error);
