@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Navbar as HeroUINavbar,
   NavbarContent,
@@ -11,6 +13,8 @@ import { Link } from "@heroui/link";
 import { link as linkStyles } from "@heroui/theme";
 import NextLink from "next/link";
 import clsx from "clsx";
+import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 
 import { siteConfig } from "@/config/site";
 import { ThemeSwitch } from "@/components/theme-switch";
@@ -22,6 +26,13 @@ interface NavbarProps {
 }
 
 export const Navbar = ({ minimal = false }: NavbarProps) => {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const pathname = usePathname();
+
+  // 监听路由变化，自动关闭菜单
+  useEffect(() => {
+    setIsMenuOpen(false);
+  }, [pathname]);
   // 简化版导航栏，只显示 logo
   if (minimal) {
     return (
@@ -43,7 +54,12 @@ export const Navbar = ({ minimal = false }: NavbarProps) => {
 
   // 完整版导航栏
   return (
-    <HeroUINavbar maxWidth="xl" position="sticky">
+    <HeroUINavbar
+      isMenuOpen={isMenuOpen}
+      maxWidth="xl"
+      position="sticky"
+      onMenuOpenChange={setIsMenuOpen}
+    >
       <NavbarContent className="basis-1/5 sm:basis-full" justify="start">
         <NavbarBrand as="li" className="gap-3 max-w-fit">
           <NextLink className="flex justify-start items-center gap-1" href="/">
@@ -51,7 +67,7 @@ export const Navbar = ({ minimal = false }: NavbarProps) => {
             <p className="font-bold text-inherit">Shadow</p>
           </NextLink>
         </NavbarBrand>
-        <ul className="hidden lg:flex gap-4 justify-start ml-2">
+        <ul className="hidden sm:flex gap-4 justify-start ml-2">
           {siteConfig.navItems.map((item) => (
             <NavbarItem key={item.href}>
               <NextLink
@@ -85,7 +101,7 @@ export const Navbar = ({ minimal = false }: NavbarProps) => {
           </Link>
           <ThemeSwitch />
         </NavbarItem>
-        <NavbarItem className="hidden md:flex">
+        <NavbarItem className="hidden sm:flex">
           <AuthButton />
         </NavbarItem>
       </NavbarContent>
@@ -106,14 +122,9 @@ export const Navbar = ({ minimal = false }: NavbarProps) => {
           {siteConfig.navMenuItems.map((item, index) => (
             <NavbarMenuItem key={`${item}-${index}`}>
               <Link
-                color={
-                  index === 2
-                    ? "primary"
-                    : index === siteConfig.navMenuItems.length - 1
-                      ? "danger"
-                      : "foreground"
-                }
-                href="#"
+                as={NextLink}
+                color="foreground"
+                href={item.href}
                 size="lg"
               >
                 {item.label}

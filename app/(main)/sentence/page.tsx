@@ -34,11 +34,13 @@ export default function SentencePage() {
         </Tabs>
         <div className="absolute right-0">
           <Button
+            isIconOnly
+            className="md:w-auto md:h-auto md:px-3 md:py-2"
             color="primary"
-            startContent={<Plus className="w-4 h-4" />}
             onPress={() => setIsAddModalOpen(true)}
           >
-            添加句子
+            <Plus className="w-4 h-4" />
+            <span className="hidden md:inline md:ml-2">添加句子</span>
           </Button>
         </div>
       </div>
