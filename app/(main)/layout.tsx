@@ -1,4 +1,5 @@
 import { Link } from "@heroui/link";
+
 import { Navbar } from "@/components/navbar";
 
 export default function MainLayout({
@@ -26,4 +27,3 @@ export default function MainLayout({
     </div>
   );
 }
-

@@ -1,15 +1,20 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from '@heroui/modal';
-import { Button } from '@heroui/button';
-import { Input } from '@heroui/input';
-import { Textarea } from '@heroui/input';
-import { Select, SelectItem } from '@heroui/select';
-import { Chip } from '@heroui/chip';
-import { Checkbox } from '@heroui/checkbox';
-import { addToast } from '@heroui/toast';
-import { useSession } from 'next-auth/react';
+import { useState, useEffect } from "react";
+import {
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+} from "@heroui/modal";
+import { Button } from "@heroui/button";
+import { Textarea } from "@heroui/input";
+import { Select, SelectItem } from "@heroui/select";
+import { Chip } from "@heroui/chip";
+import { Checkbox } from "@heroui/checkbox";
+import { addToast } from "@heroui/toast";
+import { useSession } from "next-auth/react";
 
 interface CategoryOption {
   id: number;
@@ -56,26 +61,26 @@ export default function EditSentenceModal({
   const [categories, setCategories] = useState<CategoryOption[]>([]);
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
-    englishText: '',
-    chineseText: '',
-    categoryId: '',
-    difficulty: 'medium',
-    notes: '',
+    englishText: "",
+    chineseText: "",
+    categoryId: "",
+    difficulty: "medium",
+    notes: "",
     isShared: false,
   });
 
   // 检查是否为管理员
   const isAdmin = Boolean(
-    session?.user && 
-    (session.user as any).role && 
-    ['admin', 'owner'].includes((session.user as any).role)
+    session?.user &&
+      (session.user as any).role &&
+      ["admin", "owner"].includes((session.user as any).role),
   );
 
   // 显示toast消息
-  const showToast = (message: string, type: 'success' | 'error') => {
+  const showToast = (message: string, type: "success" | "error") => {
     addToast({
       title: message,
-      color: type === 'success' ? 'success' : 'danger',
+      color: type === "success" ? "success" : "danger",
     });
   };
 
@@ -94,7 +99,7 @@ export default function EditSentenceModal({
         chineseText: sentence.chineseText,
         categoryId: sentence.category.id.toString(),
         difficulty: sentence.difficulty,
-        notes: sentence.notes || '',
+        notes: sentence.notes || "",
         isShared: sentence.isShared || false,
       });
     }
@@ -102,21 +107,28 @@ export default function EditSentenceModal({
 
   const fetchCategories = async () => {
     try {
-      const response = await fetch('/api/categories');
+      const response = await fetch("/api/categories");
+
       if (response.ok) {
         const data = await response.json();
+
         setCategories(data.categories);
       }
     } catch (error) {
-      console.error('获取分类失败:', error);
+      console.error("获取分类失败:", error);
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!formData.englishText || !formData.chineseText || !formData.categoryId) {
-      showToast('请填写所有必填字段', 'error');
+
+    if (
+      !formData.englishText ||
+      !formData.chineseText ||
+      !formData.categoryId
+    ) {
+      showToast("请填写所有必填字段", "error");
+
       return;
     }
 
@@ -125,33 +137,34 @@ export default function EditSentenceModal({
     setLoading(true);
     try {
       const response = await fetch(`/api/sentences/${sentence.id}`, {
-        method: 'PUT',
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(formData),
       });
 
       if (response.ok) {
-        showToast('句子更新成功！', 'success');
+        showToast("句子更新成功！", "success");
         onSuccess();
         setTimeout(() => {
           onClose();
         }, 1000);
       } else {
         const error = await response.json();
-        showToast(error.error || '更新失败', 'error');
+
+        showToast(error.error || "更新失败", "error");
       }
     } catch (error) {
-      console.error('更新句子失败:', error);
-      showToast('更新失败，请重试', 'error');
+      console.error("更新句子失败:", error);
+      showToast("更新失败，请重试", "error");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size="2xl" scrollBehavior="inside">
+    <Modal isOpen={isOpen} scrollBehavior="inside" size="2xl" onClose={onClose}>
       <ModalContent>
         <ModalHeader className="flex flex-col gap-1">
           <h2 className="text-xl font-semibold">编辑句子</h2>
@@ -160,52 +173,63 @@ export default function EditSentenceModal({
           <ModalBody className="gap-4">
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-2">
+                <label className="block text-sm font-medium mb-2" htmlFor="edit-englishText">
                   英文句子 <span className="text-red-500">*</span>
                 </label>
                 <Textarea
+                  id="edit-englishText"
+                  isRequired
+                  minRows={2}
                   placeholder="输入英文句子"
                   value={formData.englishText}
                   onChange={(e) =>
                     setFormData({ ...formData, englishText: e.target.value })
                   }
-                  minRows={2}
-                  isRequired
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">
+                <label className="block text-sm font-medium mb-2" htmlFor="edit-chineseText">
                   中文翻译 <span className="text-red-500">*</span>
                 </label>
                 <Textarea
+                  id="edit-chineseText"
+                  isRequired
+                  minRows={2}
                   placeholder="输入中文翻译"
                   value={formData.chineseText}
                   onChange={(e) =>
                     setFormData({ ...formData, chineseText: e.target.value })
                   }
-                  minRows={2}
-                  isRequired
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">
+                <label className="block text-sm font-medium mb-2" htmlFor="edit-categoryId">
                   分类 <span className="text-red-500">*</span>
                 </label>
                 <Select
+                  id="edit-categoryId"
+                  isRequired
+                  className="flex-1"
                   placeholder="选择分类"
-                  selectedKeys={formData.categoryId ? new Set([formData.categoryId]) : new Set()}
+                  selectedKeys={
+                    formData.categoryId
+                      ? new Set([formData.categoryId])
+                      : new Set()
+                  }
+                  selectionMode="single"
                   onSelectionChange={(keys) => {
                     const selectedKey = Array.from(keys)[0] as string;
+
                     setFormData({ ...formData, categoryId: selectedKey });
                   }}
-                  className="flex-1"
-                  isRequired
-                  selectionMode="single"
                 >
                   {categories.map((category) => (
-                    <SelectItem key={category.id.toString()} textValue={category.name}>
+                    <SelectItem
+                      key={category.id.toString()}
+                      textValue={category.name}
+                    >
                       <div className="flex items-center gap-2">
                         <div
                           className="w-3 h-3 rounded-full"
@@ -213,7 +237,7 @@ export default function EditSentenceModal({
                         />
                         <span>{category.name}</span>
                         {category.isPreset && (
-                          <Chip size="sm" color="primary" variant="flat">
+                          <Chip color="primary" size="sm" variant="flat">
                             预设
                           </Chip>
                         )}
@@ -224,33 +248,37 @@ export default function EditSentenceModal({
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">难度等级</label>
+                <label className="block text-sm font-medium mb-2" htmlFor="edit-difficulty">
+                  难度等级
+                </label>
                 <Select
+                  id="edit-difficulty"
                   placeholder="选择难度"
                   selectedKeys={new Set([formData.difficulty])}
+                  selectionMode="single"
                   onSelectionChange={(keys) => {
                     const selectedKey = Array.from(keys)[0] as string;
+
                     setFormData({ ...formData, difficulty: selectedKey });
                   }}
-                  selectionMode="single"
                 >
                   <SelectItem key="easy" textValue="简单">
                     <div className="flex items-center gap-2">
-                      <Chip size="sm" color="success" variant="flat">
+                      <Chip color="success" size="sm" variant="flat">
                         简单
                       </Chip>
                     </div>
                   </SelectItem>
                   <SelectItem key="medium" textValue="中等">
                     <div className="flex items-center gap-2">
-                      <Chip size="sm" color="warning" variant="flat">
+                      <Chip color="warning" size="sm" variant="flat">
                         中等
                       </Chip>
                     </div>
                   </SelectItem>
                   <SelectItem key="hard" textValue="困难">
                     <div className="flex items-center gap-2">
-                      <Chip size="sm" color="danger" variant="flat">
+                      <Chip color="danger" size="sm" variant="flat">
                         困难
                       </Chip>
                     </div>
@@ -259,14 +287,15 @@ export default function EditSentenceModal({
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2">备注</label>
+                <label className="block text-sm font-medium mb-2" htmlFor="edit-notes">备注</label>
                 <Textarea
+                  id="edit-notes"
+                  minRows={2}
                   placeholder="输入备注（可选）"
                   value={formData.notes}
                   onChange={(e) =>
                     setFormData({ ...formData, notes: e.target.value })
                   }
-                  minRows={2}
                 />
               </div>
 
@@ -281,13 +310,13 @@ export default function EditSentenceModal({
                   >
                     <div className="flex items-center gap-2">
                       <span>设为共享句子</span>
-                      <Chip size="sm" color="primary" variant="flat">
+                      <Chip color="primary" size="sm" variant="flat">
                         管理员
                       </Chip>
                     </div>
                   </Checkbox>
                   <p className="text-xs text-default-500 mt-1 ml-6">
-                    共享句子将在"共享库"中对所有用户可见
+                    共享句子将在&ldquo;共享库&rdquo;中对所有用户可见
                   </p>
                 </div>
               )}
@@ -297,7 +326,7 @@ export default function EditSentenceModal({
             <Button variant="light" onPress={onClose}>
               取消
             </Button>
-            <Button color="primary" type="submit" isLoading={loading}>
+            <Button color="primary" isLoading={loading} type="submit">
               保存修改
             </Button>
           </ModalFooter>
@@ -306,4 +335,3 @@ export default function EditSentenceModal({
     </Modal>
   );
 }
-

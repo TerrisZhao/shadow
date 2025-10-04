@@ -7,7 +7,7 @@ import { Button } from "@heroui/button";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import { title, subtitle } from "@/components/primitives";
+import { subtitle } from "@/components/primitives";
 
 export default function DashboardPage() {
   const { data: session, status } = useSession();
@@ -51,13 +51,15 @@ export default function DashboardPage() {
         <Card>
           <CardHeader className="flex flex-row items-center gap-3">
             <Avatar
-              src={session.user?.image || undefined}
               name={session.user?.name || session.user?.email || "用户"}
               size="md"
+              src={session.user?.image || undefined}
             />
             <div>
               <h3 className="text-lg font-semibold">个人信息</h3>
-              <p className="text-small text-default-500">查看和编辑您的个人资料</p>
+              <p className="text-small text-default-500">
+                查看和编辑您的个人资料
+              </p>
             </div>
           </CardHeader>
           <CardBody>
@@ -148,14 +150,14 @@ export default function DashboardPage() {
           <CardBody>
             <div className="space-y-3">
               <div className="flex items-center gap-3 p-3 bg-default-50 rounded-lg">
-                <div className="w-2 h-2 bg-success rounded-full"></div>
+                <div className="w-2 h-2 bg-success rounded-full" />
                 <div className="flex-1">
                   <p className="text-small font-medium">成功登录</p>
                   <p className="text-tiny text-default-500">刚刚</p>
                 </div>
               </div>
               <div className="flex items-center gap-3 p-3 bg-default-50 rounded-lg">
-                <div className="w-2 h-2 bg-primary rounded-full"></div>
+                <div className="w-2 h-2 bg-primary rounded-full" />
                 <div className="flex-1">
                   <p className="text-small font-medium">访问仪表板</p>
                   <p className="text-tiny text-default-500">刚刚</p>

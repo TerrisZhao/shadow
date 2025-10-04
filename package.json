@@ -15,6 +15,7 @@
     "db:init-categories": "tsx scripts/init-categories.ts"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.887.0",
     "@heroui/accordion": "2.2.23",
     "@heroui/alert": "2.2.26",
     "@heroui/autocomplete": "2.3.28",
@@ -68,10 +69,12 @@
     "next-themes": "0.4.6",
     "postgres": "^3.4.5",
     "react": "18.3.1",
-    "react-dom": "18.3.1",
-    "@aws-sdk/client-s3": "^3.887.0"
+    "react-dom": "18.3.1"
   },
   "devDependencies": {
+    "@eslint/compat": "^1.4.0",
+    "@eslint/eslintrc": "^3.3.1",
+    "@eslint/js": "^9.37.0",
     "@next/eslint-plugin-next": "15.3.4",
     "@react-types/shared": "3.30.0",
     "@tailwindcss/postcss": "4.1.11",

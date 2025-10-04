@@ -2,7 +2,12 @@
 
 import { Button } from "@heroui/button";
 import { Avatar } from "@heroui/avatar";
-import { Dropdown, DropdownTrigger, DropdownMenu, DropdownItem } from "@heroui/dropdown";
+import {
+  Dropdown,
+  DropdownTrigger,
+  DropdownMenu,
+  DropdownItem,
+} from "@heroui/dropdown";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
@@ -13,9 +18,9 @@ export function AuthButton() {
   if (status === "loading") {
     return (
       <Button
+        isLoading
         className="text-sm font-normal text-default-600 bg-default-100"
         variant="flat"
-        isLoading
       >
         加载中...
       </Button>
@@ -41,22 +46,19 @@ export function AuthButton() {
             <p className="font-semibold">登录为</p>
             <p className="font-semibold">{session.user?.email}</p>
           </DropdownItem>
-          <DropdownItem 
-            key="dashboard" 
-            onClick={() => router.push('/dashboard')}
+          <DropdownItem
+            key="dashboard"
+            onClick={() => router.push("/dashboard")}
           >
             仪表板
           </DropdownItem>
-          <DropdownItem 
-            key="settings" 
-            onClick={() => router.push('/settings')}
-          >
+          <DropdownItem key="settings" onClick={() => router.push("/settings")}>
             设置
           </DropdownItem>
-          <DropdownItem 
-            key="logout" 
+          <DropdownItem
+            key="logout"
             color="danger"
-            onClick={() => signOut({ callbackUrl: '/' })}
+            onClick={() => signOut({ callbackUrl: "/" })}
           >
             登出
           </DropdownItem>

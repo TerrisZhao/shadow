@@ -7,7 +7,6 @@ import {
   NavbarItem,
   NavbarMenuItem,
 } from "@heroui/navbar";
-import { Button } from "@heroui/button";
 import { Link } from "@heroui/link";
 import { link as linkStyles } from "@heroui/theme";
 import NextLink from "next/link";
@@ -16,13 +15,7 @@ import clsx from "clsx";
 import { siteConfig } from "@/config/site";
 import { ThemeSwitch } from "@/components/theme-switch";
 import { AuthButton } from "@/components/auth-button";
-import {
-  TwitterIcon,
-  GithubIcon,
-  DiscordIcon,
-  HeartFilledIcon,
-  Logo,
-} from "@/components/icons";
+import { GithubIcon, Logo } from "@/components/icons";
 
 interface NavbarProps {
   minimal?: boolean;
@@ -35,7 +28,10 @@ export const Navbar = ({ minimal = false }: NavbarProps) => {
       <HeroUINavbar maxWidth="xl" position="sticky">
         <NavbarContent justify="center">
           <NavbarBrand className="gap-3 max-w-fit">
-            <NextLink className="flex justify-start items-center gap-1" href="/">
+            <NextLink
+              className="flex justify-start items-center gap-1"
+              href="/"
+            >
               <Logo />
               <p className="font-bold text-inherit">Shadow</p>
             </NextLink>

@@ -1,18 +1,18 @@
 "use client";
 
+import type { ThemeProviderProps } from "next-themes";
+
 import { ThemeProvider as NextThemesProvider } from "next-themes";
 import { ReactNode, useEffect, useState } from "react";
-
-import type { ThemeProviderProps } from "next-themes";
 
 interface ClientThemeProviderProps {
   children: ReactNode;
   themeProps?: ThemeProviderProps;
 }
 
-export function ClientThemeProvider({ 
-  children, 
-  themeProps 
+export function ClientThemeProvider({
+  children,
+  themeProps,
 }: ClientThemeProviderProps) {
   const [mounted, setMounted] = useState(false);
 
@@ -24,12 +24,10 @@ export function ClientThemeProvider({
     return <>{children}</>;
   }
 
-  const defaultThemeProps = { attribute: "class", defaultTheme: "dark" };
+  const defaultThemeProps = { attribute: "class" as const, defaultTheme: "dark" };
   const finalThemeProps = themeProps || defaultThemeProps;
 
   return (
-    <NextThemesProvider {...finalThemeProps}>
-      {children}
-    </NextThemesProvider>
+    <NextThemesProvider {...finalThemeProps}>{children}</NextThemesProvider>
   );
 }

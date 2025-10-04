@@ -5,9 +5,10 @@ import type { ThemeProviderProps } from "next-themes";
 import * as React from "react";
 import { HeroUIProvider } from "@heroui/system";
 import { useRouter } from "next/navigation";
+import { ToastProvider } from "@heroui/toast";
+
 import { ClientSessionProvider } from "@/components/client-session-provider";
 import { ClientThemeProvider } from "@/components/client-theme-provider";
-import { ToastProvider } from "@heroui/toast";
 
 export interface ProvidersProps {
   children: React.ReactNode;

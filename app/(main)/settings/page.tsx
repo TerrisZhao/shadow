@@ -5,9 +5,10 @@ import { Card, CardBody, CardHeader } from "@heroui/card";
 import { Button } from "@heroui/button";
 import { Input } from "@heroui/input";
 import { Switch } from "@heroui/switch";
-import { title, subtitle } from "@/components/primitives";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+
+import { title, subtitle } from "@/components/primitives";
 
 export default function SettingsPage() {
   const { data: session } = useSession();
@@ -17,6 +18,7 @@ export default function SettingsPage() {
 
   if (!session) {
     router.push("/sign-in");
+
     return null;
   }
 
@@ -24,9 +26,7 @@ export default function SettingsPage() {
     <div className="max-w-2xl mx-auto">
       <div className="mb-8">
         <h1 className={title()}>设置</h1>
-        <p className={subtitle({ class: "mt-2" })}>
-          管理您的账户设置和偏好
-        </p>
+        <p className={subtitle({ class: "mt-2" })}>管理您的账户设置和偏好</p>
       </div>
 
       <div className="space-y-6">
@@ -37,16 +37,16 @@ export default function SettingsPage() {
           </CardHeader>
           <CardBody className="space-y-4">
             <Input
+              isReadOnly
+              defaultValue={session.user?.name || ""}
               label="姓名"
               placeholder="输入您的姓名"
-              defaultValue={session.user?.name || ""}
-              isReadOnly
             />
             <Input
+              isReadOnly
+              defaultValue={session.user?.email || ""}
               label="邮箱"
               placeholder="输入您的邮箱"
-              defaultValue={session.user?.email || ""}
-              isReadOnly
             />
             <Button variant="flat" onClick={() => router.push("/profile")}>
               编辑个人信息
@@ -75,14 +75,9 @@ export default function SettingsPage() {
             <div className="flex justify-between items-center">
               <div>
                 <p className="text-medium font-medium">深色模式</p>
-                <p className="text-small text-default-500">
-                  使用深色主题界面
-                </p>
+                <p className="text-small text-default-500">使用深色主题界面</p>
               </div>
-              <Switch
-                isSelected={darkMode}
-                onValueChange={setDarkMode}
-              />
+              <Switch isSelected={darkMode} onValueChange={setDarkMode} />
             </div>
           </CardBody>
         </Card>
@@ -93,13 +88,13 @@ export default function SettingsPage() {
             <p className="text-small text-default-500">管理您的账户安全</p>
           </CardHeader>
           <CardBody className="space-y-4">
-            <Button variant="flat" className="w-full justify-start">
+            <Button className="w-full justify-start" variant="flat">
               更改密码
             </Button>
-            <Button variant="flat" className="w-full justify-start">
+            <Button className="w-full justify-start" variant="flat">
               两步验证
             </Button>
-            <Button variant="flat" className="w-full justify-start">
+            <Button className="w-full justify-start" variant="flat">
               登录历史
             </Button>
           </CardBody>
@@ -111,13 +106,13 @@ export default function SettingsPage() {
             <p className="text-small text-default-500">管理您的数据</p>
           </CardHeader>
           <CardBody className="space-y-4">
-            <Button variant="flat" className="w-full justify-start">
+            <Button className="w-full justify-start" variant="flat">
               导出数据
             </Button>
-            <Button 
-              variant="flat" 
-              color="danger" 
+            <Button
               className="w-full justify-start"
+              color="danger"
+              variant="flat"
             >
               删除账户
             </Button>

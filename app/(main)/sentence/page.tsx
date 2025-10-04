@@ -1,19 +1,20 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { Button } from '@heroui/button';
-import { Tabs, Tab } from '@heroui/tabs';
-import { Plus } from 'lucide-react';
-import AddSentenceModal from '@/components/add-sentence-modal';
-import SentenceList from '@/components/sentence-list';
+import { useState } from "react";
+import { Button } from "@heroui/button";
+import { Tabs, Tab } from "@heroui/tabs";
+import { Plus } from "lucide-react";
+
+import AddSentenceModal from "@/components/add-sentence-modal";
+import SentenceList from "@/components/sentence-list";
 
 export default function SentencePage() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
-  const [selectedTab, setSelectedTab] = useState('shared');
+  const [selectedTab, setSelectedTab] = useState("shared");
 
   const handleAddSuccess = () => {
-    setRefreshKey(prev => prev + 1);
+    setRefreshKey((prev) => prev + 1);
   };
 
   return (
@@ -21,11 +22,11 @@ export default function SentencePage() {
       {/* Tabs 和添加按钮 */}
       <div className="flex justify-center items-center relative">
         <Tabs
-          selectedKey={selectedTab}
-          onSelectionChange={(key) => setSelectedTab(key as string)}
           aria-label="句子库选项"
-          size="lg"
           color="primary"
+          selectedKey={selectedTab}
+          size="lg"
+          onSelectionChange={(key) => setSelectedTab(key as string)}
         >
           <Tab key="shared" title="共享库" />
           <Tab key="custom" title="自定义" />
@@ -43,10 +44,10 @@ export default function SentencePage() {
       </div>
 
       {/* 句子列表 */}
-      <SentenceList 
-        key={`${refreshKey}-${selectedTab}`} 
-        onRefresh={handleAddSuccess}
+      <SentenceList
+        key={`${refreshKey}-${selectedTab}`}
         tab={selectedTab}
+        onRefresh={handleAddSuccess}
       />
 
       {/* 添加句子模态框 */}

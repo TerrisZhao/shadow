@@ -4,9 +4,15 @@ import { Link } from "@heroui/link";
 import { Button } from "@heroui/button";
 import { Card, CardBody, CardHeader } from "@heroui/card";
 import { Chip } from "@heroui/chip";
-import { Divider } from "@heroui/divider";
 import { motion } from "framer-motion";
-import { BookOpen, Volume2, Sparkles, TrendingUp, Clock, Target } from "lucide-react";
+import {
+  BookOpen,
+  Volume2,
+  Sparkles,
+  TrendingUp,
+  Clock,
+  Target,
+} from "lucide-react";
 
 import { title, subtitle } from "@/components/primitives";
 
@@ -36,17 +42,16 @@ export default function Home() {
     },
   };
 
-
   return (
     <div className="flex flex-col items-center justify-center">
       {/* Hero Section */}
       <MotionDiv
-        initial="hidden"
         animate="visible"
-        variants={containerVariants}
         className="flex flex-col items-center justify-center gap-6 text-center max-w-4xl px-6 min-h-screen"
+        initial="hidden"
+        variants={containerVariants}
       >
-        <MotionDiv variants={itemVariants} className="inline-block">
+        <MotionDiv className="inline-block" variants={itemVariants}>
           <h1 className={title({ size: "lg" })}>
             掌握英语，从&nbsp;
             <span className={title({ color: "blue", size: "lg" })}>
@@ -64,13 +69,13 @@ export default function Home() {
           </p>
         </MotionDiv>
 
-        <MotionDiv variants={itemVariants} className="flex gap-4 mt-4">
+        <MotionDiv className="flex gap-4 mt-4" variants={itemVariants}>
           <Link href="/sentence">
             <Button
-              color="primary"
-              size="lg"
-              radius="full"
               className="font-semibold"
+              color="primary"
+              radius="full"
+              size="lg"
               startContent={<BookOpen size={20} />}
             >
               开始学习
@@ -78,11 +83,11 @@ export default function Home() {
           </Link>
           <Link href="/dashboard">
             <Button
-              variant="bordered"
-              size="lg"
-              radius="full"
               className="font-semibold"
+              radius="full"
+              size="lg"
               startContent={<TrendingUp size={20} />}
+              variant="bordered"
             >
               查看统计
             </Button>
@@ -93,10 +98,10 @@ export default function Home() {
       {/* Features Section */}
       <section className="w-full max-w-6xl px-6 py-20">
         <MotionDiv
-          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
           className="text-center m-12"
+          initial={{ opacity: 0, y: 20 }}
+          transition={{ duration: 0.6 }}
         >
           <h2 className={title({ size: "sm" })}>
             核心
@@ -107,20 +112,23 @@ export default function Home() {
         </MotionDiv>
 
         <MotionDiv
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-100px" }}
-          variants={containerVariants}
           className="grid grid-cols-1 lg:grid-cols-3 gap-4"
+          initial="hidden"
+          variants={containerVariants}
+          viewport={{ once: true, margin: "-100px" }}
+          whileInView="visible"
         >
           <MotionCard
+            className="w-full hover:shadow-md transition-shadow"
             variants={itemVariants}
             whileHover={{ scale: 1.03, transition: { duration: 0.7 } }}
-            className="w-full hover:shadow-md transition-shadow"
           >
             <CardHeader className="flex-col items-start gap-3 pb-0">
               <div className="w-14 h-14 rounded-xl bg-blue-500/10 dark:bg-blue-500/20 flex items-center justify-center">
-                <BookOpen size={28} className="text-blue-600 dark:text-blue-400" />
+                <BookOpen
+                  className="text-blue-600 dark:text-blue-400"
+                  size={28}
+                />
               </div>
               <h3 className="text-lg font-bold">智能分类</h3>
             </CardHeader>
@@ -129,20 +137,27 @@ export default function Home() {
                 按主题、难度、场景分类管理句子，让学习更有条理、更系统化。
               </p>
               <div className="flex gap-2 mt-2 flex-wrap">
-                <Chip size="sm" variant="flat" color="primary">主题分类</Chip>
-                <Chip size="sm" variant="flat" color="primary">难度分级</Chip>
+                <Chip color="primary" size="sm" variant="flat">
+                  主题分类
+                </Chip>
+                <Chip color="primary" size="sm" variant="flat">
+                  难度分级
+                </Chip>
               </div>
             </CardBody>
           </MotionCard>
 
           <MotionCard
+            className="w-full hover:shadow-md transition-shadow"
             variants={itemVariants}
             whileHover={{ scale: 1.03, transition: { duration: 0.7 } }}
-            className="w-full hover:shadow-md transition-shadow"
           >
             <CardHeader className="flex-col items-start gap-3 pb-0">
               <div className="w-14 h-14 rounded-xl bg-purple-500/10 dark:bg-purple-500/20 flex items-center justify-center">
-                <Volume2 size={28} className="text-purple-600 dark:text-purple-400" />
+                <Volume2
+                  className="text-purple-600 dark:text-purple-400"
+                  size={28}
+                />
               </div>
               <h3 className="text-lg font-bold">语音朗读</h3>
             </CardHeader>
@@ -151,20 +166,27 @@ export default function Home() {
                 内置TTS语音功能，标准发音，帮助你掌握正确的英语发音。
               </p>
               <div className="flex gap-2 mt-2 flex-wrap">
-                <Chip size="sm" variant="flat" color="secondary">标准发音</Chip>
-                <Chip size="sm" variant="flat" color="secondary">即时播放</Chip>
+                <Chip color="secondary" size="sm" variant="flat">
+                  标准发音
+                </Chip>
+                <Chip color="secondary" size="sm" variant="flat">
+                  即时播放
+                </Chip>
               </div>
             </CardBody>
           </MotionCard>
 
           <MotionCard
+            className="w-full hover:shadow-md transition-shadow"
             variants={itemVariants}
             whileHover={{ scale: 1.03, transition: { duration: 0.7 } }}
-            className="w-full hover:shadow-md transition-shadow"
           >
             <CardHeader className="flex-col items-start gap-3 pb-0">
               <div className="w-14 h-14 rounded-xl bg-green-500/10 dark:bg-green-500/20 flex items-center justify-center">
-                <Sparkles size={28} className="text-green-600 dark:text-green-400" />
+                <Sparkles
+                  className="text-green-600 dark:text-green-400"
+                  size={28}
+                />
               </div>
               <h3 className="text-lg font-bold">个性化管理</h3>
             </CardHeader>
@@ -173,8 +195,12 @@ export default function Home() {
                 添加你喜欢的句子，标记难点，打造专属于你的学习资料库。
               </p>
               <div className="flex gap-2 mt-2 flex-wrap">
-                <Chip size="sm" variant="flat" color="success">自定义收藏</Chip>
-                <Chip size="sm" variant="flat" color="success">标记重点</Chip>
+                <Chip color="success" size="sm" variant="flat">
+                  自定义收藏
+                </Chip>
+                <Chip color="success" size="sm" variant="flat">
+                  标记重点
+                </Chip>
               </div>
             </CardBody>
           </MotionCard>
@@ -184,11 +210,11 @@ export default function Home() {
       {/* Stats Section */}
       <section className="w-full max-w-6xl px-6 py-20 pb-32">
         <MotionDiv
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
           className="text-center m-12"
+          initial={{ opacity: 0, y: 20 }}
+          transition={{ duration: 0.6 }}
+          viewport={{ once: true }}
+          whileInView={{ opacity: 1, y: 0 }}
         >
           <h2 className={title({ size: "sm" })}>
             学习
@@ -199,20 +225,23 @@ export default function Home() {
         </MotionDiv>
 
         <MotionDiv
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: "-100px" }}
-          variants={containerVariants}
           className="grid grid-cols-1 lg:grid-cols-3 gap-4"
+          initial="hidden"
+          variants={containerVariants}
+          viewport={{ once: true, margin: "-100px" }}
+          whileInView="visible"
         >
           <MotionCard
+            className="w-full hover:shadow-md transition-shadow"
             variants={itemVariants}
             whileHover={{ scale: 1.03, transition: { duration: 0.7 } }}
-            className="w-full hover:shadow-md transition-shadow"
           >
             <CardBody className="flex flex-col items-center gap-3 p-6">
               <div className="w-14 h-14 rounded-full bg-orange-500/10 dark:bg-orange-500/20 flex items-center justify-center">
-                <Target size={28} className="text-orange-600 dark:text-orange-400" />
+                <Target
+                  className="text-orange-600 dark:text-orange-400"
+                  size={28}
+                />
               </div>
               <h4 className="text-lg font-bold text-orange-600 dark:text-orange-400">
                 系统化学习
@@ -224,13 +253,16 @@ export default function Home() {
           </MotionCard>
 
           <MotionCard
+            className="w-full hover:shadow-md transition-shadow"
             variants={itemVariants}
             whileHover={{ scale: 1.03, transition: { duration: 0.7 } }}
-            className="w-full hover:shadow-md transition-shadow"
           >
             <CardBody className="flex flex-col items-center gap-3 p-6">
               <div className="w-14 h-14 rounded-full bg-amber-500/10 dark:bg-amber-500/20 flex items-center justify-center">
-                <Clock size={28} className="text-amber-600 dark:text-amber-400" />
+                <Clock
+                  className="text-amber-600 dark:text-amber-400"
+                  size={28}
+                />
               </div>
               <h4 className="text-lg font-bold text-amber-600 dark:text-amber-400">
                 高效记忆
@@ -242,13 +274,16 @@ export default function Home() {
           </MotionCard>
 
           <MotionCard
+            className="w-full hover:shadow-md transition-shadow"
             variants={itemVariants}
             whileHover={{ scale: 1.03, transition: { duration: 0.7 } }}
-            className="w-full hover:shadow-md transition-shadow"
           >
             <CardBody className="flex flex-col items-center gap-3 p-6">
               <div className="w-14 h-14 rounded-full bg-yellow-500/10 dark:bg-yellow-500/20 flex items-center justify-center">
-                <TrendingUp size={28} className="text-yellow-600 dark:text-yellow-400" />
+                <TrendingUp
+                  className="text-yellow-600 dark:text-yellow-400"
+                  size={28}
+                />
               </div>
               <h4 className="text-lg font-bold text-yellow-600 dark:text-yellow-400">
                 持续进步

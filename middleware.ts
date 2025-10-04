@@ -13,22 +13,22 @@ export default withAuth(
         if (req.nextUrl.pathname === "/") {
           return true;
         }
-        
+
         // 允许访问登录页面
         if (req.nextUrl.pathname === "/sign-in") {
           return true;
         }
-        
+
         // 允许访问 API 路由
         if (req.nextUrl.pathname.startsWith("/api/")) {
           return true;
         }
-        
+
         // 其他页面需要登录
         return !!token;
       },
     },
-  }
+  },
 );
 
 export const config = {

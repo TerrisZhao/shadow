@@ -1,15 +1,19 @@
-import { drizzle } from 'drizzle-orm/postgres-js';
-import postgres from 'postgres';
-import * as schema from './schema';
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
+
+import * as schema from "./schema";
 
 // 创建数据库连接
 const connectionString = process.env.DATABASE_URL;
 
 let db: any;
+
 type Database = any;
 
 if (!connectionString) {
-  console.warn('DATABASE_URL environment variable is not set. Database features will be disabled.');
+  console.warn(
+    "DATABASE_URL environment variable is not set. Database features will be disabled.",
+  );
   // 创建一个虚拟的数据库连接，避免应用崩溃
   db = null;
 } else {
