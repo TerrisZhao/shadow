@@ -8,7 +8,7 @@ import { recordings } from "@/lib/db/schema";
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -18,7 +18,8 @@ export async function DELETE(
     }
 
     const userId = parseInt(session.user.id);
-    const recordingId = parseInt(params.id);
+    const { id } = await params;
+    const recordingId = parseInt(id);
 
     // 查询录音记录，确保是当前用户的录音
     const [recording] = await db
