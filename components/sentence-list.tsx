@@ -655,32 +655,46 @@ export default function SentenceList({
       // 显示准备中状态
       setPreparingRecording(sentenceId);
 
-      // 步骤1: 先请求麦克风权限
-      const stream = await navigator.mediaDevices.getUserMedia({ 
-        audio: {
-          echoCancellation: true,
-          noiseSuppression: true,
-          sampleRate: 44100,
-        } 
-      });
+      // 步骤1: 先请求麦克风权限（Safari 需要更简单的配置）
+      let stream: MediaStream;
       
-      // 步骤3: 检查是否支持 webm 格式
-      let mimeType = "audio/webm";
+      try {
+        // 优先尝试带音频增强的配置
+        stream = await navigator.mediaDevices.getUserMedia({ 
+          audio: {
+            echoCancellation: true,
+            noiseSuppression: true,
+            sampleRate: 44100,
+          } 
+        });
+      } catch (constraintError) {
+        console.log("尝试使用简化的音频配置...");
+        // 如果失败，使用最简单的配置（Safari 可能不支持某些约束）
+        stream = await navigator.mediaDevices.getUserMedia({ 
+          audio: true
+        });
+      }
       
-      if (!MediaRecorder.isTypeSupported("audio/webm")) {
-        if (MediaRecorder.isTypeSupported("audio/mp4")) {
-          mimeType = "audio/mp4";
-        } else if (MediaRecorder.isTypeSupported("audio/ogg")) {
-          mimeType = "audio/ogg";
-        } else {
-          mimeType = "";
-        }
+      // 步骤3: 检查支持的格式（Safari 通常支持 audio/mp4）
+      let mimeType = "";
+      
+      // Safari 优先使用 mp4
+      if (MediaRecorder.isTypeSupported("audio/mp4")) {
+        mimeType = "audio/mp4";
+      } else if (MediaRecorder.isTypeSupported("audio/webm;codecs=opus")) {
+        mimeType = "audio/webm;codecs=opus";
+      } else if (MediaRecorder.isTypeSupported("audio/webm")) {
+        mimeType = "audio/webm";
+      } else if (MediaRecorder.isTypeSupported("audio/ogg;codecs=opus")) {
+        mimeType = "audio/ogg;codecs=opus";
       }
 
+      console.log("使用的音频格式:", mimeType || "默认格式");
+
       // 步骤4: 创建 MediaRecorder 并开始录音
-      const mediaRecorder = new MediaRecorder(stream, {
-        mimeType: mimeType || undefined,
-      });
+      const mediaRecorder = mimeType
+        ? new MediaRecorder(stream, { mimeType })
+        : new MediaRecorder(stream);
 
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
@@ -721,7 +735,7 @@ export default function SentenceList({
 
       mediaRecorder.onstop = async () => {
         const audioBlob = new Blob(audioChunksRef.current, {
-          type: mimeType || "audio/webm",
+          type: mimeType || "audio/mp4",
         });
         const duration = Math.floor(
           (Date.now() - recordingStartTimeRef.current) / 1000,
@@ -1436,15 +1450,8 @@ export default function SentenceList({
                         </div>
 
                         {/* 录音列表 */}
-                        <AnimatePresence>
-                          {expandedRecordings.has(sentence.id) && (
-                            <motion.div
-                              animate={{ opacity: 1, scaleY: 1 }}
-                              className="border-t border-default-200 pt-3 mt-3 overflow-hidden origin-top"
-                              exit={{ opacity: 0, scaleY: 0.95 }}
-                              initial={{ opacity: 0, scaleY: 0.95 }}
-                              transition={{ duration: 0.2, ease: "easeOut" }}
-                            >
+                        {expandedRecordings.has(sentence.id) && (
+                          <div className="border-t border-default-200 pt-3 mt-3">
                             {sentenceRecordings.get(sentence.id)?.length ? (
                               <div className="space-y-2">
                                 <h4 className="text-sm font-medium text-default-700 mb-2">
@@ -1534,9 +1541,8 @@ export default function SentenceList({
                                 </p>
                               </div>
                             )}
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
+                          </div>
+                        )}
                       </div>
 
                       {/* 倒计时提示 */}
