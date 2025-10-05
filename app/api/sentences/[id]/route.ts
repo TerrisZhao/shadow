@@ -144,17 +144,30 @@ export async function PUT(
     const sentence = existingSentence[0];
     const currentUserId = parseInt(session.user.id);
 
-    // 检查权限：只有句子所有者可以更新
-    if (sentence.userId !== currentUserId) {
-      return NextResponse.json(
-        { error: "您只能编辑自己创建的句子" },
-        { status: 403 },
-      );
-    }
-
     // 检查用户是否为管理员
     const user = session.user as any;
     const isAdmin = user.role && ["admin", "owner"].includes(user.role);
+
+    // 检查权限：
+    // 1. 如果是共享句子，只有管理员可以编辑
+    // 2. 如果是私有句子，只有所有者可以编辑
+    if (sentence.isShared) {
+      // 共享句子只有管理员可以编辑
+      if (!isAdmin) {
+        return NextResponse.json(
+          { error: "普通用户不能编辑共享库的句子" },
+          { status: 403 },
+        );
+      }
+    } else {
+      // 私有句子只有所有者可以编辑
+      if (sentence.userId !== currentUserId) {
+        return NextResponse.json(
+          { error: "您只能编辑自己创建的句子" },
+          { status: 403 },
+        );
+      }
+    }
 
     // 构建更新对象
     const updateData: any = {

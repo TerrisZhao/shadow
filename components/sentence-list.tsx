@@ -1256,12 +1256,16 @@ export default function SentenceList({
                                 </div>
                               )}
                             </DropdownItem>
-                            <DropdownItem key="edit">
-                              <div className="flex items-center gap-2">
-                                <Edit className="w-4 h-4" />
-                                <span>编辑</span>
-                              </div>
-                            </DropdownItem>
+                            {/* 私有句子或管理员可以编辑共享句子 */}
+                            {isPrivateSentence(sentence) ||
+                            (isAdmin && sentence.isShared) ? (
+                              <DropdownItem key="edit">
+                                <div className="flex items-center gap-2">
+                                  <Edit className="w-4 h-4" />
+                                  <span>编辑</span>
+                                </div>
+                              </DropdownItem>
+                            ) : null}
                             {/* 私有句子或管理员可以删除共享句子 */}
                             {isPrivateSentence(sentence) ||
                             (isAdmin && sentence.isShared) ? (
