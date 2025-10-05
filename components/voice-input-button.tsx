@@ -43,6 +43,12 @@ export default function VoiceInputButton({
         recognition.lang = language;
 
         recognition.onresult = (event: any) => {
+          // 只有在监听状态下才处理识别结果
+          if (!isListeningRef.current) {
+            console.log("麦克风已关闭，忽略识别结果");
+            return;
+          }
+
           let interimTranscript = "";
           let finalTranscript = "";
 
@@ -65,7 +71,10 @@ export default function VoiceInputButton({
         };
 
         recognition.onerror = (event: any) => {
-          console.error("语音识别错误:", event.error);
+          // aborted 和 no-speech 是正常操作，不记录为错误
+          if (event.error !== "no-speech" && event.error !== "aborted") {
+            console.error("语音识别错误:", event.error);
+          }
           
           // 只有非 no-speech 和 aborted 错误才停止
           if (event.error !== "no-speech" && event.error !== "aborted") {
@@ -79,7 +88,10 @@ export default function VoiceInputButton({
           } else if (event.error === "no-speech") {
             // 没有检测到语音，不提示错误，继续监听
             console.log("等待语音输入...");
-          } else if (event.error !== "aborted") {
+          } else if (event.error === "aborted") {
+            // 用户主动中止，这是正常操作
+            console.log("语音识别已中止");
+          } else {
             showToast("语音识别出错，请重试", "error");
           }
         };
@@ -126,11 +138,12 @@ export default function VoiceInputButton({
     }
 
     if (isListening) {
-      // 用户主动停止
+      // 用户主动停止 - 先设置标志位，再中止识别
       shouldStopRef.current = true;
       isListeningRef.current = false;
-      recognitionRef.current.stop();
       setIsListening(false);
+      // 使用 abort() 立即中止，而不是 stop() 等待完成
+      recognitionRef.current.abort();
       showToast("语音输入已停止", "success");
     } else {
       // 用户开始录音

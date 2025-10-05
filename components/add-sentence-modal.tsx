@@ -72,6 +72,9 @@ export default function AddSentenceModal({
   useEffect(() => {
     if (isOpen) {
       fetchCategories();
+    } else {
+      // 模态框关闭时，清理临时识别文本
+      setInterimText("");
     }
   }, [isOpen]);
 
