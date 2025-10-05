@@ -86,10 +86,14 @@ export default function SentenceList({
   const [totalPages, setTotalPages] = useState(1);
   const [hasMore, setHasMore] = useState(false);
   const [playingAudio, setPlayingAudio] = useState<number | null>(null);
-  const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(
-    null,
-  );
+  const audioElementRef = useRef<HTMLAudioElement | null>(null); // 使用 ref 存储音频元素
   const [generatingAudio, setGeneratingAudio] = useState<number | null>(null);
+  const [audioProgress, setAudioProgress] = useState<Map<number, number>>(
+    new Map(),
+  ); // sentenceId -> current time in seconds
+  const [audioDuration, setAudioDuration] = useState<Map<number, number>>(
+    new Map(),
+  ); // sentenceId -> total duration in seconds
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [sentenceToDelete, setSentenceToDelete] = useState<number | null>(null);
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -114,6 +118,7 @@ export default function SentenceList({
     new Map(),
   ); // sentenceId -> duration in seconds
   const recordingTimerRef = useRef<Map<number, NodeJS.Timeout>>(new Map());
+  const audioProgressAnimationRef = useRef<number | null>(null); // 保存动画帧 ID
   const [sentenceRecordings, setSentenceRecordings] = useState<
     Map<number, Recording[]>
   >(new Map()); // sentenceId -> recordings
@@ -225,13 +230,18 @@ export default function SentenceList({
     fetchSentences(currentPage, selectedCategory, selectedDifficulty, tab);
   }, [currentPage, selectedCategory, selectedDifficulty, tab]);
 
-  // 清理定时器
+  // 清理定时器和动画帧
   useEffect(() => {
     return () => {
       timersRef.current.forEach((timer) => clearInterval(timer));
       timersRef.current.clear();
       recordingTimerRef.current.forEach((timer) => clearInterval(timer));
       recordingTimerRef.current.clear();
+      // 清理音频进度动画帧
+      if (audioProgressAnimationRef.current) {
+        cancelAnimationFrame(audioProgressAnimationRef.current);
+        audioProgressAnimationRef.current = null;
+      }
     };
   }, []);
 
@@ -317,18 +327,24 @@ export default function SentenceList({
   };
 
   // 播放音频
-  const playAudio = async (audioUrl: string, sentenceId: number) => {
+  const playAudio = async (audioUrl: string, sentenceId: number, startTime?: number) => {
     try {
+      // 取消之前的动画帧
+      if (audioProgressAnimationRef.current) {
+        cancelAnimationFrame(audioProgressAnimationRef.current);
+        audioProgressAnimationRef.current = null;
+      }
+
       // 如果正在播放其他音频，先停止
-      if (audioElement) {
-        audioElement.pause();
-        audioElement.currentTime = 0;
+      if (audioElementRef.current) {
+        audioElementRef.current.pause();
+        audioElementRef.current.currentTime = 0;
       }
 
       // 如果点击的是当前正在播放的音频，则停止播放
       if (playingAudio === sentenceId) {
         setPlayingAudio(null);
-        setAudioElement(null);
+        audioElementRef.current = null;
 
         return;
       }
@@ -336,27 +352,137 @@ export default function SentenceList({
       // 创建新的音频元素
       const audio = new Audio(audioUrl);
 
-      setAudioElement(audio);
+      audioElementRef.current = audio;
       setPlayingAudio(sentenceId);
+
+      // 加载元数据时设置总时长
+      audio.onloadedmetadata = () => {
+        setAudioDuration((prev) => {
+          const newMap = new Map(prev);
+          newMap.set(sentenceId, audio.duration);
+          return newMap;
+        });
+      };
+
+      // 暂停时取消动画帧
+      audio.onpause = () => {
+        if (audioProgressAnimationRef.current) {
+          cancelAnimationFrame(audioProgressAnimationRef.current);
+          audioProgressAnimationRef.current = null;
+        }
+      };
+
+      // 等待音频加载元数据
+      if (audio.readyState < 1) {
+        await new Promise((resolve) => {
+          audio.addEventListener('loadedmetadata', resolve, { once: true });
+        });
+      }
+
+      // 确保 duration 已设置
+      if (audio.duration && !isNaN(audio.duration)) {
+        setAudioDuration((prev) => {
+          const newMap = new Map(prev);
+          newMap.set(sentenceId, audio.duration);
+          return newMap;
+        });
+      }
+
+      // 如果指定了起始时间，设置到该位置
+      if (startTime !== undefined && startTime > 0) {
+        audio.currentTime = startTime;
+        setAudioProgress((prev) => {
+          const newMap = new Map(prev);
+          newMap.set(sentenceId, startTime);
+          return newMap;
+        });
+      }
 
       // 播放音频
       await audio.play();
 
+      // 使用 requestAnimationFrame 平滑更新播放进度
+      const updateProgress = () => {
+        // 直接使用 audio 引用，而不是从 ref 获取
+        if (!audio.paused && !audio.ended) {
+          setAudioProgress((prev) => {
+            const newMap = new Map(prev);
+            newMap.set(sentenceId, audio.currentTime);
+            return newMap;
+          });
+          // 继续下一帧
+          audioProgressAnimationRef.current = requestAnimationFrame(updateProgress);
+        }
+      };
+
+      // 立即开始进度更新循环
+      updateProgress();
+
       // 音频播放结束时的处理
       audio.onended = () => {
+        if (audioProgressAnimationRef.current) {
+          cancelAnimationFrame(audioProgressAnimationRef.current);
+          audioProgressAnimationRef.current = null;
+        }
         setPlayingAudio(null);
-        setAudioElement(null);
+        audioElementRef.current = null;
+        setAudioProgress((prev) => {
+          const newMap = new Map(prev);
+
+          newMap.set(sentenceId, 0);
+
+          return newMap;
+        });
       };
 
       // 音频播放错误时的处理
       audio.onerror = () => {
+        if (audioProgressAnimationRef.current) {
+          cancelAnimationFrame(audioProgressAnimationRef.current);
+          audioProgressAnimationRef.current = null;
+        }
         setPlayingAudio(null);
-        setAudioElement(null);
+        audioElementRef.current = null;
       };
     } catch (error) {
+      if (audioProgressAnimationRef.current) {
+        cancelAnimationFrame(audioProgressAnimationRef.current);
+        audioProgressAnimationRef.current = null;
+      }
       setPlayingAudio(null);
-      setAudioElement(null);
+      audioElementRef.current = null;
     }
+  };
+
+  // 更改音频播放进度
+  const handleAudioSeek = async (sentenceId: number, value: number | number[]) => {
+    const newTime = Array.isArray(value) ? value[0] : value;
+
+    // 如果音频正在播放，直接跳转
+    if (audioElementRef.current && playingAudio === sentenceId) {
+      audioElementRef.current.currentTime = newTime;
+      setAudioProgress((prev) => {
+        const newMap = new Map(prev);
+        newMap.set(sentenceId, newTime);
+        return newMap;
+      });
+    } else {
+      // 如果音频没有播放，从指定位置开始播放
+      const sentence = sentences.find((s) => s.id === sentenceId);
+      
+      if (sentence?.audioUrl) {
+        await playAudio(sentence.audioUrl, sentenceId, newTime);
+      }
+    }
+  };
+
+  // 格式化时间显示 (秒 -> MM:SS)
+  const formatTime = (seconds: number) => {
+    if (isNaN(seconds) || seconds < 0) return "0:00";
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
   // 打开编辑modal
@@ -1353,6 +1479,75 @@ export default function SentenceList({
                           <p className="text-default-600 text-base">
                             {sentence.chineseText}
                           </p>
+
+                          {/* 音频进度条 */}
+                          {sentence.audioUrl &&
+                            audioDuration.get(sentence.id) !== undefined && (
+                              <div className="mt-3 space-y-2 px-1">
+                                <div
+                                  aria-label="音频播放进度条"
+                                  aria-valuemax={audioDuration.get(sentence.id) || 0}
+                                  aria-valuemin={0}
+                                  aria-valuenow={audioProgress.get(sentence.id) || 0}
+                                  aria-valuetext={`${formatTime(audioProgress.get(sentence.id) || 0)} / ${formatTime(audioDuration.get(sentence.id) || 0)}`}
+                                  className="relative w-full h-1.5 bg-default-200 rounded-full cursor-pointer group"
+                                  role="slider"
+                                  tabIndex={0}
+                                  onClick={(e) => {
+                                    const rect = e.currentTarget.getBoundingClientRect();
+                                    const offsetX = e.clientX - rect.left;
+                                    const percentage = offsetX / rect.width;
+                                    const newTime =
+                                      percentage *
+                                      (audioDuration.get(sentence.id) || 0);
+
+                                    handleAudioSeek(sentence.id, newTime);
+                                  }}
+                                  onKeyDown={(e) => {
+                                    const duration = audioDuration.get(sentence.id) || 0;
+                                    const current = audioProgress.get(sentence.id) || 0;
+                                    // 对于短音频，使用更小的步进值（0.5秒）
+                                    const step = 0.5;
+                                    
+                                    if (e.key === 'ArrowRight') {
+                                      e.preventDefault();
+                                      handleAudioSeek(sentence.id, Math.min(current + step, duration));
+                                    } else if (e.key === 'ArrowLeft') {
+                                      e.preventDefault();
+                                      handleAudioSeek(sentence.id, Math.max(current - step, 0));
+                                    }
+                                  }}
+                                >
+                                  {/* 已播放进度条（蓝色） - 移除 transition 以获得即时更新 */}
+                                  <div
+                                    className="absolute top-0 left-0 h-full bg-primary rounded-full pointer-events-none"
+                                    style={{
+                                      width: `${((audioProgress.get(sentence.id) || 0) / (audioDuration.get(sentence.id) || 1)) * 100}%`,
+                                    }}
+                                  />
+                                  {/* 可拖动的滑块 - 只在 hover 时有过渡 */}
+                                  <div
+                                    className="absolute top-1/2 -translate-y-1/2 w-3.5 h-3.5 bg-primary rounded-full shadow-md 
+                                               transition-[width,height] duration-150 group-hover:w-4 group-hover:h-4 pointer-events-none z-10"
+                                    style={{
+                                      left: `calc(${((audioProgress.get(sentence.id) || 0) / (audioDuration.get(sentence.id) || 1)) * 100}% - 7px)`,
+                                    }}
+                                  />
+                                </div>
+                                <div className="flex justify-between text-xs text-default-500 px-1">
+                                  <span className="font-medium">
+                                    {formatTime(
+                                      audioProgress.get(sentence.id) || 0,
+                                    )}
+                                  </span>
+                                  <span>
+                                    {formatTime(
+                                      audioDuration.get(sentence.id) || 0,
+                                    )}
+                                  </span>
+                                </div>
+                              </div>
+                            )}
                         </div>
 
                         {sentence.notes && (
