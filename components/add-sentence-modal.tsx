@@ -211,7 +211,6 @@ export default function AddSentenceModal({
                       isRequired
                       maxRows={4}
                       minRows={2}
-                      placeholder="输入英文句子或点击麦克风按钮语音输入..."
                       value={formData.englishText + interimText}
                       onChange={(e) =>
                         setFormData({ ...formData, englishText: e.target.value })
@@ -236,7 +235,6 @@ export default function AddSentenceModal({
                   isRequired
                   maxRows={4}
                   minRows={2}
-                  placeholder="输入中文翻译..."
                   value={formData.chineseText}
                   onChange={(e) =>
                     setFormData({ ...formData, chineseText: e.target.value })
@@ -359,7 +357,6 @@ export default function AddSentenceModal({
                   id="notes"
                   maxRows={3}
                   minRows={2}
-                  placeholder="添加备注信息（可选）..."
                   value={formData.notes}
                   onChange={(e) =>
                     setFormData({ ...formData, notes: e.target.value })

@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { eq, and, desc, or } from "drizzle-orm";
+import { eq, and, desc, or, count, sql } from "drizzle-orm";
 
 import { db } from "@/lib/db/drizzle";
-import { sentences, categories } from "@/lib/db/schema";
+import { sentences, categories, recordings } from "@/lib/db/schema";
 import { authOptions } from "@/lib/auth/config";
 import { generateTTS } from "@/lib/tts/generator";
 
@@ -82,7 +82,8 @@ export async function GET(request: NextRequest) {
       whereConditions.push(eq(sentences.difficulty, difficulty));
     }
 
-    const result = await db
+    // 先查询句子列表
+    const sentencesList = await db
       .select({
         id: sentences.id,
         englishText: sentences.englishText,
@@ -107,6 +108,36 @@ export async function GET(request: NextRequest) {
       .orderBy(desc(sentences.createdAt))
       .limit(limit)
       .offset(offset);
+
+    // 获取每个句子的录音数量
+    const sentenceIds = sentencesList.map((s) => s.id);
+    const recordingCounts: Record<number, number> = {};
+
+    if (sentenceIds.length > 0) {
+      const countResults = await db
+        .select({
+          sentenceId: recordings.sentenceId,
+          count: count(),
+        })
+        .from(recordings)
+        .where(
+          and(
+            sql`${recordings.sentenceId} IN ${sql.raw(`(${sentenceIds.join(",")})`)}`,
+            eq(recordings.userId, currentUserId),
+          ),
+        )
+        .groupBy(recordings.sentenceId);
+
+      countResults.forEach((r) => {
+        recordingCounts[r.sentenceId] = Number(r.count);
+      });
+    }
+
+    // 合并句子和录音数量
+    const result = sentencesList.map((sentence) => ({
+      ...sentence,
+      recordingsCount: recordingCounts[sentence.id] || 0,
+    }));
 
     return NextResponse.json({
       sentences: result,

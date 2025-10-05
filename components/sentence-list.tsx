@@ -31,7 +31,6 @@ import {
   Trash2,
   Edit,
   Mic,
-  Square,
   ChevronDown,
   ChevronUp,
 } from "lucide-react";
@@ -66,6 +65,7 @@ interface Sentence {
   userId: number;
   createdAt: string;
   category: Category;
+  recordingsCount?: number;
 }
 
 interface SentenceListProps {
@@ -74,8 +74,7 @@ interface SentenceListProps {
 }
 
 export default function SentenceList({
-  onRefresh,
-  tab = "shared",
+                                         tab = "shared",
 }: SentenceListProps) {
   const { data: session, status } = useSession();
   const [sentences, setSentences] = useState<Sentence[]>([]);
@@ -199,7 +198,6 @@ export default function SentenceList({
         );
       }
     } catch (error) {
-      console.error("获取句子列表失败:", error);
     } finally {
       setLoading(false);
     }
@@ -216,7 +214,6 @@ export default function SentenceList({
         setCategories(data.categories);
       }
     } catch (error) {
-      console.error("获取分类失败:", error);
     }
   };
 
@@ -353,12 +350,10 @@ export default function SentenceList({
 
       // 音频播放错误时的处理
       audio.onerror = () => {
-        console.error("音频播放失败");
         setPlayingAudio(null);
         setAudioElement(null);
       };
     } catch (error) {
-      console.error("播放音频失败:", error);
       setPlayingAudio(null);
       setAudioElement(null);
     }
@@ -397,7 +392,6 @@ export default function SentenceList({
         showToast(error.error || "删除失败", "error");
       }
     } catch (error) {
-      console.error("删除句子失败:", error);
       showToast("删除失败，请重试", "error");
     } finally {
       setDeleteConfirmOpen(false);
@@ -444,7 +438,6 @@ export default function SentenceList({
         showToast(error.error || "操作失败", "error");
       }
     } catch (error) {
-      console.error("切换收藏状态失败:", error);
       showToast("操作失败，请重试", "error");
     }
   };
@@ -539,7 +532,6 @@ export default function SentenceList({
         showToast(error.error || "取消收藏失败", "error");
       }
     } catch (error) {
-      console.error("取消收藏失败:", error);
       setRemovingItems((prev) => {
         const newMap = new Map(prev);
 
@@ -599,18 +591,15 @@ export default function SentenceList({
 
             showToast("音频生成成功！", "success");
           } else {
-            console.error("保存音频URL到数据库失败");
             showToast("音频生成成功，但保存失败", "error");
           }
         } catch (updateError) {
-          console.error("更新数据库失败:", updateError);
           showToast("音频生成成功，但保存失败", "error");
         }
       } else {
         showToast("音频生成失败，请重试", "error");
       }
     } catch (error) {
-      console.error("生成音频失败:", error);
       showToast("音频生成失败，请重试", "error");
     } finally {
       setGeneratingAudio(null);
@@ -642,6 +631,12 @@ export default function SentenceList({
 
   // 开始录音
   const startRecording = async (sentenceId: number) => {
+    // 检查是否有其他句子正在准备或录音
+    if (preparingRecording !== null && preparingRecording !== sentenceId) {
+      showToast("请等待当前录音完成", "error");
+      return;
+    }
+
     // 检查浏览器支持
     const { supported, message } = checkRecordingSupport();
 
@@ -668,13 +663,12 @@ export default function SentenceList({
           } 
         });
       } catch (constraintError) {
-        console.log("尝试使用简化的音频配置...");
         // 如果失败，使用最简单的配置（Safari 可能不支持某些约束）
         stream = await navigator.mediaDevices.getUserMedia({ 
           audio: true
         });
       }
-      
+
       // 步骤3: 检查支持的格式（Safari 通常支持 audio/mp4）
       let mimeType = "";
       
@@ -689,7 +683,6 @@ export default function SentenceList({
         mimeType = "audio/ogg;codecs=opus";
       }
 
-      console.log("使用的音频格式:", mimeType || "默认格式");
 
       // 步骤4: 创建 MediaRecorder 并开始录音
       const mediaRecorder = mimeType
@@ -764,7 +757,6 @@ export default function SentenceList({
       };
 
       mediaRecorder.onerror = (event: any) => {
-        console.error("录音错误:", event);
         setPreparingRecording(null);
         showToast("录音过程中出现错误", "error");
         stopRecording(sentenceId);
@@ -773,7 +765,6 @@ export default function SentenceList({
       // 开始录音
       mediaRecorder.start();
     } catch (error: any) {
-      console.error("开始录音失败:", error);
       setPreparingRecording(null);
       
       let errorMessage = "无法访问麦克风";
@@ -845,6 +836,18 @@ export default function SentenceList({
           "success",
         );
 
+        // 更新句子的录音数量
+        setSentences((prevSentences) =>
+          prevSentences.map((sentence) =>
+            sentence.id === sentenceId
+              ? {
+                  ...sentence,
+                  recordingsCount: (sentence.recordingsCount || 0) + 1,
+                }
+              : sentence,
+          ),
+        );
+
         // 刷新该句子的录音列表
         await fetchRecordings(sentenceId);
 
@@ -858,7 +861,6 @@ export default function SentenceList({
         showToast(error.error || "录音上传失败", "error");
       }
     } catch (error) {
-      console.error("上传录音失败:", error);
       showToast("录音上传失败，请重试", "error");
     } finally {
       setUploadingRecording(null);
@@ -872,6 +874,20 @@ export default function SentenceList({
     if (isRecording) {
       stopRecording(sentenceId);
     } else {
+      // 检查是否有其他句子正在准备录音
+      if (preparingRecording !== null && preparingRecording !== sentenceId) {
+        showToast("请等待当前录音完成", "error");
+        return;
+      }
+
+      // 先停止其他正在录音的句子
+      recordingState.forEach((isRecording, id) => {
+        if (isRecording && id !== sentenceId) {
+          stopRecording(id);
+        }
+      });
+      
+      // 然后开始当前句子的录音
       startRecording(sentenceId);
     }
   };
@@ -890,10 +906,8 @@ export default function SentenceList({
           new Map(prev).set(sentenceId, data.recordings),
         );
       } else {
-        console.error("获取录音列表失败");
       }
     } catch (error) {
-      console.error("获取录音列表失败:", error);
     }
   };
 
@@ -952,13 +966,11 @@ export default function SentenceList({
 
       // 音频播放错误时的处理
       audio.onerror = () => {
-        console.error("录音播放失败");
         setPlayingRecording(null);
         setRecordingAudioElement(null);
         showToast("录音播放失败", "error");
       };
     } catch (error) {
-      console.error("播放录音失败:", error);
       setPlayingRecording(null);
       setRecordingAudioElement(null);
       showToast("播放录音失败", "error");
@@ -987,6 +999,21 @@ export default function SentenceList({
       });
 
       if (response.ok) {
+        // 更新句子的录音数量
+        setSentences((prevSentences) =>
+          prevSentences.map((sentence) =>
+            sentence.id === sentenceId
+              ? {
+                  ...sentence,
+                  recordingsCount: Math.max(
+                    (sentence.recordingsCount || 0) - 1,
+                    0,
+                  ),
+                }
+              : sentence,
+          ),
+        );
+
         // 更新录音列表
         setSentenceRecordings((prev) => {
           const newMap = new Map(prev);
@@ -1006,7 +1033,6 @@ export default function SentenceList({
         showToast(error.error || "删除失败", "error");
       }
     } catch (error) {
-      console.error("删除录音失败:", error);
       showToast("删除失败，请重试", "error");
     } finally {
       setDeletingRecording(null);
@@ -1268,7 +1294,7 @@ export default function SentenceList({
                                       ? "primary"
                                       : "default"
                                   }
-                                  size="sm"
+                                  size="md"
                                   variant="light"
                                   onClick={() =>
                                     playAudio(sentence.audioUrl!, sentence.id)
@@ -1282,52 +1308,42 @@ export default function SentenceList({
                                 </Button>
                               )}
                               {/* 录音按钮 */}
-                              <motion.div
-                                animate={
-                                  recordingState.get(sentence.id) ||
-                                  preparingRecording === sentence.id
-                                    ? {
-                                        scale: [1, 1.1, 1],
-                                      }
-                                    : {}
+                              <Button
+                                isIconOnly
+                                color={
+                                  recordingState.get(sentence.id)
+                                    ? "danger"
+                                    : preparingRecording === sentence.id
+                                      ? "warning"
+                                      : undefined
                                 }
-                                transition={{
-                                  duration: 1,
-                                  repeat:
-                                    recordingState.get(sentence.id) ||
-                                    preparingRecording === sentence.id
-                                      ? Infinity
-                                      : 0,
-                                  ease: "easeInOut",
-                                }}
+                                isDisabled={
+                                  uploadingRecording === sentence.id ||
+                                  preparingRecording === sentence.id
+                                }
+                                isLoading={uploadingRecording === sentence.id}
+                                size="md"
+                                variant="light"
+                                onClick={() => toggleRecording(sentence.id)}
                               >
-                                <Button
-                                  isIconOnly
-                                  isDisabled={
-                                    uploadingRecording === sentence.id ||
-                                    preparingRecording === sentence.id
-                                  }
-                                  isLoading={
-                                    uploadingRecording === sentence.id
-                                  }
-                                  color={
-                                    recordingState.get(sentence.id)
-                                      ? "danger"
-                                      : preparingRecording === sentence.id
-                                        ? "warning"
-                                        : "default"
-                                  }
-                                  size="sm"
-                                  variant="light"
-                                  onClick={() => toggleRecording(sentence.id)}
-                                >
-                                  {recordingState.get(sentence.id) ? (
-                                    <Square className="w-4 h-4 fill-current" />
-                                  ) : (
+                                {recordingState.get(sentence.id) ||
+                                preparingRecording === sentence.id ? (
+                                  <motion.div
+                                    animate={{
+                                      scale: [1, 1.2, 1],
+                                    }}
+                                    transition={{
+                                      duration: 1.5,
+                                      repeat: Infinity,
+                                      ease: "easeInOut",
+                                    }}
+                                  >
                                     <Mic className="w-4 h-4" />
-                                  )}
-                                </Button>
-                              </motion.div>
+                                  </motion.div>
+                                ) : (
+                                  <Mic className="w-4 h-4" />
+                                )}
+                              </Button>
                             </div>
                           </div>
                           <p className="text-default-600 text-base">
@@ -1395,7 +1411,7 @@ export default function SentenceList({
                               </div>
                               <Button
                                 color="danger"
-                                size="sm"
+                                size="md"
                                 variant="flat"
                                 onPress={() => stopRecording(sentence.id)}
                               >
@@ -1435,10 +1451,12 @@ export default function SentenceList({
                               <Volume2 className="w-4 h-4" />
                               <span>
                                 我的录音
-                                {sentenceRecordings.get(sentence.id)
-                                  ?.length
-                                  ? ` (${sentenceRecordings.get(sentence.id)?.length})`
-                                  : ""}
+                                {sentence.recordingsCount !== undefined &&
+                                sentence.recordingsCount > 0
+                                  ? ` (${sentence.recordingsCount})`
+                                  : sentenceRecordings.get(sentence.id)?.length
+                                    ? ` (${sentenceRecordings.get(sentence.id)?.length})`
+                                    : ""}
                               </span>
                               {expandedRecordings.has(sentence.id) ? (
                                 <ChevronUp className="w-4 h-4" />
@@ -1505,7 +1523,9 @@ export default function SentenceList({
                                             </span>
                                           </div>
                                           <span className="text-xs text-default-400">
-                                            {formatDateTime(recording.createdAt)}
+                                            {formatDateTime(
+                                              recording.createdAt,
+                                            )}
                                           </span>
                                         </div>
                                       </div>
