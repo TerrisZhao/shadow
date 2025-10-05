@@ -110,7 +110,7 @@ export async function GET(request: NextRequest) {
       .offset(offset);
 
     // 获取每个句子的录音数量
-    const sentenceIds = sentencesList.map((s) => s.id);
+    const sentenceIds = sentencesList.map((s: { id: number }) => s.id);
     const recordingCounts: Record<number, number> = {};
 
     if (sentenceIds.length > 0) {
@@ -128,13 +128,13 @@ export async function GET(request: NextRequest) {
         )
         .groupBy(recordings.sentenceId);
 
-      countResults.forEach((r) => {
+      countResults.forEach((r: { sentenceId: number; count: unknown }) => {
         recordingCounts[r.sentenceId] = Number(r.count);
       });
     }
 
     // 合并句子和录音数量
-    const result = sentencesList.map((sentence) => ({
+    const result = sentencesList.map((sentence: { id: number; [key: string]: any }) => ({
       ...sentence,
       recordingsCount: recordingCounts[sentence.id] || 0,
     }));
