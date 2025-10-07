@@ -119,7 +119,7 @@ export const Navbar = ({ minimal = false }: NavbarProps) => {
       </NavbarContent>
 
       <NavbarMenu>
-        <div className="mx-4 mt-2 flex flex-col gap-2">
+        <div className="mx-4 mt-3 flex flex-col gap-3">
           {siteConfig.navMenuItems.map((item, index) => (
             <NavbarMenuItem key={`${item}-${index}`}>
               <Link
@@ -127,6 +127,7 @@ export const Navbar = ({ minimal = false }: NavbarProps) => {
                 color="foreground"
                 href={item.href}
                 size="lg"
+                className="block w-full py-3 px-3 rounded-lg text-lg hover:bg-default-100"
               >
                 {item.label}
               </Link>
