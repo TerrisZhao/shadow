@@ -5,7 +5,54 @@ import { eq, and, isNull } from "drizzle-orm";
 import { compare } from "bcryptjs";
 
 import { db } from "@/lib/db/drizzle";
-import { users } from "@/lib/db/schema";
+import { users, loginHistory } from "@/lib/db/schema";
+import { parseUserAgent, getClientIP } from "@/lib/utils/device-parser";
+
+/**
+ * 记录登录历史
+ */
+async function recordLoginHistory(
+  userId: number,
+  userAgent: string,
+  ipAddress: string | null,
+  isSuccessful: boolean = true,
+  failureReason?: string
+) {
+  try {
+    const { deviceType, browser, os } = parseUserAgent(userAgent);
+    
+    await db.insert(loginHistory).values({
+      userId,
+      ipAddress,
+      userAgent,
+      deviceType,
+      browser,
+      os,
+      isSuccessful,
+      failureReason,
+    });
+  } catch (error) {
+    console.error("记录登录历史失败:", error);
+    // 不抛出错误，避免影响登录流程
+  }
+}
+
+/**
+ * 从请求中获取客户端信息
+ */
+function getClientInfo(req: any) {
+  const userAgent = req?.headers?.["user-agent"] || "Unknown";
+  const forwarded = req?.headers?.["x-forwarded-for"];
+  const realIP = req?.headers?.["x-real-ip"];
+  const cfConnectingIP = req?.headers?.["cf-connecting-ip"];
+  
+  let ipAddress = null;
+  if (cfConnectingIP) ipAddress = cfConnectingIP;
+  else if (realIP) ipAddress = realIP;
+  else if (forwarded) ipAddress = forwarded.split(",")[0].trim();
+  
+  return { userAgent, ipAddress };
+}
 
 /**
  * NextAuth 配置
@@ -76,14 +123,23 @@ const authOptions = {
 
         if (existingUser.length === 0) {
           // 创建新用户
-          await db.insert(users).values({
+          const newUser = await db.insert(users).values({
             email: user.email!,
             name: user.name || undefined,
             provider: account.provider,
             providerId: user.id,
             passwordHash: null,
             role: "user",
-          });
+          }).returning({ id: users.id });
+
+          // 记录登录历史
+          if (newUser.length > 0) {
+            await recordLoginHistory(
+              newUser[0].id,
+              user.userAgent || "Unknown",
+              user.ipAddress || null
+            );
+          }
         } else {
           const existingUserData = existingUser[0];
 
@@ -101,6 +157,13 @@ const authOptions = {
               updatedAt: new Date(),
             })
             .where(eq(users.email, user.email!));
+
+          // 记录登录历史
+          await recordLoginHistory(
+            existingUserData.id,
+            user.userAgent || "Unknown",
+            user.ipAddress || null
+          );
         }
 
         return true;
@@ -131,6 +194,9 @@ const authOptions = {
           if (dbUser.length > 0) {
             token.sub = String(dbUser[0].id);
             token.role = dbUser[0].role;
+            token.name = dbUser[0].name;
+            token.email = dbUser[0].email;
+            token.themeMode = dbUser[0].themeMode;
           }
         } else {
           // 对于credentials登录，需要从数据库获取用户角色
@@ -143,7 +209,24 @@ const authOptions = {
           if (dbUser.length > 0) {
             token.sub = (user as any).id ?? token.sub;
             token.role = dbUser[0].role;
+            token.name = dbUser[0].name;
+            token.email = dbUser[0].email;
+            token.themeMode = dbUser[0].themeMode;
           }
+        }
+      } else if (token?.sub) {
+        // 每次JWT被验证时，从数据库获取最新的用户信息
+        const dbUser = await db
+          .select()
+          .from(users)
+          .where(and(eq(users.id, parseInt(token.sub)), isNull(users.deletedAt)))
+          .limit(1);
+
+        if (dbUser.length > 0) {
+          token.name = dbUser[0].name;
+          token.email = dbUser[0].email;
+          token.role = dbUser[0].role;
+          token.themeMode = dbUser[0].themeMode;
         }
       }
 
@@ -154,6 +237,10 @@ const authOptions = {
       if (session.user && token?.sub) {
         (session.user as any).id = token.sub;
         (session.user as any).role = token.role;
+        // 使用token中的最新用户信息
+        if (token.name) session.user.name = token.name;
+        if (token.email) session.user.email = token.email;
+        if (token.themeMode) (session.user as any).themeMode = token.themeMode;
       }
 
       return session;

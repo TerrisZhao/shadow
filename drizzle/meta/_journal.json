@@ -36,6 +36,20 @@
       "when": 1759617535279,
       "tag": "0004_pink_rhodey",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1759792991983,
+      "tag": "0005_dazzling_forge",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1759801041725,
+      "tag": "0006_lonely_killer_shrike",
+      "breakpoints": true
     }
   ]
 }

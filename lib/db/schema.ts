@@ -11,6 +11,9 @@ import {
 // 用户角色枚举
 export const userRoleEnum = pgEnum("user_role", ["owner", "admin", "user"]);
 
+// 主题模式枚举
+export const themeModeEnum = pgEnum("theme_mode", ["light", "dark", "system"]);
+
 // 用户表
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
@@ -22,6 +25,7 @@ export const users = pgTable("users", {
   role: userRoleEnum("role").notNull().default("user"),
   emailVerified: boolean("email_verified").notNull().default(false),
   isActive: boolean("is_active").notNull().default(true),
+  themeMode: themeModeEnum("theme_mode").notNull().default("system"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
   deletedAt: timestamp("deleted_at"), // 软删除
@@ -115,6 +119,23 @@ export const recordings = pgTable("recordings", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+// 登录历史表
+export const loginHistory = pgTable("login_history", {
+  id: serial("id").primaryKey(),
+  userId: serial("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  ipAddress: varchar("ip_address", { length: 45 }), // IPv4 或 IPv6 地址
+  userAgent: text("user_agent"), // 用户代理字符串
+  deviceType: varchar("device_type", { length: 50 }), // 设备类型：desktop, mobile, tablet
+  browser: varchar("browser", { length: 100 }), // 浏览器名称
+  os: varchar("os", { length: 100 }), // 操作系统
+  location: varchar("location", { length: 255 }), // 地理位置（可选）
+  isSuccessful: boolean("is_successful").notNull().default(true), // 是否登录成功
+  failureReason: varchar("failure_reason", { length: 255 }), // 失败原因（如果登录失败）
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 // 导出所有表
 export const schema = {
   users,
@@ -124,4 +145,5 @@ export const schema = {
   categories,
   sentences,
   recordings,
+  loginHistory,
 };
