@@ -1,3 +1,5 @@
+import { NextRequest } from "next/server";
+
 /**
  * 解析用户代理字符串，提取设备、浏览器和操作系统信息
  */
