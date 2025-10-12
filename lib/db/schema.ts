@@ -119,6 +119,33 @@ export const recordings = pgTable("recordings", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
+// 场景表
+export const scenes = pgTable("scenes", {
+  id: serial("id").primaryKey(),
+  title: varchar("title", { length: 255 }).notNull(), // 场景标题
+  description: text("description"), // 场景描述
+  userId: serial("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  isShared: boolean("is_shared").notNull().default(false), // 是否为共享场景（管理员可设置）
+  isFavorite: boolean("is_favorite").notNull().default(false), // 是否收藏
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// 场景句子关联表
+export const sceneSentences = pgTable("scene_sentences", {
+  id: serial("id").primaryKey(),
+  sceneId: serial("scene_id")
+    .notNull()
+    .references(() => scenes.id, { onDelete: "cascade" }),
+  sentenceId: serial("sentence_id")
+    .notNull()
+    .references(() => sentences.id, { onDelete: "cascade" }),
+  order: serial("order").notNull(), // 句子在场景中的顺序
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 // 登录历史表
 export const loginHistory = pgTable("login_history", {
   id: serial("id").primaryKey(),
@@ -145,5 +172,7 @@ export const schema = {
   categories,
   sentences,
   recordings,
+  scenes,
+  sceneSentences,
   loginHistory,
 };

@@ -10,6 +10,10 @@ export const siteConfig = {
       href: "/sentence",
     },
     {
+      label: "场景",
+      href: "/scene",
+    },
+    {
       label: "统计",
       href: "/dashboard",
     },
@@ -18,6 +22,10 @@ export const siteConfig = {
     {
       label: "句子",
       href: "/sentence",
+    },
+    {
+      label: "场景",
+      href: "/scene",
     },
     {
       label: "统计",

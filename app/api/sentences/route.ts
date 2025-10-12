@@ -46,6 +46,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const categoryId = searchParams.get("categoryId");
     const difficulty = searchParams.get("difficulty");
+    const search = searchParams.get("search"); // 搜索关键词
     const tab = searchParams.get("tab") || "shared"; // shared, custom, favorite
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "10");
@@ -80,6 +81,18 @@ export async function GET(request: NextRequest) {
 
     if (difficulty) {
       whereConditions.push(eq(sentences.difficulty, difficulty));
+    }
+
+    // 添加搜索条件
+    if (search && search.trim()) {
+      const searchTerm = `%${search.trim()}%`;
+      whereConditions.push(
+        or(
+          sql`${sentences.englishText} ILIKE ${searchTerm}`,
+          sql`${sentences.chineseText} ILIKE ${searchTerm}`,
+          sql`${sentences.notes} ILIKE ${searchTerm}`
+        )
+      );
     }
 
     // 先查询句子列表
