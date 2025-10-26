@@ -43,6 +43,36 @@ export default function SentenceListWithAI({ tab }: SentenceListWithAIProps) {
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
 
+  // 切换收藏状态
+  const toggleFavorite = async (sentenceId: number, currentFavorite: boolean) => {
+    try {
+      const response = await fetch(`/api/sentences/${sentenceId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          isFavorite: !currentFavorite,
+        }),
+      });
+
+      if (response.ok) {
+        // 更新本地状态
+        setSentences((prevSentences) =>
+          prevSentences.map((sentence) =>
+            sentence.id === sentenceId
+              ? { ...sentence, isFavorite: !currentFavorite }
+              : sentence,
+          ),
+        );
+      } else {
+        console.error("收藏状态更新失败");
+      }
+    } catch (error) {
+      console.error("收藏状态更新失败:", error);
+    }
+  };
+
   // 获取句子列表
   const fetchSentences = async (
     page: number = 1,
@@ -215,6 +245,7 @@ export default function SentenceListWithAI({ tab }: SentenceListWithAIProps) {
                 onRefresh={() => {
                   fetchSentences(currentPage, selectedCategory, selectedDifficulty, tab);
                 }}
+                onToggleFavorite={toggleFavorite}
               />
             </div>
           ))}
