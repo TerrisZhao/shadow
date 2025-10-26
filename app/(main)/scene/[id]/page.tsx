@@ -318,22 +318,12 @@ export default function SceneDetailPage() {
                   }}
                   initial={{ opacity: 1, scale: 1 }}
                 >
-                  <div className="relative">
-                    {/* 句子序号 */}
-                    <div className="absolute -left-2 top-6 z-10">
-                      <div className="w-8 h-8 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-sm font-medium">
-                        {index + 1}
-                      </div>
-                    </div>
-                    {/* 句子卡片 */}
-                    <div className="ml-6">
-                      <SentenceCard
-                        sentence={sceneSentence.sentence}
-                        showActions={true}
-                        onRefresh={handleSentenceRefresh}
-                      />
-                    </div>
-                  </div>
+                  <SentenceCard
+                    sentence={sceneSentence.sentence}
+                    sentenceNumber={index + 1}
+                    showActions={true}
+                    onRefresh={handleSentenceRefresh}
+                  />
                 </motion.div>
               ))}
             </AnimatePresence>

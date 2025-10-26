@@ -8,7 +8,7 @@ import { Pagination } from "@heroui/pagination";
 import { Select, SelectItem } from "@heroui/select";
 import { motion, AnimatePresence } from "framer-motion";
 
-import SimpleSentenceCard from "./simple-sentence-card";
+import SentenceCard from "./sentence-card";
 
 interface Category {
   id: number;
@@ -223,7 +223,7 @@ export default function SentenceListWithAI({ tab }: SentenceListWithAIProps) {
                 }}
                 initial={{ opacity: 1, scale: 1 }}
               >
-                <SimpleSentenceCard
+                <SentenceCard
                   sentence={sentence}
                   onRefresh={() => {
                     fetchSentences(currentPage, selectedCategory, selectedDifficulty, tab);

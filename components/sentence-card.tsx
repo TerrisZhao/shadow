@@ -89,6 +89,7 @@ interface SentenceCardProps {
   recordingState?: Map<number, boolean>;
   uploadingRecording?: number | null;
   recordingDuration?: number;
+  sentenceNumber?: number;
   sentenceRecordings?: any[];
   expandedRecordings?: Record<number, boolean>;
   playingRecording?: number | null;
@@ -119,6 +120,7 @@ export default function SentenceCard({
   recordingState: propRecordingState = new Map(),
   uploadingRecording: propUploadingRecording = null,
   recordingDuration: propRecordingDuration = 0,
+  sentenceNumber,
   sentenceRecordings: propSentenceRecordings = [],
   expandedRecordings: propExpandedRecordings = {},
   playingRecording: propPlayingRecording = null,
@@ -844,8 +846,16 @@ export default function SentenceCard({
         className={`hover:shadow-md transition-shadow ${isRemoving ? "opacity-60 border-2 border-danger" : ""}`}
       >
         <CardBody className="p-6">
-          <div className="flex justify-between items-start mb-4">
-            <div className="flex items-center gap-2">
+          <div className="flex items-start gap-3 mb-4">
+            {/* 句子序号 */}
+            {sentenceNumber !== undefined && (
+              <div className="h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xs font-medium flex-shrink-0 px-2">
+                {sentenceNumber}
+              </div>
+            )}
+            <div className="flex-1">
+              <div className="flex justify-between items-start">
+                <div className="flex items-center gap-2">
               <Chip
                 size="sm"
                 style={{
@@ -967,6 +977,8 @@ export default function SentenceCard({
                 </DropdownMenu>
               </Dropdown>
             )}
+              </div>
+            </div>
           </div>
 
           <div className="space-y-3">
