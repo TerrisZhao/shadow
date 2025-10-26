@@ -110,13 +110,8 @@ export default function AddSentenceModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (
-      !formData.englishText ||
-      !formData.chineseText ||
-      !formData.categoryId
-    ) {
-      showToast("请填写所有必填字段", "error");
-
+    if (!formData.englishText || !formData.categoryId) {
+      showToast("请填写英文句子与分类", "error");
       return;
     }
 
@@ -231,11 +226,10 @@ export default function AddSentenceModal({
 
               <div>
                 <label className="block text-sm font-medium mb-2" htmlFor="chineseText">
-                  中文翻译 <span className="text-red-500">*</span>
+                  中文翻译 <span className="text-default-400 text-xs">(可选)</span>
                 </label>
                 <Textarea
                   id="chineseText"
-                  isRequired
                   maxRows={4}
                   minRows={2}
                   value={formData.chineseText}

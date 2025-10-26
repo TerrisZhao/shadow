@@ -31,11 +31,13 @@ import {
   Mic,
   ChevronDown,
   ChevronUp,
+  Bot,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
 
 import EditSentenceModal from "./edit-sentence-modal";
+import AIAssistant from "./ai-assistant";
 
 interface Category {
   id: number;
@@ -54,7 +56,7 @@ interface Recording {
 interface Sentence {
   id: number;
   englishText: string;
-  chineseText: string;
+  chineseText?: string | null;
   difficulty: string;
   notes?: string;
   isFavorite: boolean;
@@ -73,7 +75,25 @@ interface SentenceCardProps {
   onDelete?: (sentenceId: number) => void;
   onToggleFavorite?: (sentenceId: number, currentFavorite: boolean) => void;
   onEdit?: (sentence: Sentence) => void;
-  isRemoving?: boolean;
+  onGenerateAudio?: (sentenceId: number, text: string) => void;
+  onToggleRecording?: (sentenceId: number) => void;
+  onUploadRecording?: (sentenceId: number, audioBlob: Blob, duration: number) => void;
+  onDeleteRecording?: (recordingId: number, sentenceId: number) => void;
+  currentIsAdmin?: boolean;
+  currentIsPrivateSentence?: (sentence: Sentence) => boolean;
+  playingAudio?: number | null;
+  audioProgress?: number;
+  audioDuration?: number;
+  generatingAudio?: number | null;
+  preparingRecording?: number | null;
+  recordingState?: Map<number, boolean>;
+  uploadingRecording?: number | null;
+  recordingDuration?: number;
+  sentenceRecordings?: any[];
+  expandedRecordings?: Record<number, boolean>;
+  playingRecording?: number | null;
+  deletingRecording?: number | null;
+  removingItems?: Map<number, number>;
   countdown?: number;
   onCancelRemoval?: (sentenceId: number) => void;
 }
@@ -85,14 +105,32 @@ export default function SentenceCard({
   onDelete,
   onToggleFavorite,
   onEdit,
-  isRemoving = false,
+  onGenerateAudio,
+  onToggleRecording,
+  onUploadRecording,
+  onDeleteRecording,
+  currentIsAdmin: propIsAdmin = false,
+  currentIsPrivateSentence: propIsPrivateSentence,
+  playingAudio: propPlayingAudio = null,
+  audioProgress: propAudioProgress = 0,
+  audioDuration: propAudioDuration = 0,
+  generatingAudio: propGeneratingAudio = null,
+  preparingRecording: propPreparingRecording = null,
+  recordingState: propRecordingState = new Map(),
+  uploadingRecording: propUploadingRecording = null,
+  recordingDuration: propRecordingDuration = 0,
+  sentenceRecordings: propSentenceRecordings = [],
+  expandedRecordings: propExpandedRecordings = {},
+  playingRecording: propPlayingRecording = null,
+  deletingRecording: propDeletingRecording = null,
+  removingItems = new Map(),
   countdown,
   onCancelRemoval,
 }: SentenceCardProps) {
   const { data: session } = useSession();
-  const [playingAudio, setPlayingAudio] = useState<number | null>(null);
+  const [playingAudio, setPlayingAudio] = useState<number | null>(propPlayingAudio);
   const audioElementRef = useRef<HTMLAudioElement | null>(null);
-  const [generatingAudio, setGeneratingAudio] = useState<number | null>(null);
+  const [generatingAudio, setGeneratingAudio] = useState<number | null>(propGeneratingAudio);
   const [audioProgress, setAudioProgress] = useState<Map<number, number>>(
     new Map(),
   );
@@ -102,13 +140,13 @@ export default function SentenceCard({
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [recordingState, setRecordingState] = useState<Map<number, boolean>>(
-    new Map(),
+    propRecordingState,
   );
   const [preparingRecording, setPreparingRecording] = useState<number | null>(
-    null,
+    propPreparingRecording,
   );
   const [uploadingRecording, setUploadingRecording] = useState<number | null>(
-    null,
+    propUploadingRecording,
   );
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -120,15 +158,15 @@ export default function SentenceCard({
   const audioProgressAnimationRef = useRef<number | null>(null);
   const [sentenceRecordings, setSentenceRecordings] = useState<
     Map<number, Recording[]>
-  >(new Map());
+  >(new Map(propSentenceRecordings.map((recording, index) => [index, recording])));
   const [expandedRecordings, setExpandedRecordings] = useState<Set<number>>(
-    new Set(),
+    new Set(Object.keys(propExpandedRecordings).map(Number)),
   );
-  const [playingRecording, setPlayingRecording] = useState<number | null>(null);
+  const [playingRecording, setPlayingRecording] = useState<number | null>(propPlayingRecording);
   const [recordingAudioElement, setRecordingAudioElement] =
     useState<HTMLAudioElement | null>(null);
   const [deletingRecording, setDeletingRecording] = useState<number | null>(
-    null,
+    propDeletingRecording,
   );
   const [deleteRecordingConfirmOpen, setDeleteRecordingConfirmOpen] =
     useState(false);
@@ -136,9 +174,13 @@ export default function SentenceCard({
     recordingId: number;
     sentenceId: number;
   } | null>(null);
+  const [aiAssistantOpen, setAiAssistantOpen] = useState(false);
+  
+  // 检查是否正在移除
+  const isRemoving = removingItems.has(sentence.id);
 
-  // 检查是否为管理员
-  const isAdmin = Boolean(
+  // 使用传入的 isAdmin 或根据 session 计算
+  const currentIsAdmin = propIsAdmin || Boolean(
     session?.user &&
       (session.user as any).role &&
       ["admin", "owner"].includes((session.user as any).role),
@@ -153,13 +195,13 @@ export default function SentenceCard({
   };
 
   // 判断句子是否为当前用户的私有句子
-  const isPrivateSentence = (sentence: Sentence) => {
+  const currentIsPrivateSentence = propIsPrivateSentence || ((sentence: Sentence) => {
     if (session?.user && (session.user as any).id) {
       const currentUserId = parseInt((session.user as any).id);
       return !sentence.isShared && sentence.userId === currentUserId;
     }
     return false;
-  };
+  });
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
@@ -853,6 +895,8 @@ export default function SentenceCard({
                       );
                     } else if (key === "edit") {
                       openEditModal(sentence);
+                    } else if (key === "ai") {
+                      setAiAssistantOpen(true);
                     }
                   }}
                 >
@@ -893,8 +937,8 @@ export default function SentenceCard({
                       </div>
                     )}
                   </DropdownItem>
-                  {isPrivateSentence(sentence) ||
-                  (isAdmin && sentence.isShared) ? (
+                  {currentIsPrivateSentence(sentence) ||
+                  (currentIsAdmin && sentence.isShared) ? (
                     <DropdownItem key="edit">
                       <div className="flex items-center gap-2">
                         <Edit className="w-4 h-4" />
@@ -902,8 +946,14 @@ export default function SentenceCard({
                       </div>
                     </DropdownItem>
                   ) : null}
-                  {isPrivateSentence(sentence) ||
-                  (isAdmin && sentence.isShared) ? (
+                  <DropdownItem key="ai">
+                    <div className="flex items-center gap-2">
+                      <Bot className="w-4 h-4" />
+                      <span>AI 学习助手</span>
+                    </div>
+                  </DropdownItem>
+                  {currentIsPrivateSentence(sentence) ||
+                  (currentIsAdmin && sentence.isShared) ? (
                     <DropdownItem
                       key="delete"
                       className="text-danger"
@@ -986,7 +1036,7 @@ export default function SentenceCard({
                 </div>
               </div>
               <p className="text-default-600 text-base">
-                {sentence.chineseText}
+                {sentence.chineseText || "(暂无中文翻译)"}
               </p>
 
               {/* 音频进度条 */}
@@ -1358,6 +1408,13 @@ export default function SentenceCard({
           </ModalFooter>
         </ModalContent>
       </Modal>
+
+      {/* AI 学习助手模态框 */}
+      <AIAssistant
+        sentence={sentence.englishText}
+        isOpen={aiAssistantOpen}
+        onClose={() => setAiAssistantOpen(false)}
+      />
     </motion.div>
   );
 }

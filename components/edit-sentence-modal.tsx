@@ -35,7 +35,7 @@ interface CategoryInfo {
 interface Sentence {
   id: number;
   englishText: string;
-  chineseText: string;
+  chineseText?: string | null;
   difficulty: string;
   notes?: string;
   isFavorite: boolean;
@@ -102,7 +102,7 @@ export default function EditSentenceModal({
     if (sentence) {
       setFormData({
         englishText: sentence.englishText,
-        chineseText: sentence.chineseText,
+        chineseText: sentence.chineseText || "",
         categoryId: sentence.category.id.toString(),
         difficulty: sentence.difficulty,
         notes: sentence.notes || "",
@@ -143,13 +143,8 @@ export default function EditSentenceModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (
-      !formData.englishText ||
-      !formData.chineseText ||
-      !formData.categoryId
-    ) {
-      showToast("请填写所有必填字段", "error");
-
+    if (!formData.englishText || !formData.categoryId) {
+      showToast("请填写英文句子与分类", "error");
       return;
     }
 
@@ -221,11 +216,10 @@ export default function EditSentenceModal({
 
               <div>
                 <label className="block text-sm font-medium mb-2" htmlFor="edit-chineseText">
-                  中文翻译 <span className="text-red-500">*</span>
+                  中文翻译 <span className="text-default-400 text-xs">(可选)</span>
                 </label>
                 <Textarea
                   id="edit-chineseText"
-                  isRequired
                   minRows={2}
                   placeholder="输入中文翻译"
                   value={formData.chineseText}

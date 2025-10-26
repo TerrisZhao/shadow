@@ -177,7 +177,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const {
+  const {
       englishText,
       chineseText,
       categoryId,
@@ -186,9 +186,9 @@ export async function POST(request: NextRequest) {
       isShared,
     } = body;
 
-    if (!englishText || !chineseText || !categoryId) {
+    if (!englishText || !categoryId) {
       return NextResponse.json(
-        { error: "英文句子、中文翻译和分类是必填项" },
+        { error: "英文句子和分类是必填项" },
         { status: 400 },
       );
     }
@@ -215,11 +215,11 @@ export async function POST(request: NextRequest) {
       .insert(sentences)
       .values({
         englishText,
-        chineseText,
+        chineseText: (typeof chineseText === "string" && chineseText.trim()) ? chineseText.trim() : null,
         categoryId: parseInt(categoryId),
         userId: parseInt(session.user.id),
         difficulty: difficulty || "medium",
-        notes: notes || null,
+        notes: notes ? String(notes) : null,
         isShared: shouldBeShared,
       })
       .returning();

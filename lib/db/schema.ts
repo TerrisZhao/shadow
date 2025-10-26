@@ -87,7 +87,7 @@ export const categories = pgTable("categories", {
 export const sentences = pgTable("sentences", {
   id: serial("id").primaryKey(),
   englishText: text("english_text").notNull(), // 英文句子
-  chineseText: text("chinese_text").notNull(), // 中文翻译
+  chineseText: text("chinese_text"), // 中文翻译（可为空）
   categoryId: serial("category_id")
     .notNull()
     .references(() => categories.id, { onDelete: "cascade" }),

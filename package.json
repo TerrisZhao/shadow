@@ -12,7 +12,9 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "db:init": "tsx scripts/init-db.ts",
-    "db:init-categories": "tsx scripts/init-categories.ts"
+    "db:init-categories": "tsx scripts/init-categories.ts",
+    "ai:test": "tsx scripts/test-ai.ts",
+    "import:interview": "tsx scripts/import-interview-sentences.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.887.0",
@@ -56,6 +58,8 @@
     "@heroui/toast": "2.0.16",
     "@heroui/tooltip": "2.2.23",
     "@heroui/user": "2.2.21",
+    "@langchain/core": "^0.3.78",
+    "@langchain/openai": "^0.6.15",
     "@react-aria/ssr": "3.9.10",
     "@react-aria/visually-hidden": "3.8.27",
     "bcryptjs": "^2.4.3",
@@ -63,6 +67,7 @@
     "drizzle-orm": "^0.36.4",
     "framer-motion": "11.18.2",
     "intl-messageformat": "10.7.16",
+    "langchain": "^0.3.35",
     "lucide-react": "^0.544.0",
     "next": "15.3.1",
     "next-auth": "^4.24.11",
@@ -70,7 +75,8 @@
     "postgres": "^3.4.5",
     "react": "18.3.1",
     "react-dom": "18.3.1",
-    "zod": "^4.1.12"
+    "zod": "^4.1.12",
+    "cheerio": "^1.0.0"
   },
   "devDependencies": {
     "@eslint/compat": "^1.4.0",

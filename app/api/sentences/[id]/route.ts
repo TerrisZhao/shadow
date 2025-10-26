@@ -123,9 +123,9 @@ export async function PUT(
       isShared,
     } = body;
 
-    if (!englishText || !chineseText || !categoryId) {
+    if (!englishText || !categoryId) {
       return NextResponse.json(
-        { error: "英文句子、中文翻译和分类是必填项" },
+        { error: "英文句子和分类是必填项" },
         { status: 400 },
       );
     }
@@ -172,10 +172,13 @@ export async function PUT(
     // 构建更新对象
     const updateData: any = {
       englishText,
-      chineseText,
+      chineseText:
+        typeof chineseText === "string" && chineseText.trim()
+          ? chineseText.trim()
+          : null,
       categoryId: parseInt(categoryId),
       difficulty: difficulty || "medium",
-      notes: notes || null,
+      notes: notes ? String(notes) : null,
       updatedAt: new Date(),
     };
 

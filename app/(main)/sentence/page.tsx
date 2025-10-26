@@ -6,7 +6,7 @@ import { Tabs, Tab } from "@heroui/tabs";
 import { Plus } from "lucide-react";
 
 import AddSentenceModal from "@/components/add-sentence-modal";
-import SentenceList from "@/components/sentence-list";
+import SentenceListWithAI from "@/components/sentence-list-with-ai";
 
 export default function SentencePage() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -46,10 +46,9 @@ export default function SentencePage() {
       </div>
 
       {/* 句子列表 */}
-      <SentenceList
+      <SentenceListWithAI
         key={`${refreshKey}-${selectedTab}`}
         tab={selectedTab}
-        onRefresh={handleAddSuccess}
       />
 
       {/* 添加句子模态框 */}

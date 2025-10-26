@@ -77,6 +77,7 @@ export default function SceneDetailPage() {
 
       if (response.ok) {
         const data = await response.json();
+
         setScene(data.scene);
         setSentences(data.sentences);
       } else if (response.status === 404) {
@@ -96,9 +97,7 @@ export default function SceneDetailPage() {
   };
 
   // 切换收藏状态
-  const toggleFavorite = async (
-    currentFavorite: boolean,
-  ) => {
+  const toggleFavorite = async (currentFavorite: boolean) => {
     if (!scene) return;
 
     try {
@@ -113,7 +112,9 @@ export default function SceneDetailPage() {
       });
 
       if (response.ok) {
-        setScene(prev => prev ? { ...prev, isFavorite: !currentFavorite } : null);
+        setScene((prev) =>
+          prev ? { ...prev, isFavorite: !currentFavorite } : null,
+        );
         showToast(!currentFavorite ? "已添加到收藏" : "已取消收藏", "success");
       } else {
         const error = await response.json();
@@ -169,14 +170,16 @@ export default function SceneDetailPage() {
   const isPrivateScene = (scene: Scene) => {
     if (session?.user && (session.user as any).id) {
       const currentUserId = parseInt((session.user as any).id);
+
       return !scene.isShared && scene.userId === currentUserId;
     }
+
     return false;
   };
 
   // 处理句子刷新
   const handleSentenceRefresh = () => {
-    setRefreshKey(prev => prev + 1);
+    setRefreshKey((prev) => prev + 1);
     fetchSceneDetail();
   };
 
@@ -224,19 +227,19 @@ export default function SceneDetailPage() {
       {/* 返回按钮和操作按钮 */}
       <div className="flex justify-between items-center">
         <Button
-          variant="light"
           startContent={<ArrowLeft className="w-4 h-4" />}
+          variant="light"
           onPress={() => router.push("/scene")}
         >
           返回场景列表
         </Button>
-        
+
         <div className="flex items-center gap-2">
           <Button
             isIconOnly
+            color={scene.isFavorite ? "danger" : "default"}
             size="sm"
             variant="light"
-            color={scene.isFavorite ? "danger" : "default"}
             onPress={() => toggleFavorite(scene.isFavorite)}
           >
             {scene.isFavorite ? (
@@ -248,9 +251,9 @@ export default function SceneDetailPage() {
           {(isPrivateScene(scene) || (isAdmin && scene.isShared)) && (
             <Button
               isIconOnly
+              color="warning"
               size="sm"
               variant="light"
-              color="warning"
               onPress={() => router.push(`/scene/${scene.id}/edit`)}
             >
               <Edit className="w-4 h-4" />
@@ -259,9 +262,9 @@ export default function SceneDetailPage() {
           {(isPrivateScene(scene) || (isAdmin && scene.isShared)) && (
             <Button
               isIconOnly
+              color="danger"
               size="sm"
               variant="light"
-              color="danger"
               onPress={deleteScene}
             >
               <Trash2 className="w-4 h-4" />
@@ -279,19 +282,13 @@ export default function SceneDetailPage() {
                 {scene.title}
               </h1>
               {scene.description && (
-                <p className="text-default-600 text-lg">
-                  {scene.description}
-                </p>
+                <p className="text-default-600 text-lg">{scene.description}</p>
               )}
             </div>
 
             <div className="flex justify-between items-center text-sm text-default-400">
-              <span>
-                创建时间：{formatDate(scene.createdAt)}
-              </span>
-              <span>
-                更新时间：{formatDate(scene.updatedAt)}
-              </span>
+              <span>创建时间：{formatDate(scene.createdAt)}</span>
+              <span>更新时间：{formatDate(scene.updatedAt)}</span>
             </div>
           </div>
         </CardBody>
@@ -299,10 +296,6 @@ export default function SceneDetailPage() {
 
       {/* 句子列表 */}
       <div className="space-y-4">
-        <h2 className="text-xl font-semibold text-foreground">
-          场景句子 ({sentences.length})
-        </h2>
-        
         {sentences.length === 0 ? (
           <Card>
             <CardBody className="text-center py-8">
@@ -332,13 +325,12 @@ export default function SceneDetailPage() {
                         {index + 1}
                       </div>
                     </div>
-                    
                     {/* 句子卡片 */}
                     <div className="ml-6">
                       <SentenceCard
                         sentence={sceneSentence.sentence}
-                        onRefresh={handleSentenceRefresh}
                         showActions={true}
+                        onRefresh={handleSentenceRefresh}
                       />
                     </div>
                   </div>
