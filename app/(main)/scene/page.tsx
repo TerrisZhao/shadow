@@ -87,7 +87,7 @@ export default function ScenePage() {
   };
 
   // 处理标签页切换
-  const handleTabChange = (key: string) => {
+  const handleTabChange = (key: React.Key) => {
     setSelectedTab(key as string);
     setCurrentPage(1);
     fetchScenes(1, key as string);

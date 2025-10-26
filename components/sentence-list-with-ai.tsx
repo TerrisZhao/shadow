@@ -172,7 +172,7 @@ export default function SentenceListWithAI({ tab }: SentenceListWithAIProps) {
                 <span>{category.name}</span>
               </div>
             </SelectItem>
-          ))}
+          )) as any}
         </Select>
 
         <Select

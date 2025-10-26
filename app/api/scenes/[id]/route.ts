@@ -8,7 +8,7 @@ import { scenes, sceneSentences, sentences, categories } from "@/lib/db/schema";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -17,7 +17,8 @@ export async function GET(
       return NextResponse.json({ error: "未授权" }, { status: 401 });
     }
 
-    const sceneId = parseInt(params.id);
+    const resolvedParams = await params;
+    const sceneId = parseInt(resolvedParams.id);
 
     if (isNaN(sceneId)) {
       return NextResponse.json({ error: "无效的场景ID" }, { status: 400 });
@@ -82,7 +83,7 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -91,7 +92,8 @@ export async function PATCH(
       return NextResponse.json({ error: "未授权" }, { status: 401 });
     }
 
-    const sceneId = parseInt(params.id);
+    const resolvedParams = await params;
+    const sceneId = parseInt(resolvedParams.id);
 
     if (isNaN(sceneId)) {
       return NextResponse.json({ error: "无效的场景ID" }, { status: 400 });
@@ -161,7 +163,7 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } },
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -170,7 +172,8 @@ export async function DELETE(
       return NextResponse.json({ error: "未授权" }, { status: 401 });
     }
 
-    const sceneId = parseInt(params.id);
+    const resolvedParams = await params;
+    const sceneId = parseInt(resolvedParams.id);
 
     if (isNaN(sceneId)) {
       return NextResponse.json({ error: "无效的场景ID" }, { status: 400 });
