@@ -16,7 +16,6 @@ import { Checkbox } from "@heroui/checkbox";
 import { addToast } from "@heroui/toast";
 import { useSession } from "next-auth/react";
 
-import VoiceInputButton from "./voice-input-button";
 
 interface CategoryOption {
   id: number;
@@ -70,7 +69,6 @@ export default function EditSentenceModal({
     notes: "",
     isShared: false,
   });
-  const [interimText, setInterimText] = useState(""); // 临时识别文本
 
   // 检查是否为管理员
   const isAdmin = Boolean(
@@ -91,9 +89,6 @@ export default function EditSentenceModal({
   useEffect(() => {
     if (isOpen) {
       fetchCategories();
-    } else {
-      // 模态框关闭时，清理临时识别文本
-      setInterimText("");
     }
   }, [isOpen]);
 
@@ -111,20 +106,6 @@ export default function EditSentenceModal({
     }
   }, [sentence]);
 
-  // 处理语音识别的文本
-  const handleVoiceTranscript = (text: string, isFinal: boolean) => {
-    if (isFinal) {
-      // 最终结果：追加到输入框并清除临时文本
-      setFormData((prev) => ({
-        ...prev,
-        englishText: prev.englishText + text,
-      }));
-      setInterimText("");
-    } else {
-      // 临时结果：暂时保存，不立即写入输入框
-      setInterimText(text);
-    }
-  };
 
   const fetchCategories = async () => {
     try {
@@ -192,26 +173,16 @@ export default function EditSentenceModal({
                 <label className="block text-sm font-medium mb-2" htmlFor="edit-englishText">
                   英文句子 <span className="text-red-500">*</span>
                 </label>
-                <div className="flex gap-2 items-start">
-                  <div className="flex-1">
-                    <Textarea
-                      id="edit-englishText"
-                      isRequired
-                      minRows={2}
-                      placeholder="输入英文句子或点击麦克风按钮语音输入..."
-                      value={formData.englishText + interimText}
-                      onChange={(e) =>
-                        setFormData({ ...formData, englishText: e.target.value })
-                      }
-                    />
-                    {interimText && (
-                      <p className="text-xs text-warning-500 mt-1">
-                        🎤 正在识别: {interimText}
-                      </p>
-                    )}
-                  </div>
-                  <VoiceInputButton onTranscript={handleVoiceTranscript} />
-                </div>
+                <Textarea
+                  id="edit-englishText"
+                  isRequired
+                  minRows={2}
+                  placeholder="输入英文句子..."
+                  value={formData.englishText}
+                  onChange={(e) =>
+                    setFormData({ ...formData, englishText: e.target.value })
+                  }
+                />
               </div>
 
               <div>
