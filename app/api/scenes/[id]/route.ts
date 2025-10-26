@@ -1,21 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
+import { eq, asc } from "drizzle-orm";
+
 import { authOptions } from "@/lib/auth/config";
 import { db } from "@/lib/db/drizzle";
 import { scenes, sceneSentences, sentences, categories } from "@/lib/db/schema";
-import { eq, and, asc } from "drizzle-orm";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { id: string } },
 ) {
   try {
     const session = await getServerSession(authOptions);
+
     if (!session?.user) {
       return NextResponse.json({ error: "未授权" }, { status: 401 });
     }
 
     const sceneId = parseInt(params.id);
+
     if (isNaN(sceneId)) {
       return NextResponse.json({ error: "无效的场景ID" }, { status: 400 });
     }
@@ -72,24 +75,24 @@ export async function GET(
     });
   } catch (error) {
     console.error("获取场景详情失败:", error);
-    return NextResponse.json(
-      { error: "获取场景详情失败" },
-      { status: 500 }
-    );
+
+    return NextResponse.json({ error: "获取场景详情失败" }, { status: 500 });
   }
 }
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { id: string } },
 ) {
   try {
     const session = await getServerSession(authOptions);
+
     if (!session?.user) {
       return NextResponse.json({ error: "未授权" }, { status: 401 });
     }
 
     const sceneId = parseInt(params.id);
+
     if (isNaN(sceneId)) {
       return NextResponse.json({ error: "无效的场景ID" }, { status: 400 });
     }
@@ -116,16 +119,15 @@ export async function PATCH(
 
     // 更新场景信息
     const updateData: any = {};
+
     if (title !== undefined) updateData.title = title.trim();
-    if (description !== undefined) updateData.description = description?.trim() || null;
+    if (description !== undefined)
+      updateData.description = description?.trim() || null;
     if (isFavorite !== undefined) updateData.isFavorite = isFavorite;
 
     if (Object.keys(updateData).length > 0) {
       updateData.updatedAt = new Date();
-      await db
-        .update(scenes)
-        .set(updateData)
-        .where(eq(scenes.id, sceneId));
+      await db.update(scenes).set(updateData).where(eq(scenes.id, sceneId));
     }
 
     // 如果提供了句子ID列表，更新场景句子关联
@@ -137,11 +139,13 @@ export async function PATCH(
 
       // 创建新的关联
       if (Array.isArray(sentenceIds) && sentenceIds.length > 0) {
-        const sceneSentenceData = sentenceIds.map((sentenceId: number, index: number) => ({
-          sceneId,
-          sentenceId,
-          order: index,
-        }));
+        const sceneSentenceData = sentenceIds.map(
+          (sentenceId: number, index: number) => ({
+            sceneId,
+            sentenceId,
+            order: index,
+          }),
+        );
 
         await db.insert(sceneSentences).values(sceneSentenceData);
       }
@@ -150,24 +154,24 @@ export async function PATCH(
     return NextResponse.json({ message: "场景更新成功" });
   } catch (error) {
     console.error("更新场景失败:", error);
-    return NextResponse.json(
-      { error: "更新场景失败" },
-      { status: 500 }
-    );
+
+    return NextResponse.json({ error: "更新场景失败" }, { status: 500 });
   }
 }
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { id: string } },
 ) {
   try {
     const session = await getServerSession(authOptions);
+
     if (!session?.user) {
       return NextResponse.json({ error: "未授权" }, { status: 401 });
     }
 
     const sceneId = parseInt(params.id);
+
     if (isNaN(sceneId)) {
       return NextResponse.json({ error: "无效的场景ID" }, { status: 400 });
     }
@@ -195,9 +199,7 @@ export async function DELETE(
     return NextResponse.json({ message: "场景删除成功" });
   } catch (error) {
     console.error("删除场景失败:", error);
-    return NextResponse.json(
-      { error: "删除场景失败" },
-      { status: 500 }
-    );
+
+    return NextResponse.json({ error: "删除场景失败" }, { status: 500 });
   }
 }
