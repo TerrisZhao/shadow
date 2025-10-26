@@ -6,7 +6,6 @@ import { Button } from "@heroui/button";
 import { Spinner } from "@heroui/spinner";
 import { Pagination } from "@heroui/pagination";
 import { Select, SelectItem } from "@heroui/select";
-import { motion, AnimatePresence } from "framer-motion";
 
 import SentenceCard from "./sentence-card";
 
@@ -209,29 +208,16 @@ export default function SentenceListWithAI({ tab }: SentenceListWithAIProps) {
         </Card>
       ) : (
         <div className="space-y-4">
-          <AnimatePresence mode="popLayout">
-            {sentences.map((sentence) => (
-              <motion.div
-                key={sentence.id}
-                layout
-                exit={{
-                  opacity: 0,
-                  scale: 0.8,
-                  height: 0,
-                  marginBottom: 0,
-                  transition: { duration: 0.3 },
+          {sentences.map((sentence) => (
+            <div key={sentence.id}>
+              <SentenceCard
+                sentence={sentence}
+                onRefresh={() => {
+                  fetchSentences(currentPage, selectedCategory, selectedDifficulty, tab);
                 }}
-                initial={{ opacity: 1, scale: 1 }}
-              >
-                <SentenceCard
-                  sentence={sentence}
-                  onRefresh={() => {
-                    fetchSentences(currentPage, selectedCategory, selectedDifficulty, tab);
-                  }}
-                />
-              </motion.div>
-            ))}
-          </AnimatePresence>
+              />
+            </div>
+          ))}
         </div>
       )}
 

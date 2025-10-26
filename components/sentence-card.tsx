@@ -34,7 +34,6 @@ import {
   Bot,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
-import { motion, AnimatePresence } from "framer-motion";
 
 import EditSentenceModal from "./edit-sentence-modal";
 import AIAssistant from "./ai-assistant";
@@ -77,7 +76,11 @@ interface SentenceCardProps {
   onEdit?: (sentence: Sentence) => void;
   onGenerateAudio?: (sentenceId: number, text: string) => void;
   onToggleRecording?: (sentenceId: number) => void;
-  onUploadRecording?: (sentenceId: number, audioBlob: Blob, duration: number) => void;
+  onUploadRecording?: (
+    sentenceId: number,
+    audioBlob: Blob,
+    duration: number,
+  ) => void;
   onDeleteRecording?: (recordingId: number, sentenceId: number) => void;
   currentIsAdmin?: boolean;
   currentIsPrivateSentence?: (sentence: Sentence) => boolean;
@@ -130,9 +133,13 @@ export default function SentenceCard({
   onCancelRemoval,
 }: SentenceCardProps) {
   const { data: session } = useSession();
-  const [playingAudio, setPlayingAudio] = useState<number | null>(propPlayingAudio);
+  const [playingAudio, setPlayingAudio] = useState<number | null>(
+    propPlayingAudio,
+  );
   const audioElementRef = useRef<HTMLAudioElement | null>(null);
-  const [generatingAudio, setGeneratingAudio] = useState<number | null>(propGeneratingAudio);
+  const [generatingAudio, setGeneratingAudio] = useState<number | null>(
+    propGeneratingAudio,
+  );
   const [audioProgress, setAudioProgress] = useState<Map<number, number>>(
     new Map(),
   );
@@ -141,9 +148,8 @@ export default function SentenceCard({
   );
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
-  const [recordingState, setRecordingState] = useState<Map<number, boolean>>(
-    propRecordingState,
-  );
+  const [recordingState, setRecordingState] =
+    useState<Map<number, boolean>>(propRecordingState);
   const [preparingRecording, setPreparingRecording] = useState<number | null>(
     propPreparingRecording,
   );
@@ -153,18 +159,24 @@ export default function SentenceCard({
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const recordingStartTimeRef = useRef<number>(0);
-  const [recordingDuration, setRecordingDuration] = useState<Map<number, number>>(
-    new Map(),
-  );
+  const [recordingDuration, setRecordingDuration] = useState<
+    Map<number, number>
+  >(new Map());
   const recordingTimerRef = useRef<Map<number, NodeJS.Timeout>>(new Map());
   const audioProgressAnimationRef = useRef<number | null>(null);
   const [sentenceRecordings, setSentenceRecordings] = useState<
     Map<number, Recording[]>
-  >(new Map(propSentenceRecordings.map((recording, index) => [index, recording])));
+  >(
+    new Map(
+      propSentenceRecordings.map((recording, index) => [index, recording]),
+    ),
+  );
   const [expandedRecordings, setExpandedRecordings] = useState<Set<number>>(
     new Set(Object.keys(propExpandedRecordings).map(Number)),
   );
-  const [playingRecording, setPlayingRecording] = useState<number | null>(propPlayingRecording);
+  const [playingRecording, setPlayingRecording] = useState<number | null>(
+    propPlayingRecording,
+  );
   const [recordingAudioElement, setRecordingAudioElement] =
     useState<HTMLAudioElement | null>(null);
   const [deletingRecording, setDeletingRecording] = useState<number | null>(
@@ -177,16 +189,18 @@ export default function SentenceCard({
     sentenceId: number;
   } | null>(null);
   const [aiAssistantOpen, setAiAssistantOpen] = useState(false);
-  
+
   // 检查是否正在移除
   const isRemoving = removingItems.has(sentence.id);
 
   // 使用传入的 isAdmin 或根据 session 计算
-  const currentIsAdmin = propIsAdmin || Boolean(
-    session?.user &&
-      (session.user as any).role &&
-      ["admin", "owner"].includes((session.user as any).role),
-  );
+  const currentIsAdmin =
+    propIsAdmin ||
+    Boolean(
+      session?.user &&
+        (session.user as any).role &&
+        ["admin", "owner"].includes((session.user as any).role),
+    );
 
   // 显示toast消息
   const showToast = (message: string, type: "success" | "error") => {
@@ -197,13 +211,17 @@ export default function SentenceCard({
   };
 
   // 判断句子是否为当前用户的私有句子
-  const currentIsPrivateSentence = propIsPrivateSentence || ((sentence: Sentence) => {
-    if (session?.user && (session.user as any).id) {
-      const currentUserId = parseInt((session.user as any).id);
-      return !sentence.isShared && sentence.userId === currentUserId;
-    }
-    return false;
-  });
+  const currentIsPrivateSentence =
+    propIsPrivateSentence ||
+    ((sentence: Sentence) => {
+      if (session?.user && (session.user as any).id) {
+        const currentUserId = parseInt((session.user as any).id);
+
+        return !sentence.isShared && sentence.userId === currentUserId;
+      }
+
+      return false;
+    });
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
@@ -250,7 +268,11 @@ export default function SentenceCard({
   };
 
   // 播放音频
-  const playAudio = async (audioUrl: string, sentenceId: number, startTime?: number) => {
+  const playAudio = async (
+    audioUrl: string,
+    sentenceId: number,
+    startTime?: number,
+  ) => {
     try {
       if (audioProgressAnimationRef.current) {
         cancelAnimationFrame(audioProgressAnimationRef.current);
@@ -265,17 +287,21 @@ export default function SentenceCard({
       if (playingAudio === sentenceId) {
         setPlayingAudio(null);
         audioElementRef.current = null;
+
         return;
       }
 
       const audio = new Audio(audioUrl);
+
       audioElementRef.current = audio;
       setPlayingAudio(sentenceId);
 
       audio.onloadedmetadata = () => {
         setAudioDuration((prev) => {
           const newMap = new Map(prev);
+
           newMap.set(sentenceId, audio.duration);
+
           return newMap;
         });
       };
@@ -289,14 +315,16 @@ export default function SentenceCard({
 
       if (audio.readyState < 1) {
         await new Promise((resolve) => {
-          audio.addEventListener('loadedmetadata', resolve, { once: true });
+          audio.addEventListener("loadedmetadata", resolve, { once: true });
         });
       }
 
       if (audio.duration && !isNaN(audio.duration)) {
         setAudioDuration((prev) => {
           const newMap = new Map(prev);
+
           newMap.set(sentenceId, audio.duration);
+
           return newMap;
         });
       }
@@ -305,7 +333,9 @@ export default function SentenceCard({
         audio.currentTime = startTime;
         setAudioProgress((prev) => {
           const newMap = new Map(prev);
+
           newMap.set(sentenceId, startTime);
+
           return newMap;
         });
       }
@@ -316,10 +346,13 @@ export default function SentenceCard({
         if (!audio.paused && !audio.ended) {
           setAudioProgress((prev) => {
             const newMap = new Map(prev);
+
             newMap.set(sentenceId, audio.currentTime);
+
             return newMap;
           });
-          audioProgressAnimationRef.current = requestAnimationFrame(updateProgress);
+          audioProgressAnimationRef.current =
+            requestAnimationFrame(updateProgress);
         }
       };
 
@@ -334,7 +367,9 @@ export default function SentenceCard({
         audioElementRef.current = null;
         setAudioProgress((prev) => {
           const newMap = new Map(prev);
+
           newMap.set(sentenceId, 0);
+
           return newMap;
         });
       };
@@ -358,14 +393,19 @@ export default function SentenceCard({
   };
 
   // 更改音频播放进度
-  const handleAudioSeek = async (sentenceId: number, value: number | number[]) => {
+  const handleAudioSeek = async (
+    sentenceId: number,
+    value: number | number[],
+  ) => {
     const newTime = Array.isArray(value) ? value[0] : value;
 
     if (audioElementRef.current && playingAudio === sentenceId) {
       audioElementRef.current.currentTime = newTime;
       setAudioProgress((prev) => {
         const newMap = new Map(prev);
+
         newMap.set(sentenceId, newTime);
+
         return newMap;
       });
     } else {
@@ -380,6 +420,7 @@ export default function SentenceCard({
     if (isNaN(seconds) || seconds < 0) return "0:00";
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
+
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
@@ -470,7 +511,8 @@ export default function SentenceCard({
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       return {
         supported: false,
-        message: "您的浏览器不支持录音功能，请使用现代浏览器（Chrome、Firefox、Safari等）",
+        message:
+          "您的浏览器不支持录音功能，请使用现代浏览器（Chrome、Firefox、Safari等）",
       };
     }
 
@@ -491,6 +533,7 @@ export default function SentenceCard({
   const startRecording = async (sentenceId: number) => {
     if (preparingRecording !== null && preparingRecording !== sentenceId) {
       showToast("请等待当前录音完成", "error");
+
       return;
     }
 
@@ -498,6 +541,7 @@ export default function SentenceCard({
 
     if (!supported) {
       showToast(message, "error");
+
       return;
     }
 
@@ -505,23 +549,23 @@ export default function SentenceCard({
       setPreparingRecording(sentenceId);
 
       let stream: MediaStream;
-      
+
       try {
-        stream = await navigator.mediaDevices.getUserMedia({ 
+        stream = await navigator.mediaDevices.getUserMedia({
           audio: {
             echoCancellation: true,
             noiseSuppression: true,
             sampleRate: 44100,
-          } 
+          },
         });
       } catch (constraintError) {
-        stream = await navigator.mediaDevices.getUserMedia({ 
-          audio: true
+        stream = await navigator.mediaDevices.getUserMedia({
+          audio: true,
         });
       }
 
       let mimeType = "";
-      
+
       if (MediaRecorder.isTypeSupported("audio/mp4")) {
         mimeType = "audio/mp4";
       } else if (MediaRecorder.isTypeSupported("audio/webm;codecs=opus")) {
@@ -555,7 +599,9 @@ export default function SentenceCard({
           setRecordingDuration((prev) => {
             const newMap = new Map(prev);
             const currentDuration = newMap.get(sentenceId) || 0;
+
             newMap.set(sentenceId, currentDuration + 1);
+
             return newMap;
           });
         }, 1000);
@@ -575,13 +621,16 @@ export default function SentenceCard({
         stream.getTracks().forEach((track) => track.stop());
 
         const timer = recordingTimerRef.current.get(sentenceId);
+
         if (timer) {
           clearInterval(timer);
           recordingTimerRef.current.delete(sentenceId);
         }
         setRecordingDuration((prev) => {
           const newMap = new Map(prev);
+
           newMap.delete(sentenceId);
+
           return newMap;
         });
 
@@ -597,16 +646,28 @@ export default function SentenceCard({
       mediaRecorder.start();
     } catch (error: any) {
       setPreparingRecording(null);
-      
+
       let errorMessage = "无法访问麦克风";
 
-      if (error.name === "NotAllowedError" || error.name === "PermissionDeniedError") {
+      if (
+        error.name === "NotAllowedError" ||
+        error.name === "PermissionDeniedError"
+      ) {
         errorMessage = "麦克风权限被拒绝，请在浏览器设置中允许访问麦克风";
-      } else if (error.name === "NotFoundError" || error.name === "DevicesNotFoundError") {
+      } else if (
+        error.name === "NotFoundError" ||
+        error.name === "DevicesNotFoundError"
+      ) {
         errorMessage = "未找到麦克风设备，请检查是否连接了麦克风";
-      } else if (error.name === "NotReadableError" || error.name === "TrackStartError") {
+      } else if (
+        error.name === "NotReadableError" ||
+        error.name === "TrackStartError"
+      ) {
         errorMessage = "麦克风正被其他应用占用，请关闭其他使用麦克风的程序";
-      } else if (error.name === "OverconstrainedError" || error.name === "ConstraintNotSatisfiedError") {
+      } else if (
+        error.name === "OverconstrainedError" ||
+        error.name === "ConstraintNotSatisfiedError"
+      ) {
         errorMessage = "麦克风不支持请求的音频设置";
       } else if (error.name === "TypeError") {
         errorMessage = "浏览器不支持录音功能或需要在 HTTPS 环境下使用";
@@ -624,7 +685,9 @@ export default function SentenceCard({
       mediaRecorderRef.current.stop();
       setRecordingState((prev) => {
         const newMap = new Map(prev);
+
         newMap.delete(sentenceId);
+
         return newMap;
       });
     }
@@ -634,6 +697,7 @@ export default function SentenceCard({
   const formatRecordingDuration = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
+
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
@@ -646,6 +710,7 @@ export default function SentenceCard({
     setUploadingRecording(sentenceId);
     try {
       const formData = new FormData();
+
       formData.append("audio", audioBlob, "recording.webm");
       formData.append("sentenceId", sentenceId.toString());
       formData.append("duration", duration.toString());
@@ -657,6 +722,7 @@ export default function SentenceCard({
 
       if (response.ok) {
         const result = await response.json();
+
         showToast(
           `录音上传成功！时长：${result.recording.duration}秒`,
           "success",
@@ -673,6 +739,7 @@ export default function SentenceCard({
         }
       } else {
         const error = await response.json();
+
         showToast(error.error || "录音上传失败", "error");
       }
     } catch (error) {
@@ -691,6 +758,7 @@ export default function SentenceCard({
     } else {
       if (preparingRecording !== null && preparingRecording !== sentenceId) {
         showToast("请等待当前录音完成", "error");
+
         return;
       }
 
@@ -699,7 +767,7 @@ export default function SentenceCard({
           stopRecording(id);
         }
       });
-      
+
       startRecording(sentenceId);
     }
   };
@@ -707,12 +775,11 @@ export default function SentenceCard({
   // 获取句子的录音列表
   const fetchRecordings = async (sentenceId: number) => {
     try {
-      const response = await fetch(
-        `/api/recordings?sentenceId=${sentenceId}`,
-      );
+      const response = await fetch(`/api/recordings?sentenceId=${sentenceId}`);
 
       if (response.ok) {
         const data = await response.json();
+
         setSentenceRecordings((prev) =>
           new Map(prev).set(sentenceId, data.recordings),
         );
@@ -729,7 +796,9 @@ export default function SentenceCard({
     if (isExpanded) {
       setExpandedRecordings((prev) => {
         const newSet = new Set(prev);
+
         newSet.delete(sentenceId);
+
         return newSet;
       });
     } else {
@@ -751,10 +820,12 @@ export default function SentenceCard({
       if (playingRecording === recordingId) {
         setPlayingRecording(null);
         setRecordingAudioElement(null);
+
         return;
       }
 
       const audio = new Audio(recordingUrl);
+
       setRecordingAudioElement(audio);
       setPlayingRecording(recordingId);
 
@@ -802,15 +873,18 @@ export default function SentenceCard({
         setSentenceRecordings((prev) => {
           const newMap = new Map(prev);
           const recordings = newMap.get(sentenceId) || [];
+
           newMap.set(
             sentenceId,
             recordings.filter((r) => r.id !== recordingId),
           );
+
           return newMap;
         });
         showToast("录音删除成功", "success");
       } else {
         const error = await response.json();
+
         showToast(error.error || "删除失败", "error");
       }
     } catch (error) {
@@ -825,23 +899,15 @@ export default function SentenceCard({
   // 格式化文件大小
   const formatFileSize = (bytes: string) => {
     const size = parseInt(bytes);
+
     if (size < 1024) return `${size} B`;
     if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
+
     return `${(size / (1024 * 1024)).toFixed(1)} MB`;
   };
 
   return (
-    <motion.div
-      layout
-      exit={{
-        opacity: 0,
-        scale: 0.8,
-        height: 0,
-        marginBottom: 0,
-        transition: { duration: 0.3 },
-      }}
-      initial={{ opacity: 1, scale: 1 }}
-    >
+    <div>
       <Card
         className={`hover:shadow-md transition-shadow ${isRemoving ? "opacity-60 border-2 border-danger" : ""}`}
       >
@@ -856,127 +922,118 @@ export default function SentenceCard({
             <div className="flex-1">
               <div className="flex justify-between items-start">
                 <div className="flex items-center gap-2">
-              <Chip
-                size="sm"
-                style={{
-                  backgroundColor: sentence.category.color,
-                  color: "white",
-                }}
-              >
-                {sentence.category.name}
-              </Chip>
-              <Chip
-                color={getDifficultyColor(sentence.difficulty)}
-                size="sm"
-                variant="flat"
-              >
-                {getDifficultyText(sentence.difficulty)}
-              </Chip>
-              {sentence.isShared ? (
-                <Chip color="primary" size="sm" variant="flat">
-                  共享
-                </Chip>
-              ) : (
-                <Chip color="default" size="sm" variant="flat">
-                  自定义
-                </Chip>
-              )}
-              {sentence.isFavorite && (
-                <Chip color="danger" size="sm" variant="flat">
-                  收藏
-                </Chip>
-              )}
-            </div>
-            {showActions && (
-              <Dropdown>
-                <DropdownTrigger>
-                  <Button isIconOnly size="sm" variant="light">
-                    <MoreVertical className="w-4 h-4" />
-                  </Button>
-                </DropdownTrigger>
-                <DropdownMenu
-                  onAction={(key) => {
-                    if (key === "delete") {
-                      openDeleteConfirm(sentence.id);
-                    } else if (key === "favorite") {
-                      toggleFavorite(
-                        sentence.id,
-                        sentence.isFavorite,
-                      );
-                    } else if (key === "edit") {
-                      openEditModal(sentence);
-                    } else if (key === "ai") {
-                      setAiAssistantOpen(true);
-                    }
-                  }}
-                >
-                  {!sentence.audioUrl ? (
-                    <DropdownItem
-                      key="generate-audio"
-                      isDisabled={generatingAudio === sentence.id}
-                      onClick={() =>
-                        generateAudio(
-                          sentence.id,
-                          sentence.englishText,
-                        )
-                      }
+                  <Chip
+                    size="sm"
+                    style={{
+                      backgroundColor: sentence.category.color,
+                      color: "white",
+                    }}
+                  >
+                    {sentence.category.name}
+                  </Chip>
+                  <Chip
+                    color={getDifficultyColor(sentence.difficulty)}
+                    size="sm"
+                    variant="flat"
+                  >
+                    {getDifficultyText(sentence.difficulty)}
+                  </Chip>
+                  {sentence.isShared ? (
+                    <Chip color="primary" size="sm" variant="flat">
+                      共享
+                    </Chip>
+                  ) : (
+                    <Chip color="default" size="sm" variant="flat">
+                      自定义
+                    </Chip>
+                  )}
+                  {sentence.isFavorite && (
+                    <Chip color="danger" size="sm" variant="flat">
+                      收藏
+                    </Chip>
+                  )}
+                </div>
+                {showActions && (
+                  <Dropdown>
+                    <DropdownTrigger>
+                      <Button isIconOnly size="sm" variant="light">
+                        <MoreVertical className="w-4 h-4" />
+                      </Button>
+                    </DropdownTrigger>
+                    <DropdownMenu
+                      onAction={(key) => {
+                        if (key === "delete") {
+                          openDeleteConfirm(sentence.id);
+                        } else if (key === "favorite") {
+                          toggleFavorite(sentence.id, sentence.isFavorite);
+                        } else if (key === "edit") {
+                          openEditModal(sentence);
+                        } else if (key === "ai") {
+                          setAiAssistantOpen(true);
+                        }
+                      }}
                     >
-                      {generatingAudio === sentence.id ? (
+                      {!sentence.audioUrl ? (
+                        <DropdownItem
+                          key="generate-audio"
+                          isDisabled={generatingAudio === sentence.id}
+                          onClick={() =>
+                            generateAudio(sentence.id, sentence.englishText)
+                          }
+                        >
+                          {generatingAudio === sentence.id ? (
+                            <div className="flex items-center gap-2">
+                              <Spinner size="sm" />
+                              <span>生成中...</span>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <Volume2 className="w-4 h-4" />
+                              <span>生成音频</span>
+                            </div>
+                          )}
+                        </DropdownItem>
+                      ) : null}
+                      <DropdownItem key="favorite">
+                        {sentence.isFavorite ? (
+                          <div className="flex items-center gap-2">
+                            <HeartOff className="w-4 h-4" />
+                            <span>取消收藏</span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <Heart className="w-4 h-4" />
+                            <span>添加收藏</span>
+                          </div>
+                        )}
+                      </DropdownItem>
+                      {currentIsPrivateSentence(sentence) ||
+                      (currentIsAdmin && sentence.isShared) ? (
+                        <DropdownItem key="edit">
+                          <div className="flex items-center gap-2">
+                            <Edit className="w-4 h-4" />
+                            <span>编辑</span>
+                          </div>
+                        </DropdownItem>
+                      ) : null}
+                      <DropdownItem key="ai">
                         <div className="flex items-center gap-2">
-                          <Spinner size="sm" />
-                          <span>生成中...</span>
+                          <Bot className="w-4 h-4" />
+                          <span>AI 学习助手</span>
                         </div>
-                      ) : (
-                        <div className="flex items-center gap-2">
-                          <Volume2 className="w-4 h-4" />
-                          <span>生成音频</span>
-                        </div>
-                      )}
-                    </DropdownItem>
-                  ) : null}
-                  <DropdownItem key="favorite">
-                    {sentence.isFavorite ? (
-                      <div className="flex items-center gap-2">
-                        <HeartOff className="w-4 h-4" />
-                        <span>取消收藏</span>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2">
-                        <Heart className="w-4 h-4" />
-                        <span>添加收藏</span>
-                      </div>
-                    )}
-                  </DropdownItem>
-                  {currentIsPrivateSentence(sentence) ||
-                  (currentIsAdmin && sentence.isShared) ? (
-                    <DropdownItem key="edit">
-                      <div className="flex items-center gap-2">
-                        <Edit className="w-4 h-4" />
-                        <span>编辑</span>
-                      </div>
-                    </DropdownItem>
-                  ) : null}
-                  <DropdownItem key="ai">
-                    <div className="flex items-center gap-2">
-                      <Bot className="w-4 h-4" />
-                      <span>AI 学习助手</span>
-                    </div>
-                  </DropdownItem>
-                  {currentIsPrivateSentence(sentence) ||
-                  (currentIsAdmin && sentence.isShared) ? (
-                    <DropdownItem
-                      key="delete"
-                      className="text-danger"
-                    >
-                      <div className="flex items-center gap-2">
-                        <Trash2 className="w-4 h-4" />
-                        <span>删除</span>
-                      </div>
-                    </DropdownItem>
-                  ) : null}
-                </DropdownMenu>
-              </Dropdown>
-            )}
+                      </DropdownItem>
+                      {currentIsPrivateSentence(sentence) ||
+                      (currentIsAdmin && sentence.isShared) ? (
+                        <DropdownItem key="delete" className="text-danger">
+                          <div className="flex items-center gap-2">
+                            <Trash2 className="w-4 h-4" />
+                            <span>删除</span>
+                          </div>
+                        </DropdownItem>
+                      ) : null}
+                    </DropdownMenu>
+                  </Dropdown>
+                )}
               </div>
             </div>
           </div>
@@ -992,15 +1049,11 @@ export default function SentenceCard({
                     <Button
                       isIconOnly
                       color={
-                        playingAudio === sentence.id
-                          ? "primary"
-                          : "default"
+                        playingAudio === sentence.id ? "primary" : "default"
                       }
                       size="md"
                       variant="light"
-                      onClick={() =>
-                        playAudio(sentence.audioUrl!, sentence.id)
-                      }
+                      onClick={() => playAudio(sentence.audioUrl!, sentence.id)}
                     >
                       {playingAudio === sentence.id ? (
                         <Pause className="w-4 h-4" />
@@ -1027,23 +1080,7 @@ export default function SentenceCard({
                     variant="light"
                     onClick={() => toggleRecording(sentence.id)}
                   >
-                    {recordingState.get(sentence.id) ||
-                    preparingRecording === sentence.id ? (
-                      <motion.div
-                        animate={{
-                          scale: [1, 1.2, 1],
-                        }}
-                        transition={{
-                          duration: 1.5,
-                          repeat: Infinity,
-                          ease: "easeInOut",
-                        }}
-                      >
-                        <Mic className="w-4 h-4" />
-                      </motion.div>
-                    ) : (
-                      <Mic className="w-4 h-4" />
-                    )}
+                    <Mic className="w-4 h-4" />
                   </Button>
                 </div>
               </div>
@@ -1069,21 +1106,27 @@ export default function SentenceCard({
                         const offsetX = e.clientX - rect.left;
                         const percentage = offsetX / rect.width;
                         const newTime =
-                          percentage *
-                          (audioDuration.get(sentence.id) || 0);
+                          percentage * (audioDuration.get(sentence.id) || 0);
+
                         handleAudioSeek(sentence.id, newTime);
                       }}
                       onKeyDown={(e) => {
                         const duration = audioDuration.get(sentence.id) || 0;
                         const current = audioProgress.get(sentence.id) || 0;
                         const step = 0.5;
-                        
-                        if (e.key === 'ArrowRight') {
+
+                        if (e.key === "ArrowRight") {
                           e.preventDefault();
-                          handleAudioSeek(sentence.id, Math.min(current + step, duration));
-                        } else if (e.key === 'ArrowLeft') {
+                          handleAudioSeek(
+                            sentence.id,
+                            Math.min(current + step, duration),
+                          );
+                        } else if (e.key === "ArrowLeft") {
                           e.preventDefault();
-                          handleAudioSeek(sentence.id, Math.max(current - step, 0));
+                          handleAudioSeek(
+                            sentence.id,
+                            Math.max(current - step, 0),
+                          );
                         }
                       }}
                     >
@@ -1103,14 +1146,10 @@ export default function SentenceCard({
                     </div>
                     <div className="flex justify-between text-xs text-default-500 px-1">
                       <span className="font-medium">
-                        {formatTime(
-                          audioProgress.get(sentence.id) || 0,
-                        )}
+                        {formatTime(audioProgress.get(sentence.id) || 0)}
                       </span>
                       <span>
-                        {formatTime(
-                          audioDuration.get(sentence.id) || 0,
-                        )}
+                        {formatTime(audioDuration.get(sentence.id) || 0)}
                       </span>
                     </div>
                   </div>
@@ -1128,41 +1167,22 @@ export default function SentenceCard({
 
             {/* 准备录音的提示 */}
             {preparingRecording === sentence.id && (
-              <motion.div
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-warning-50 dark:bg-warning-900/20 rounded-lg p-3 border border-warning-200 dark:border-warning-800"
-                initial={{ opacity: 0, y: -10 }}
-              >
+              <div className="bg-warning-50 dark:bg-warning-900/20 rounded-lg p-3 border border-warning-200 dark:border-warning-800">
                 <div className="flex items-center gap-2">
                   <Spinner color="warning" size="sm" />
                   <span className="text-warning-700 dark:text-warning-400 text-sm font-medium">
                     准备录音中，请稍候...
                   </span>
                 </div>
-              </motion.div>
+              </div>
             )}
 
             {/* 录音中的提示 */}
             {recordingState.get(sentence.id) && (
-              <motion.div
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-danger-50 dark:bg-danger-900/20 rounded-lg p-3 border border-danger-200 dark:border-danger-800"
-                initial={{ opacity: 0, y: -10 }}
-              >
+              <div className="bg-danger-50 dark:bg-danger-900/20 rounded-lg p-3 border border-danger-200 dark:border-danger-800">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <motion.div
-                      animate={{
-                        scale: [1, 1.2, 1],
-                        opacity: [1, 0.7, 1],
-                      }}
-                      transition={{
-                        duration: 1.5,
-                        repeat: Infinity,
-                      }}
-                    >
-                      <div className="w-3 h-3 rounded-full bg-danger-500" />
-                    </motion.div>
+                    <div className="w-3 h-3 rounded-full bg-danger-500" />
                     <div className="flex flex-col">
                       <span className="text-danger-700 dark:text-danger-400 text-sm font-medium">
                         正在录音...
@@ -1184,29 +1204,23 @@ export default function SentenceCard({
                     停止录音
                   </Button>
                 </div>
-              </motion.div>
+              </div>
             )}
 
             {/* 上传中的提示 */}
             {uploadingRecording === sentence.id && (
-              <motion.div
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-primary-50 dark:bg-primary-900/20 rounded-lg p-3 border border-primary-200 dark:border-primary-800"
-                initial={{ opacity: 0, y: -10 }}
-              >
+              <div className="bg-primary-50 dark:bg-primary-900/20 rounded-lg p-3 border border-primary-200 dark:border-primary-800">
                 <div className="flex items-center gap-2">
                   <Spinner color="primary" size="sm" />
                   <span className="text-primary-700 dark:text-primary-400 text-sm font-medium">
                     正在上传录音...
                   </span>
                 </div>
-              </motion.div>
+              </div>
             )}
 
             <div className="flex justify-between items-center text-sm text-default-400">
-              <span>
-                创建时间：{formatDate(sentence.createdAt)}
-              </span>
+              <span>创建时间：{formatDate(sentence.createdAt)}</span>
               <Button
                 size="sm"
                 variant="light"
@@ -1240,90 +1254,73 @@ export default function SentenceCard({
                     <h4 className="text-sm font-medium text-default-700 mb-2">
                       我的录音记录
                     </h4>
-                    {sentenceRecordings
-                      .get(sentence.id)
-                      ?.map((recording) => (
-                        <motion.div
-                          key={recording.id}
-                          animate={{ opacity: 1, x: 0 }}
-                          className="flex items-center justify-between p-3 bg-default-50 dark:bg-default-100/50 rounded-lg hover:bg-default-100 dark:hover:bg-default-100 transition-colors"
-                          initial={{ opacity: 0, x: -20 }}
-                        >
-                          <div className="flex items-center gap-3 flex-1">
-                            <Button
-                              isIconOnly
-                              color={
-                                playingRecording === recording.id
-                                  ? "primary"
-                                  : "default"
-                              }
-                              size="sm"
-                              variant="flat"
-                              onClick={() =>
-                                playRecording(
-                                  recording.audioUrl,
-                                  recording.id,
-                                )
-                              }
-                            >
-                              {playingRecording === recording.id ? (
-                                <Pause className="w-4 h-4" />
-                              ) : (
-                                <Play className="w-4 h-4" />
-                              )}
-                            </Button>
-                            <div className="flex flex-col flex-1">
-                              <div className="flex items-center gap-2">
-                                <span className="text-xs text-default-600">
-                                  时长：{recording.duration}秒
-                                </span>
-                                <span className="text-xs text-default-400">
-                                  •
-                                </span>
-                                <span className="text-xs text-default-600">
-                                  大小：
-                                  {formatFileSize(
-                                    recording.fileSize,
-                                  )}
-                                </span>
-                              </div>
-                              <span className="text-xs text-default-400">
-                                {formatDateTime(
-                                  recording.createdAt,
-                                )}
-                              </span>
-                            </div>
-                          </div>
+                    {sentenceRecordings.get(sentence.id)?.map((recording) => (
+                      <div
+                        key={recording.id}
+                        className="flex items-center justify-between p-3 bg-default-50 dark:bg-default-100/50 rounded-lg hover:bg-default-100 dark:hover:bg-default-100 transition-colors"
+                      >
+                        <div className="flex items-center gap-3 flex-1">
                           <Button
                             isIconOnly
-                            color="danger"
-                            isDisabled={
-                              deletingRecording === recording.id
-                            }
-                            isLoading={
-                              deletingRecording === recording.id
+                            color={
+                              playingRecording === recording.id
+                                ? "primary"
+                                : "default"
                             }
                             size="sm"
-                            variant="light"
+                            variant="flat"
                             onClick={() =>
-                              openDeleteRecordingConfirm(
-                                recording.id,
-                                sentence.id,
-                              )
+                              playRecording(recording.audioUrl, recording.id)
                             }
                           >
-                            <Trash2 className="w-4 h-4" />
+                            {playingRecording === recording.id ? (
+                              <Pause className="w-4 h-4" />
+                            ) : (
+                              <Play className="w-4 h-4" />
+                            )}
                           </Button>
-                        </motion.div>
-                      ))}
+                          <div className="flex flex-col flex-1">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-default-600">
+                                时长：{recording.duration}秒
+                              </span>
+                              <span className="text-xs text-default-400">
+                                •
+                              </span>
+                              <span className="text-xs text-default-600">
+                                大小：
+                                {formatFileSize(recording.fileSize)}
+                              </span>
+                            </div>
+                            <span className="text-xs text-default-400">
+                              {formatDateTime(recording.createdAt)}
+                            </span>
+                          </div>
+                        </div>
+                        <Button
+                          isIconOnly
+                          color="danger"
+                          isDisabled={deletingRecording === recording.id}
+                          isLoading={deletingRecording === recording.id}
+                          size="sm"
+                          variant="light"
+                          onClick={() =>
+                            openDeleteRecordingConfirm(
+                              recording.id,
+                              sentence.id,
+                            )
+                          }
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ))}
                   </div>
                 ) : (
                   <div className="text-center py-6 text-default-400 text-sm">
                     <Volume2 className="w-8 h-8 mx-auto mb-2 opacity-50" />
                     <p>还没有录音记录</p>
-                    <p className="text-xs mt-1">
-                      点击上方的麦克风按钮开始录音
-                    </p>
+                    <p className="text-xs mt-1">点击上方的麦克风按钮开始录音</p>
                   </div>
                 )}
               </div>
@@ -1332,11 +1329,7 @@ export default function SentenceCard({
 
           {/* 倒计时提示 */}
           {isRemoving && (
-            <motion.div
-              animate={{ opacity: 1, y: 0 }}
-              className="mt-4 p-3 bg-danger-50 dark:bg-danger-900/20 rounded-lg border border-danger-200 dark:border-danger-800"
-              initial={{ opacity: 0, y: -10 }}
-            >
+            <div className="mt-4 p-3 bg-danger-50 dark:bg-danger-900/20 rounded-lg border border-danger-200 dark:border-danger-800">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <Spinner color="danger" size="sm" />
@@ -1355,7 +1348,7 @@ export default function SentenceCard({
                   </Button>
                 )}
               </div>
-            </motion.div>
+            </div>
           )}
         </CardBody>
       </Card>
@@ -1423,10 +1416,10 @@ export default function SentenceCard({
 
       {/* AI 学习助手模态框 */}
       <AIAssistant
-        sentence={sentence.englishText}
         isOpen={aiAssistantOpen}
+        sentence={sentence.englishText}
         onClose={() => setAiAssistantOpen(false)}
       />
-    </motion.div>
+    </div>
   );
 }
