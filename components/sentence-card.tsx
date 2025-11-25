@@ -428,6 +428,77 @@ export default function SentenceCard({
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
 
+  // 将文本按句子拆分
+  const splitIntoSentences = (text: string) => {
+    // 使用正则表达式按句号、问号、感叹号等拆分，保留标点符号
+    const sentences = text.match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [text];
+
+    return sentences.map((s) => s.trim()).filter((s) => s.length > 0);
+  };
+
+  // 计算每个句子的权重（基于字符数和单词数的综合考虑）
+  const calculateSentenceWeights = (sentences: string[]) => {
+    return sentences.map((sent) => {
+      // 计算单词数量
+      const words = sent.split(/\s+/).filter((w) => w.length > 0);
+      const wordCount = words.length;
+
+      // 计算字符总数（只计算字母和数字，排除标点符号）
+      const charCount = sent.replace(/[^a-zA-Z0-9]/g, "").length;
+
+      // 综合权重：字符数占70%，单词数占30%
+      // 这样既考虑了单词长度，也考虑了单词停顿
+      const weight = charCount * 0.7 + wordCount * 3 * 0.3;
+
+      return weight;
+    });
+  };
+
+  // 根据权重计算每个句子的时间范围
+  const calculateSentenceTimeRanges = (sentenceId: number) => {
+    const duration = audioDuration.get(sentenceId) || 0;
+
+    if (duration === 0) return [];
+
+    const sentences = splitIntoSentences(sentence.englishText);
+    const weights = calculateSentenceWeights(sentences);
+    const totalWeight = weights.reduce((sum, w) => sum + w, 0);
+
+    if (totalWeight === 0) return [];
+
+    // 计算每个句子的开始和结束时间
+    let currentTime = 0;
+    const timeRanges = weights.map((weight) => {
+      const sentenceDuration = (weight / totalWeight) * duration;
+      const start = currentTime;
+      const end = currentTime + sentenceDuration;
+
+      currentTime = end;
+
+      return { start, end };
+    });
+
+    return timeRanges;
+  };
+
+  // 计算当前应该高亮的句子索引
+  const getCurrentSentenceIndex = (sentenceId: number) => {
+    const progress = audioProgress.get(sentenceId) || 0;
+    const timeRanges = calculateSentenceTimeRanges(sentenceId);
+
+    if (timeRanges.length === 0) return -1;
+
+    // 找到当前时间所在的句子
+    for (let i = 0; i < timeRanges.length; i++) {
+      if (progress >= timeRanges[i].start && progress < timeRanges[i].end) {
+        return i;
+      }
+    }
+
+    // 如果播放到最后，返回最后一个句子
+    return timeRanges.length - 1;
+  };
+
   // 打开编辑modal
   const openEditModal = (sentence: Sentence) => {
     if (onEdit) {
@@ -1045,8 +1116,32 @@ export default function SentenceCard({
           <div className="space-y-3">
             <div>
               <div className="mb-2">
-                <h3 className="text-lg font-medium text-foreground">
-                  {sentence.englishText}
+                <h3 className="text-lg font-medium leading-relaxed">
+                  {playingAudio === sentence.id || audioProgress.get(sentence.id) ? (
+                    splitIntoSentences(sentence.englishText).map((sent, index) => {
+                      const currentIndex = getCurrentSentenceIndex(sentence.id);
+                      const isPlaying = playingAudio === sentence.id;
+                      const isCurrent = index === currentIndex && isPlaying;
+                      const isPassed = index < currentIndex && isPlaying;
+
+                      return (
+                        <span
+                          key={index}
+                          className={`transition-all duration-300 ${
+                            isCurrent
+                              ? "text-primary font-semibold"
+                              : isPassed
+                                ? "text-default-500"
+                                : "text-foreground opacity-60"
+                          }`}
+                        >
+                          {sent}{" "}
+                        </span>
+                      );
+                    })
+                  ) : (
+                    <span className="text-foreground">{sentence.englishText}</span>
+                  )}
                 </h3>
               </div>
               <p className="text-default-600 text-base">
