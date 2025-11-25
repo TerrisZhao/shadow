@@ -190,6 +190,7 @@ export default function SentenceCard({
     sentenceId: number;
   } | null>(null);
   const [aiAssistantOpen, setAiAssistantOpen] = useState(false);
+  const [deletingSentence, setDeletingSentence] = useState(false);
 
   // 检查是否正在移除
   const isRemoving = removingItems.has(sentence.id);
@@ -551,10 +552,30 @@ export default function SentenceCard({
 
   // 确认删除句子
   const confirmDelete = async () => {
-    if (onDelete) {
-      onDelete(sentence.id);
+    setDeletingSentence(true);
+    try {
+      const response = await fetch(`/api/sentences/${sentence.id}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        showToast("句子删除成功", "success");
+        if (onRefresh) {
+          onRefresh();
+        }
+        if (onDelete) {
+          onDelete(sentence.id);
+        }
+      } else {
+        const error = await response.json();
+        showToast(error.error || "删除失败", "error");
+      }
+    } catch (error) {
+      showToast("删除失败，请重试", "error");
+    } finally {
+      setDeletingSentence(false);
+      setDeleteConfirmOpen(false);
     }
-    setDeleteConfirmOpen(false);
   };
 
   // 切换收藏状态
@@ -1521,8 +1542,9 @@ export default function SentenceCard({
 
       {/* 删除句子确认对话框 */}
       <Modal
+        isDismissable={!deletingSentence}
         isOpen={deleteConfirmOpen}
-        onClose={() => setDeleteConfirmOpen(false)}
+        onClose={() => !deletingSentence && setDeleteConfirmOpen(false)}
       >
         <ModalContent>
           <ModalHeader className="flex flex-col gap-1">
@@ -1532,10 +1554,18 @@ export default function SentenceCard({
             <p>确定要删除这个句子吗？删除后将无法恢复。</p>
           </ModalBody>
           <ModalFooter>
-            <Button variant="light" onPress={() => setDeleteConfirmOpen(false)}>
+            <Button
+              isDisabled={deletingSentence}
+              variant="light"
+              onPress={() => setDeleteConfirmOpen(false)}
+            >
               取消
             </Button>
-            <Button color="danger" onPress={confirmDelete}>
+            <Button
+              color="danger"
+              isLoading={deletingSentence}
+              onPress={confirmDelete}
+            >
               删除
             </Button>
           </ModalFooter>
