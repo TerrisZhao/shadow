@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { eq, and, desc, or, count, sql } from "drizzle-orm";
+import { eq, and, desc, or, count, inArray, exists, sql } from "drizzle-orm";
 
 import { db } from "@/lib/db/drizzle";
-import { sentences, categories, recordings } from "@/lib/db/schema";
+import {
+  sentences,
+  categories,
+  recordings,
+  userSentenceFavorites,
+} from "@/lib/db/schema";
 import { authOptions } from "@/lib/auth/config";
 import { generateTTS } from "@/lib/tts/generator";
 
@@ -68,10 +73,19 @@ export async function GET(request: NextRequest) {
         eq(sentences.isShared, false),
       );
     } else if (tab === "favorite") {
-      // 收藏：显示当前用户收藏的句子（包括共享的和自己的）
+      // 收藏：显示当前用户收藏的句子（通过关联表查询）
       whereConditions.push(
-        or(eq(sentences.isShared, true), eq(sentences.userId, currentUserId)),
-        eq(sentences.isFavorite, true),
+        exists(
+          db
+            .select()
+            .from(userSentenceFavorites)
+            .where(
+              and(
+                eq(userSentenceFavorites.sentenceId, sentences.id),
+                eq(userSentenceFavorites.userId, currentUserId),
+              ),
+            ),
+        ),
       );
     }
 
@@ -86,16 +100,17 @@ export async function GET(request: NextRequest) {
     // 添加搜索条件
     if (search && search.trim()) {
       const searchTerm = `%${search.trim()}%`;
+
       whereConditions.push(
         or(
           sql`${sentences.englishText} ILIKE ${searchTerm}`,
           sql`${sentences.chineseText} ILIKE ${searchTerm}`,
-          sql`${sentences.notes} ILIKE ${searchTerm}`
-        )
+          sql`${sentences.notes} ILIKE ${searchTerm}`,
+        ),
       );
     }
 
-    // 先查询句子列表
+    // 先查询句子列表，并检查当前用户是否收藏
     const sentencesList = await db
       .select({
         id: sentences.id,
@@ -103,7 +118,6 @@ export async function GET(request: NextRequest) {
         chineseText: sentences.chineseText,
         difficulty: sentences.difficulty,
         notes: sentences.notes,
-        isFavorite: sentences.isFavorite,
         isShared: sentences.isShared,
         audioUrl: sentences.audioUrl,
         userId: sentences.userId,
@@ -114,6 +128,12 @@ export async function GET(request: NextRequest) {
           name: categories.name,
           color: categories.color,
         },
+        // 使用子查询检查是否收藏
+        isFavorite: sql<boolean>`EXISTS (
+          SELECT 1 FROM ${userSentenceFavorites}
+          WHERE ${userSentenceFavorites.sentenceId} = ${sentences.id}
+          AND ${userSentenceFavorites.userId} = ${currentUserId}
+        )`,
       })
       .from(sentences)
       .innerJoin(categories, eq(sentences.categoryId, categories.id))
@@ -122,11 +142,12 @@ export async function GET(request: NextRequest) {
       .limit(limit)
       .offset(offset);
 
-    // 获取每个句子的录音数量
+    // 获取每个句子的录音数量 - 修复SQL注入
     const sentenceIds = sentencesList.map((s: { id: number }) => s.id);
     const recordingCounts: Record<number, number> = {};
 
     if (sentenceIds.length > 0) {
+      // 使用 inArray 代替 sql.raw 拼接
       const countResults = await db
         .select({
           sentenceId: recordings.sentenceId,
@@ -135,22 +156,24 @@ export async function GET(request: NextRequest) {
         .from(recordings)
         .where(
           and(
-            sql`${recordings.sentenceId} IN ${sql.raw(`(${sentenceIds.join(",")})`)}`,
+            inArray(recordings.sentenceId, sentenceIds),
             eq(recordings.userId, currentUserId),
           ),
         )
         .groupBy(recordings.sentenceId);
 
-      countResults.forEach((r: { sentenceId: number; count: unknown }) => {
+      countResults.forEach((r: { sentenceId: number; count: number }) => {
         recordingCounts[r.sentenceId] = Number(r.count);
       });
     }
 
     // 合并句子和录音数量
-    const result = sentencesList.map((sentence: { id: number; [key: string]: any }) => ({
-      ...sentence,
-      recordingsCount: recordingCounts[sentence.id] || 0,
-    }));
+    const result = sentencesList.map(
+      (sentence: (typeof sentencesList)[number]) => ({
+        ...sentence,
+        recordingsCount: recordingCounts[sentence.id] || 0,
+      }),
+    );
 
     return NextResponse.json({
       sentences: result,
@@ -161,8 +184,6 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("获取句子列表失败:", error);
-
     return NextResponse.json({ error: "获取句子列表失败" }, { status: 500 });
   }
 }
@@ -177,7 +198,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-  const {
+    const {
       englishText,
       chineseText,
       categoryId,
@@ -215,7 +236,10 @@ export async function POST(request: NextRequest) {
       .insert(sentences)
       .values({
         englishText,
-        chineseText: (typeof chineseText === "string" && chineseText.trim()) ? chineseText.trim() : null,
+        chineseText:
+          typeof chineseText === "string" && chineseText.trim()
+            ? chineseText.trim()
+            : null,
         categoryId: parseInt(categoryId),
         userId: parseInt(session.user.id),
         difficulty: difficulty || "medium",
@@ -238,8 +262,6 @@ export async function POST(request: NextRequest) {
       sentence: newSentence[0],
     });
   } catch (error) {
-    console.error("创建句子失败:", error);
-
     return NextResponse.json({ error: "创建句子失败" }, { status: 500 });
   }
 }

@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 
 import { db } from "@/lib/db/drizzle";
-import { sentences } from "@/lib/db/schema";
+import { sentences, userSentenceFavorites } from "@/lib/db/schema";
 import { authOptions } from "@/lib/auth/config";
+import { extractKeyFromUrl, deleteFromR2 } from "@/lib/utils/r2-client";
 
-// 更新单个句子
+// 更新单个句子（PATCH用于部分更新）
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
@@ -36,27 +37,64 @@ export async function PATCH(
       );
     }
 
-    // 检查句子是否存在
-    const existingSentence = await db
-      .select()
-      .from(sentences)
-      .where(eq(sentences.id, sentenceId))
-      .limit(1);
-
-    if (existingSentence.length === 0) {
-      return NextResponse.json({ error: "句子不存在" }, { status: 404 });
-    }
-
-    const sentence = existingSentence[0];
     const currentUserId = parseInt(session.user.id);
 
-    // 构建更新对象
-    const updateData: any = { updatedAt: new Date() };
+    // 处理收藏状态更新
+    if (isFavorite !== undefined) {
+      // 检查句子是否存在
+      const existingSentence = await db
+        .select()
+        .from(sentences)
+        .where(eq(sentences.id, sentenceId))
+        .limit(1);
 
-    // 权限检查：
-    // - audioUrl 只有所有者或管理员可以更新
-    // - isFavorite 任何用户都可以更新（收藏功能）
+      if (existingSentence.length === 0) {
+        return NextResponse.json({ error: "句子不存在" }, { status: 404 });
+      }
+
+      // 处理收藏/取消收藏
+      if (isFavorite) {
+        // 添加收藏（使用 onConflictDoNothing 避免重复插入错误）
+        await db
+          .insert(userSentenceFavorites)
+          .values({
+            userId: currentUserId,
+            sentenceId: sentenceId,
+          })
+          .onConflictDoNothing();
+      } else {
+        // 取消收藏
+        await db
+          .delete(userSentenceFavorites)
+          .where(
+            and(
+              eq(userSentenceFavorites.userId, currentUserId),
+              eq(userSentenceFavorites.sentenceId, sentenceId),
+            ),
+          );
+      }
+
+      return NextResponse.json({
+        message: isFavorite ? "已添加到收藏" : "已取消收藏",
+        isFavorite: isFavorite,
+      });
+    }
+
+    // 处理audioUrl更新（需要权限检查）
     if (audioUrl !== undefined) {
+      // 检查句子是否存在
+      const existingSentence = await db
+        .select()
+        .from(sentences)
+        .where(eq(sentences.id, sentenceId))
+        .limit(1);
+
+      if (existingSentence.length === 0) {
+        return NextResponse.json({ error: "句子不存在" }, { status: 404 });
+      }
+
+      const sentence = existingSentence[0];
+
       // 检查 audioUrl 更新权限
       if (sentence.userId !== currentUserId) {
         const user = session.user as any;
@@ -68,28 +106,25 @@ export async function PATCH(
           );
         }
       }
-      updateData.audioUrl = audioUrl;
+
+      // 更新句子
+      const updatedSentence = await db
+        .update(sentences)
+        .set({
+          audioUrl: audioUrl,
+          updatedAt: new Date(),
+        })
+        .where(eq(sentences.id, sentenceId))
+        .returning();
+
+      return NextResponse.json({
+        message: "句子更新成功",
+        sentence: updatedSentence[0],
+      });
     }
 
-    if (isFavorite !== undefined) {
-      // 所有用户都可以收藏/取消收藏任何句子
-      updateData.isFavorite = isFavorite;
-    }
-
-    // 更新句子
-    const updatedSentence = await db
-      .update(sentences)
-      .set(updateData)
-      .where(eq(sentences.id, sentenceId))
-      .returning();
-
-    return NextResponse.json({
-      message: "句子更新成功",
-      sentence: updatedSentence[0],
-    });
+    return NextResponse.json({ error: "无效的请求" }, { status: 400 });
   } catch (error) {
-    console.error("更新句子失败:", error);
-
     return NextResponse.json({ error: "更新句子失败" }, { status: 500 });
   }
 }
@@ -199,8 +234,6 @@ export async function PUT(
       sentence: updatedSentence[0],
     });
   } catch (error) {
-    console.error("更新句子失败:", error);
-
     return NextResponse.json({ error: "更新句子失败" }, { status: 500 });
   }
 }
@@ -255,15 +288,26 @@ export async function DELETE(
       }
     }
 
-    // 删除句子
+    // 如果有音频文件，尝试从R2删除
+    if (sentence.audioUrl) {
+      const objectKey = extractKeyFromUrl(sentence.audioUrl);
+
+      if (objectKey) {
+        const deleteResult = await deleteFromR2(objectKey);
+
+        if (!deleteResult.success) {
+          // 继续删除数据库记录，即使R2删除失败
+        }
+      }
+    }
+
+    // 删除句子（会级联删除收藏记录）
     await db.delete(sentences).where(eq(sentences.id, sentenceId));
 
     return NextResponse.json({
       message: "句子删除成功",
     });
   } catch (error) {
-    console.error("删除句子失败:", error);
-
     return NextResponse.json({ error: "删除句子失败" }, { status: 500 });
   }
 }

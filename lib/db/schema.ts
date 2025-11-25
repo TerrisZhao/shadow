@@ -1,12 +1,17 @@
 import {
   pgTable,
   serial,
+  integer,
   varchar,
   text,
   timestamp,
   boolean,
   pgEnum,
+  index,
+  uniqueIndex,
+  primaryKey,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 
 // 用户角色枚举
 export const userRoleEnum = pgEnum("user_role", ["owner", "admin", "user"]);
@@ -34,9 +39,7 @@ export const users = pgTable("users", {
 // 账户表 (NextAuth.js 需要)
 export const accounts = pgTable("accounts", {
   id: serial("id").primaryKey(),
-  userId: serial("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
+  userId: integer("user_id").notNull(),
   type: varchar("type", { length: 50 }).notNull(), // 'oauth', 'email', 'credentials'
   provider: varchar("provider", { length: 50 }).notNull(),
   providerAccountId: varchar("provider_account_id", { length: 255 }).notNull(),
@@ -49,19 +52,21 @@ export const accounts = pgTable("accounts", {
   sessionState: varchar("session_state", { length: 255 }),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
-});
+}, (table) => ({
+  userIdIdx: index("accounts_user_id_idx").on(table.userId),
+}));
 
 // 会话表 (NextAuth.js 需要)
 export const sessions = pgTable("sessions", {
   id: serial("id").primaryKey(),
   sessionToken: varchar("session_token", { length: 255 }).notNull().unique(),
-  userId: serial("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
+  userId: integer("user_id").notNull(),
   expires: timestamp("expires").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
-});
+}, (table) => ({
+  userIdIdx: index("sessions_user_id_idx").on(table.userId),
+}));
 
 // 验证令牌表 (NextAuth.js 需要)
 export const verificationTokens = pgTable("verification_tokens", {
@@ -69,89 +74,120 @@ export const verificationTokens = pgTable("verification_tokens", {
   token: varchar("token", { length: 255 }).notNull(),
   expires: timestamp("expires").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+}, (table) => ({
+  pk: primaryKey({ columns: [table.identifier, table.token] }),
+}));
 
 // 句子分类表
 export const categories = pgTable("categories", {
   id: serial("id").primaryKey(),
-  name: varchar("name", { length: 100 }).notNull().unique(),
+  name: varchar("name", { length: 100 }).notNull(),
   description: text("description"),
   color: varchar("color", { length: 20 }).default("#3b82f6"), // 分类颜色
   isPreset: boolean("is_preset").notNull().default(false), // 是否为预设分类
-  userId: serial("user_id").references(() => users.id, { onDelete: "cascade" }), // 自定义分类关联用户
+  userId: integer("user_id"), // 自定义分类关联用户
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
-});
+}, (table) => ({
+  // 预设分类的名称全局唯一
+  presetNameIdx: uniqueIndex("categories_preset_name_idx").on(table.name).where(sql`${table.isPreset} = true`),
+  // 用户自定义分类在用户范围内名称唯一
+  userNameIdx: uniqueIndex("categories_user_name_idx").on(table.userId, table.name).where(sql`${table.isPreset} = false`),
+  userIdIdx: index("categories_user_id_idx").on(table.userId),
+  isPresetIdx: index("categories_is_preset_idx").on(table.isPreset),
+}));
 
 // 句子表
 export const sentences = pgTable("sentences", {
   id: serial("id").primaryKey(),
   englishText: text("english_text").notNull(), // 英文句子
   chineseText: text("chinese_text"), // 中文翻译（可为空）
-  categoryId: serial("category_id")
-    .notNull()
-    .references(() => categories.id, { onDelete: "cascade" }),
-  userId: serial("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
+  categoryId: integer("category_id").notNull(),
+  userId: integer("user_id").notNull(),
   difficulty: varchar("difficulty", { length: 20 }).default("medium"), // 难度等级: easy, medium, hard
   notes: text("notes"), // 备注
-  isFavorite: boolean("is_favorite").notNull().default(false), // 是否收藏
   isShared: boolean("is_shared").notNull().default(false), // 是否为共享句子（管理员可设置）
   audioUrl: text("audio_url"), // 音频文件 URL
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
-});
+}, (table) => ({
+  userIdIdx: index("sentences_user_id_idx").on(table.userId),
+  categoryIdIdx: index("sentences_category_id_idx").on(table.categoryId),
+  isSharedIdx: index("sentences_is_shared_idx").on(table.isShared),
+  // 复合索引用于查询共享句子或用户自己的句子
+  userSharedIdx: index("sentences_user_shared_idx").on(table.userId, table.isShared),
+}));
+
+// 用户句子收藏关联表
+export const userSentenceFavorites = pgTable("user_sentence_favorites", {
+  userId: integer("user_id").notNull(),
+  sentenceId: integer("sentence_id").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (table) => ({
+  pk: primaryKey({ columns: [table.userId, table.sentenceId] }),
+  userIdIdx: index("user_sentence_favorites_user_id_idx").on(table.userId),
+  sentenceIdIdx: index("user_sentence_favorites_sentence_id_idx").on(table.sentenceId),
+}));
 
 // 录音记录表
 export const recordings = pgTable("recordings", {
   id: serial("id").primaryKey(),
-  sentenceId: serial("sentence_id")
-    .notNull()
-    .references(() => sentences.id, { onDelete: "cascade" }),
-  userId: serial("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
+  sentenceId: integer("sentence_id").notNull(),
+  userId: integer("user_id").notNull(),
   audioUrl: text("audio_url").notNull(), // 录音文件 URL
-  duration: varchar("duration", { length: 20 }), // 录音时长（秒）
-  fileSize: varchar("file_size", { length: 20 }), // 文件大小（字节）
+  duration: integer("duration"), // 录音时长（秒）
+  fileSize: integer("file_size"), // 文件大小（字节）
   mimeType: varchar("mime_type", { length: 50 }).default("audio/webm"), // MIME类型
   createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+}, (table) => ({
+  sentenceIdIdx: index("recordings_sentence_id_idx").on(table.sentenceId),
+  userIdIdx: index("recordings_user_id_idx").on(table.userId),
+  // 复合索引用于查询特定句子的特定用户录音
+  userSentenceIdx: index("recordings_user_sentence_idx").on(table.userId, table.sentenceId),
+}));
 
 // 场景表
 export const scenes = pgTable("scenes", {
   id: serial("id").primaryKey(),
   title: varchar("title", { length: 255 }).notNull(), // 场景标题
   description: text("description"), // 场景描述
-  userId: serial("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
+  userId: integer("user_id").notNull(),
   isShared: boolean("is_shared").notNull().default(false), // 是否为共享场景（管理员可设置）
-  isFavorite: boolean("is_favorite").notNull().default(false), // 是否收藏
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
-});
+}, (table) => ({
+  userIdIdx: index("scenes_user_id_idx").on(table.userId),
+  isSharedIdx: index("scenes_is_shared_idx").on(table.isShared),
+  userSharedIdx: index("scenes_user_shared_idx").on(table.userId, table.isShared),
+}));
+
+// 用户场景收藏关联表
+export const userSceneFavorites = pgTable("user_scene_favorites", {
+  userId: integer("user_id").notNull(),
+  sceneId: integer("scene_id").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (table) => ({
+  pk: primaryKey({ columns: [table.userId, table.sceneId] }),
+  userIdIdx: index("user_scene_favorites_user_id_idx").on(table.userId),
+  sceneIdIdx: index("user_scene_favorites_scene_id_idx").on(table.sceneId),
+}));
 
 // 场景句子关联表
 export const sceneSentences = pgTable("scene_sentences", {
   id: serial("id").primaryKey(),
-  sceneId: serial("scene_id")
-    .notNull()
-    .references(() => scenes.id, { onDelete: "cascade" }),
-  sentenceId: serial("sentence_id")
-    .notNull()
-    .references(() => sentences.id, { onDelete: "cascade" }),
-  order: serial("order").notNull(), // 句子在场景中的顺序
+  sceneId: integer("scene_id").notNull(),
+  sentenceId: integer("sentence_id").notNull(),
+  order: integer("order").notNull(), // 句子在场景中的顺序
   createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+}, (table) => ({
+  sceneIdIdx: index("scene_sentences_scene_id_idx").on(table.sceneId),
+  sentenceIdIdx: index("scene_sentences_sentence_id_idx").on(table.sentenceId),
+}));
 
 // 登录历史表
 export const loginHistory = pgTable("login_history", {
   id: serial("id").primaryKey(),
-  userId: serial("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
+  userId: integer("user_id").notNull(),
   ipAddress: varchar("ip_address", { length: 45 }), // IPv4 或 IPv6 地址
   userAgent: text("user_agent"), // 用户代理字符串
   deviceType: varchar("device_type", { length: 50 }), // 设备类型：desktop, mobile, tablet
@@ -161,7 +197,10 @@ export const loginHistory = pgTable("login_history", {
   isSuccessful: boolean("is_successful").notNull().default(true), // 是否登录成功
   failureReason: varchar("failure_reason", { length: 255 }), // 失败原因（如果登录失败）
   createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+}, (table) => ({
+  userIdIdx: index("login_history_user_id_idx").on(table.userId),
+  createdAtIdx: index("login_history_created_at_idx").on(table.createdAt),
+}));
 
 // 导出所有表
 export const schema = {
@@ -171,8 +210,10 @@ export const schema = {
   verificationTokens,
   categories,
   sentences,
+  userSentenceFavorites,
   recordings,
   scenes,
+  userSceneFavorites,
   sceneSentences,
   loginHistory,
 };

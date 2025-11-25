@@ -1,13 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
+import { eq, and, desc, sql, exists } from "drizzle-orm";
+
 import { authOptions } from "@/lib/auth/config";
 import { db } from "@/lib/db/drizzle";
-import { scenes, sceneSentences, sentences, categories } from "@/lib/db/schema";
-import { eq, and, desc, asc, sql } from "drizzle-orm";
+import { scenes, sceneSentences, userSceneFavorites } from "@/lib/db/schema";
 
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
+
     if (!session?.user) {
       return NextResponse.json({ error: "未授权" }, { status: 401 });
     }
@@ -31,14 +33,22 @@ export async function GET(request: NextRequest) {
       case "custom":
         whereCondition = and(
           eq(scenes.userId, userId),
-          eq(scenes.isShared, false)
+          eq(scenes.isShared, false),
         );
         orderBy = desc(scenes.createdAt);
         break;
       case "favorite":
-        whereCondition = and(
-          eq(scenes.userId, userId),
-          eq(scenes.isFavorite, true)
+        // 查询用户收藏的场景
+        whereCondition = exists(
+          db
+            .select()
+            .from(userSceneFavorites)
+            .where(
+              and(
+                eq(userSceneFavorites.sceneId, scenes.id),
+                eq(userSceneFavorites.userId, userId),
+              ),
+            ),
         );
         orderBy = desc(scenes.updatedAt);
         break;
@@ -47,21 +57,26 @@ export async function GET(request: NextRequest) {
         orderBy = desc(scenes.createdAt);
     }
 
-    // 获取场景列表
+    // 获取场景列表，并检查是否被当前用户收藏
     const scenesList = await db
       .select({
         id: scenes.id,
         title: scenes.title,
         description: scenes.description,
         isShared: scenes.isShared,
-        isFavorite: scenes.isFavorite,
         userId: scenes.userId,
         createdAt: scenes.createdAt,
         updatedAt: scenes.updatedAt,
         sentencesCount: sql<number>`(
-          SELECT COUNT(*) 
-          FROM ${sceneSentences} 
+          SELECT COUNT(*)
+          FROM ${sceneSentences}
           WHERE ${sceneSentences.sceneId} = ${scenes.id}
+        )`,
+        // 检查当前用户是否收藏
+        isFavorite: sql<boolean>`EXISTS (
+          SELECT 1 FROM ${userSceneFavorites}
+          WHERE ${userSceneFavorites.sceneId} = ${scenes.id}
+          AND ${userSceneFavorites.userId} = ${userId}
         )`,
       })
       .from(scenes)
@@ -89,17 +104,14 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("获取场景列表失败:", error);
-    return NextResponse.json(
-      { error: "获取场景列表失败" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "获取场景列表失败" }, { status: 500 });
   }
 }
 
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
+
     if (!session?.user) {
       return NextResponse.json({ error: "未授权" }, { status: 401 });
     }
@@ -108,10 +120,7 @@ export async function POST(request: NextRequest) {
     const { title, description, sentenceIds } = body;
 
     if (!title || !title.trim()) {
-      return NextResponse.json(
-        { error: "场景标题不能为空" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "场景标题不能为空" }, { status: 400 });
     }
 
     const userId = parseInt((session.user as any).id);
@@ -124,17 +133,18 @@ export async function POST(request: NextRequest) {
         description: description?.trim() || null,
         userId,
         isShared: false,
-        isFavorite: false,
       })
       .returning();
 
     // 如果有句子ID，创建场景句子关联
     if (sentenceIds && Array.isArray(sentenceIds) && sentenceIds.length > 0) {
-      const sceneSentenceData = sentenceIds.map((sentenceId: number, index: number) => ({
-        sceneId: newScene.id,
-        sentenceId,
-        order: index,
-      }));
+      const sceneSentenceData = sentenceIds.map(
+        (sentenceId: number, index: number) => ({
+          sceneId: newScene.id,
+          sentenceId,
+          order: index,
+        }),
+      );
 
       await db.insert(sceneSentences).values(sceneSentenceData);
     }
@@ -144,10 +154,6 @@ export async function POST(request: NextRequest) {
       message: "场景创建成功",
     });
   } catch (error) {
-    console.error("创建场景失败:", error);
-    return NextResponse.json(
-      { error: "创建场景失败" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "创建场景失败" }, { status: 500 });
   }
 }

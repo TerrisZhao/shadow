@@ -1,10 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { eq, asc } from "drizzle-orm";
+import { eq, asc, and, sql } from "drizzle-orm";
 
 import { authOptions } from "@/lib/auth/config";
 import { db } from "@/lib/db/drizzle";
-import { scenes, sceneSentences, sentences, categories } from "@/lib/db/schema";
+import {
+  scenes,
+  sceneSentences,
+  sentences,
+  categories,
+  userSceneFavorites,
+} from "@/lib/db/schema";
 
 export async function GET(
   request: NextRequest,
@@ -26,15 +32,30 @@ export async function GET(
 
     const userId = parseInt((session.user as any).id);
 
-    // 获取场景信息
-    const [scene] = await db
-      .select()
+    // 获取场景信息，并检查是否收藏
+    const sceneResult = await db
+      .select({
+        id: scenes.id,
+        title: scenes.title,
+        description: scenes.description,
+        isShared: scenes.isShared,
+        userId: scenes.userId,
+        createdAt: scenes.createdAt,
+        updatedAt: scenes.updatedAt,
+        isFavorite: sql<boolean>`EXISTS (
+          SELECT 1 FROM ${userSceneFavorites}
+          WHERE ${userSceneFavorites.sceneId} = ${scenes.id}
+          AND ${userSceneFavorites.userId} = ${userId}
+        )`,
+      })
       .from(scenes)
       .where(eq(scenes.id, sceneId));
 
-    if (!scene) {
+    if (sceneResult.length === 0) {
       return NextResponse.json({ error: "场景不存在" }, { status: 404 });
     }
+
+    const scene = sceneResult[0];
 
     // 检查权限：只有场景创建者或共享场景才能访问
     if (scene.userId !== userId && !scene.isShared) {
@@ -52,7 +73,6 @@ export async function GET(
           chineseText: sentences.chineseText,
           difficulty: sentences.difficulty,
           notes: sentences.notes,
-          isFavorite: sentences.isFavorite,
           isShared: sentences.isShared,
           audioUrl: sentences.audioUrl,
           userId: sentences.userId,
@@ -75,8 +95,6 @@ export async function GET(
       sentences: sceneSentencesList,
     });
   } catch (error) {
-    console.error("获取场景详情失败:", error);
-
     return NextResponse.json({ error: "获取场景详情失败" }, { status: 500 });
   }
 }
@@ -104,7 +122,7 @@ export async function PATCH(
 
     const userId = parseInt((session.user as any).id);
 
-    // 检查场景是否存在和权限
+    // 检查场景是否存在
     const [existingScene] = await db
       .select()
       .from(scenes)
@@ -114,6 +132,36 @@ export async function PATCH(
       return NextResponse.json({ error: "场景不存在" }, { status: 404 });
     }
 
+    // 处理收藏状态更新
+    if (isFavorite !== undefined) {
+      if (isFavorite) {
+        // 添加收藏
+        await db
+          .insert(userSceneFavorites)
+          .values({
+            userId,
+            sceneId,
+          })
+          .onConflictDoNothing();
+      } else {
+        // 取消收藏
+        await db
+          .delete(userSceneFavorites)
+          .where(
+            and(
+              eq(userSceneFavorites.userId, userId),
+              eq(userSceneFavorites.sceneId, sceneId),
+            ),
+          );
+      }
+
+      return NextResponse.json({
+        message: isFavorite ? "已添加到收藏" : "已取消收藏",
+        isFavorite: isFavorite,
+      });
+    }
+
+    // 处理场景编辑（需要权限）
     // 只有场景创建者才能编辑
     if (existingScene.userId !== userId) {
       return NextResponse.json({ error: "无权限编辑此场景" }, { status: 403 });
@@ -125,7 +173,6 @@ export async function PATCH(
     if (title !== undefined) updateData.title = title.trim();
     if (description !== undefined)
       updateData.description = description?.trim() || null;
-    if (isFavorite !== undefined) updateData.isFavorite = isFavorite;
 
     if (Object.keys(updateData).length > 0) {
       updateData.updatedAt = new Date();
@@ -155,8 +202,6 @@ export async function PATCH(
 
     return NextResponse.json({ message: "场景更新成功" });
   } catch (error) {
-    console.error("更新场景失败:", error);
-
     return NextResponse.json({ error: "更新场景失败" }, { status: 500 });
   }
 }
@@ -196,13 +241,11 @@ export async function DELETE(
       return NextResponse.json({ error: "无权限删除此场景" }, { status: 403 });
     }
 
-    // 删除场景（级联删除场景句子关联）
+    // 删除场景（级联删除场景句子关联和收藏记录）
     await db.delete(scenes).where(eq(scenes.id, sceneId));
 
     return NextResponse.json({ message: "场景删除成功" });
   } catch (error) {
-    console.error("删除场景失败:", error);
-
     return NextResponse.json({ error: "删除场景失败" }, { status: 500 });
   }
 }

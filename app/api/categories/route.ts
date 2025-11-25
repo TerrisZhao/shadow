@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { eq, or, desc, inArray } from "drizzle-orm";
+import { eq, or, and, desc, inArray } from "drizzle-orm";
 
 import { db } from "@/lib/db/drizzle";
 import { categories, users } from "@/lib/db/schema";
 import { authOptions } from "@/lib/auth/config";
 
 // 获取分类列表
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const session = await getServerSession(authOptions);
 
@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
       .from(users)
       .where(inArray(users.role, ["admin", "owner"]));
 
-    const adminUserIds = adminUsers.map((user: { id: number }) => user.id);
+    const adminUserIds = adminUsers.map((user: { id: any }) => user.id);
     const currentUserId = parseInt(session.user.id);
 
     // 获取预设分类、当前用户自定义分类和管理员创建的分类
@@ -32,15 +32,16 @@ export async function GET(request: NextRequest) {
         or(
           eq(categories.isPreset, true),
           eq(categories.userId, currentUserId),
-          inArray(categories.userId, adminUserIds),
+          and(
+            inArray(categories.userId, adminUserIds),
+            eq(categories.isPreset, false),
+          ),
         ),
       )
       .orderBy(desc(categories.isPreset), desc(categories.createdAt));
 
     return NextResponse.json({ categories: result });
   } catch (error) {
-    console.error("获取分类列表失败:", error);
-
     return NextResponse.json({ error: "获取分类列表失败" }, { status: 500 });
   }
 }
@@ -57,29 +58,58 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { name, description, color } = body;
 
-    if (!name) {
+    if (!name || !name.trim()) {
       return NextResponse.json({ error: "分类名称是必填项" }, { status: 400 });
     }
 
-    // 检查分类名称是否已存在
-    const existingCategory = await db
+    const currentUserId = parseInt(session.user.id);
+
+    // 检查分类名称唯一性
+    // 1. 预设分类的名称全局唯一
+    const presetCategory = await db
       .select()
       .from(categories)
-      .where(eq(categories.name, name))
+      .where(
+        and(eq(categories.name, name.trim()), eq(categories.isPreset, true)),
+      )
       .limit(1);
 
-    if (existingCategory.length > 0) {
-      return NextResponse.json({ error: "分类名称已存在" }, { status: 400 });
+    if (presetCategory.length > 0) {
+      return NextResponse.json(
+        { error: "该分类名称已被预设分类使用" },
+        { status: 400 },
+      );
     }
 
+    // 2. 用户自定义分类在用户范围内唯一
+    const userCategory = await db
+      .select()
+      .from(categories)
+      .where(
+        and(
+          eq(categories.name, name.trim()),
+          eq(categories.userId, currentUserId),
+          eq(categories.isPreset, false),
+        ),
+      )
+      .limit(1);
+
+    if (userCategory.length > 0) {
+      return NextResponse.json(
+        { error: "您已经创建过同名的自定义分类" },
+        { status: 400 },
+      );
+    }
+
+    // 创建分类
     const newCategory = await db
       .insert(categories)
       .values({
-        name,
-        description: description || null,
+        name: name.trim(),
+        description: description?.trim() || null,
         color: color || "#3b82f6",
         isPreset: false,
-        userId: parseInt(session.user.id),
+        userId: currentUserId,
       })
       .returning();
 
@@ -88,8 +118,6 @@ export async function POST(request: NextRequest) {
       category: newCategory[0],
     });
   } catch (error) {
-    console.error("创建分类失败:", error);
-
     return NextResponse.json({ error: "创建分类失败" }, { status: 500 });
   }
 }
