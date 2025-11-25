@@ -436,7 +436,9 @@ export default function SentenceCard({
   // 将文本按句子拆分
   const splitIntoSentences = (text: string) => {
     // 使用正则表达式按句号、问号、感叹号等拆分，保留标点符号
-    const sentences = text.match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [text];
+    // 只有当标点符号后面有空格或在行尾时才切分，避免像 next.js 这样的词被错误切分
+    // .*? 非贪婪匹配任意字符（包括标点），直到遇到"标点+空格"或"标点+结尾"
+    const sentences = text.match(/.*?[.!?]+(?=\s|$)|.+$/g) || [text];
 
     return sentences.map((s) => s.trim()).filter((s) => s.length > 0);
   };
