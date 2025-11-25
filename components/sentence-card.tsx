@@ -275,8 +275,12 @@ export default function SentenceCard({
     startTime?: number,
   ) => {
     try {
-      // 如果正在播放同一个音频，则暂停
-      if (playingAudio === sentenceId && audioElementRef.current) {
+      // 如果正在播放同一个音频且没有指定 startTime，则暂停
+      if (
+        playingAudio === sentenceId &&
+        audioElementRef.current &&
+        startTime === undefined
+      ) {
         audioElementRef.current.pause();
         setPlayingAudio(null);
         if (audioProgressAnimationRef.current) {
@@ -355,15 +359,16 @@ export default function SentenceCard({
             return newMap;
           });
         }
+      }
 
-        if (startTime !== undefined && startTime > 0) {
-          audio.currentTime = startTime;
-          setAudioProgress((prev) => {
-            const newMap = new Map(prev);
-            newMap.set(sentenceId, startTime);
-            return newMap;
-          });
-        }
+      // 如果指定了 startTime，设置播放位置（无论是新音频还是现有音频）
+      if (startTime !== undefined && audioElementRef.current) {
+        audioElementRef.current.currentTime = startTime;
+        setAudioProgress((prev) => {
+          const newMap = new Map(prev);
+          newMap.set(sentenceId, startTime);
+          return newMap;
+        });
       }
 
       // 播放音频（不论是新创建的还是继续播放的）
@@ -436,19 +441,27 @@ export default function SentenceCard({
     return sentences.map((s) => s.trim()).filter((s) => s.length > 0);
   };
 
-  // 计算每个句子的权重（基于字符数和单词数的综合考虑）
+  // 计算每个句子的权重（基于字符数、单词数和标点符号的综合考虑）
   const calculateSentenceWeights = (sentences: string[]) => {
     return sentences.map((sent) => {
       // 计算单词数量
       const words = sent.split(/\s+/).filter((w) => w.length > 0);
       const wordCount = words.length;
 
-      // 计算字符总数（只计算字母和数字，排除标点符号）
+      // 计算字符总数（只计算字母和数字，排除标点符号和空格）
       const charCount = sent.replace(/[^a-zA-Z0-9]/g, "").length;
 
-      // 综合权重：字符数占70%，单词数占30%
-      // 这样既考虑了单词长度，也考虑了单词停顿
-      const weight = charCount * 0.7 + wordCount * 3 * 0.3;
+      // 计算标点符号数量（句号、逗号、问号、感叹号等会增加停顿）
+      const punctuationCount = (sent.match(/[.,;:!?—-]/g) || []).length;
+
+      // 综合权重计算：
+      // - 字符数：主要因素，代表实际发音时长
+      // - 单词数：每个单词之间有停顿
+      // - 标点符号：增加额外的停顿时间
+      const weight =
+        charCount * 1.0 + // 每个字符
+        wordCount * 2.5 + // 每个单词间的停顿
+        punctuationCount * 5; // 标点符号的停顿（逗号、句号等）
 
       return weight;
     });
@@ -497,6 +510,27 @@ export default function SentenceCard({
 
     // 如果播放到最后，返回最后一个句子
     return timeRanges.length - 1;
+  };
+
+  // 点击句子，从该句子开始播放
+  const handleSentenceClick = async (sentenceIndex: number) => {
+    if (!sentence.audioUrl) return;
+
+    const timeRanges = calculateSentenceTimeRanges(sentence.id);
+
+    if (timeRanges.length === 0 || sentenceIndex >= timeRanges.length) return;
+
+    // 获取该句子的开始时间
+    let startTime = timeRanges[sentenceIndex].start;
+
+    // 添加一个缓冲时间，稍微提前一点开始播放
+    // 避免漏掉句子开头的单词（0.2秒的缓冲）
+    const bufferTime = 0.2;
+    startTime = Math.max(0, startTime - bufferTime);
+
+    // 从指定时间开始播放
+    // playAudio 会自动处理：如果指定了 startTime，就跳转到该位置并播放
+    await playAudio(sentence.audioUrl, sentence.id, startTime);
   };
 
   // 打开编辑modal
@@ -1117,30 +1151,47 @@ export default function SentenceCard({
             <div>
               <div className="mb-2">
                 <h3 className="text-lg font-medium leading-relaxed">
-                  {playingAudio === sentence.id || audioProgress.get(sentence.id) ? (
-                    splitIntoSentences(sentence.englishText).map((sent, index) => {
-                      const currentIndex = getCurrentSentenceIndex(sentence.id);
-                      const isPlaying = playingAudio === sentence.id;
-                      const isCurrent = index === currentIndex && isPlaying;
-                      const isPassed = index < currentIndex && isPlaying;
+                  {sentence.audioUrl ? (
+                    splitIntoSentences(sentence.englishText).map(
+                      (sent, index) => {
+                        const currentIndex = getCurrentSentenceIndex(
+                          sentence.id,
+                        );
+                        const isPlaying = playingAudio === sentence.id;
+                        const isCurrent = index === currentIndex && isPlaying;
+                        const isPassed = index < currentIndex && isPlaying;
 
-                      return (
-                        <span
-                          key={index}
-                          className={`transition-all duration-300 ${
-                            isCurrent
-                              ? "text-primary font-semibold"
-                              : isPassed
-                                ? "text-default-500"
-                                : "text-foreground opacity-60"
-                          }`}
-                        >
-                          {sent}{" "}
-                        </span>
-                      );
-                    })
+                        return (
+                          <span
+                            key={index}
+                            className={`transition-all duration-300 cursor-pointer hover:text-primary hover:underline ${
+                              isPlaying
+                                ? isCurrent
+                                  ? "text-primary font-semibold"
+                                  : isPassed
+                                    ? "text-default-500"
+                                    : "text-foreground opacity-60"
+                                : "text-foreground"
+                            }`}
+                            role="button"
+                            tabIndex={0}
+                            onClick={() => handleSentenceClick(index)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter" || e.key === " ") {
+                                e.preventDefault();
+                                handleSentenceClick(index);
+                              }
+                            }}
+                          >
+                            {sent}{" "}
+                          </span>
+                        );
+                      },
+                    )
                   ) : (
-                    <span className="text-foreground">{sentence.englishText}</span>
+                    <span className="text-foreground">
+                      {sentence.englishText}
+                    </span>
                   )}
                 </h3>
               </div>
