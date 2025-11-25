@@ -137,6 +137,7 @@ export default function SentenceCard({
     propPlayingAudio,
   );
   const audioElementRef = useRef<HTMLAudioElement | null>(null);
+  const currentAudioSentenceRef = useRef<number | null>(null); // 追踪当前加载的音频对应的句子ID
   const [generatingAudio, setGeneratingAudio] = useState<number | null>(
     propGeneratingAudio,
   );
@@ -274,81 +275,110 @@ export default function SentenceCard({
     startTime?: number,
   ) => {
     try {
-      if (audioProgressAnimationRef.current) {
-        cancelAnimationFrame(audioProgressAnimationRef.current);
-        audioProgressAnimationRef.current = null;
-      }
-
-      if (audioElementRef.current) {
+      // 如果正在播放同一个音频，则暂停
+      if (playingAudio === sentenceId && audioElementRef.current) {
         audioElementRef.current.pause();
-        audioElementRef.current.currentTime = 0;
-      }
-
-      if (playingAudio === sentenceId) {
         setPlayingAudio(null);
-        audioElementRef.current = null;
-
-        return;
-      }
-
-      const audio = new Audio(audioUrl);
-
-      audioElementRef.current = audio;
-      setPlayingAudio(sentenceId);
-
-      audio.onloadedmetadata = () => {
-        setAudioDuration((prev) => {
-          const newMap = new Map(prev);
-
-          newMap.set(sentenceId, audio.duration);
-
-          return newMap;
-        });
-      };
-
-      audio.onpause = () => {
         if (audioProgressAnimationRef.current) {
           cancelAnimationFrame(audioProgressAnimationRef.current);
           audioProgressAnimationRef.current = null;
         }
-      };
-
-      if (audio.readyState < 1) {
-        await new Promise((resolve) => {
-          audio.addEventListener("loadedmetadata", resolve, { once: true });
-        });
+        return;
       }
 
-      if (audio.duration && !isNaN(audio.duration)) {
-        setAudioDuration((prev) => {
-          const newMap = new Map(prev);
+      // 如果是不同的句子，停止之前的音频并创建新的
+      if (currentAudioSentenceRef.current !== sentenceId) {
+        if (audioElementRef.current) {
+          audioElementRef.current.pause();
+          audioElementRef.current.currentTime = 0;
+        }
+        if (audioProgressAnimationRef.current) {
+          cancelAnimationFrame(audioProgressAnimationRef.current);
+          audioProgressAnimationRef.current = null;
+        }
 
-          newMap.set(sentenceId, audio.duration);
+        // 创建新的音频元素
+        const audio = new Audio(audioUrl);
+        audioElementRef.current = audio;
+        currentAudioSentenceRef.current = sentenceId;
 
-          return newMap;
-        });
-      }
+        audio.onloadedmetadata = () => {
+          setAudioDuration((prev) => {
+            const newMap = new Map(prev);
+            newMap.set(sentenceId, audio.duration);
+            return newMap;
+          });
+        };
 
-      if (startTime !== undefined && startTime > 0) {
-        audio.currentTime = startTime;
-        setAudioProgress((prev) => {
-          const newMap = new Map(prev);
+        audio.onpause = () => {
+          if (audioProgressAnimationRef.current) {
+            cancelAnimationFrame(audioProgressAnimationRef.current);
+            audioProgressAnimationRef.current = null;
+          }
+        };
 
-          newMap.set(sentenceId, startTime);
-
-          return newMap;
-        });
-      }
-
-      await audio.play();
-
-      const updateProgress = () => {
-        if (!audio.paused && !audio.ended) {
+        audio.onended = () => {
+          if (audioProgressAnimationRef.current) {
+            cancelAnimationFrame(audioProgressAnimationRef.current);
+            audioProgressAnimationRef.current = null;
+          }
+          setPlayingAudio(null);
           setAudioProgress((prev) => {
             const newMap = new Map(prev);
+            newMap.set(sentenceId, 0);
+            return newMap;
+          });
+          audioElementRef.current = null;
+          currentAudioSentenceRef.current = null;
+        };
 
-            newMap.set(sentenceId, audio.currentTime);
+        audio.onerror = () => {
+          if (audioProgressAnimationRef.current) {
+            cancelAnimationFrame(audioProgressAnimationRef.current);
+            audioProgressAnimationRef.current = null;
+          }
+          setPlayingAudio(null);
+          audioElementRef.current = null;
+          currentAudioSentenceRef.current = null;
+        };
 
+        if (audio.readyState < 1) {
+          await new Promise((resolve) => {
+            audio.addEventListener("loadedmetadata", resolve, { once: true });
+          });
+        }
+
+        if (audio.duration && !isNaN(audio.duration)) {
+          setAudioDuration((prev) => {
+            const newMap = new Map(prev);
+            newMap.set(sentenceId, audio.duration);
+            return newMap;
+          });
+        }
+
+        if (startTime !== undefined && startTime > 0) {
+          audio.currentTime = startTime;
+          setAudioProgress((prev) => {
+            const newMap = new Map(prev);
+            newMap.set(sentenceId, startTime);
+            return newMap;
+          });
+        }
+      }
+
+      // 播放音频（不论是新创建的还是继续播放的）
+      setPlayingAudio(sentenceId);
+      await audioElementRef.current!.play();
+
+      const updateProgress = () => {
+        if (
+          audioElementRef.current &&
+          !audioElementRef.current.paused &&
+          !audioElementRef.current.ended
+        ) {
+          setAudioProgress((prev) => {
+            const newMap = new Map(prev);
+            newMap.set(sentenceId, audioElementRef.current!.currentTime);
             return newMap;
           });
           audioProgressAnimationRef.current =
@@ -357,38 +387,12 @@ export default function SentenceCard({
       };
 
       updateProgress();
-
-      audio.onended = () => {
-        if (audioProgressAnimationRef.current) {
-          cancelAnimationFrame(audioProgressAnimationRef.current);
-          audioProgressAnimationRef.current = null;
-        }
-        setPlayingAudio(null);
-        audioElementRef.current = null;
-        setAudioProgress((prev) => {
-          const newMap = new Map(prev);
-
-          newMap.set(sentenceId, 0);
-
-          return newMap;
-        });
-      };
-
-      audio.onerror = () => {
-        if (audioProgressAnimationRef.current) {
-          cancelAnimationFrame(audioProgressAnimationRef.current);
-          audioProgressAnimationRef.current = null;
-        }
-        setPlayingAudio(null);
-        audioElementRef.current = null;
-      };
     } catch (error) {
       if (audioProgressAnimationRef.current) {
         cancelAnimationFrame(audioProgressAnimationRef.current);
         audioProgressAnimationRef.current = null;
       }
       setPlayingAudio(null);
-      audioElementRef.current = null;
     }
   };
 
@@ -1040,49 +1044,10 @@ export default function SentenceCard({
 
           <div className="space-y-3">
             <div>
-              <div className="flex items-start justify-between mb-2">
-                <h3 className="text-lg font-medium text-foreground flex-1">
+              <div className="mb-2">
+                <h3 className="text-lg font-medium text-foreground">
                   {sentence.englishText}
                 </h3>
-                <div className="flex items-center gap-2 ml-2">
-                  {sentence.audioUrl && (
-                    <Button
-                      isIconOnly
-                      color={
-                        playingAudio === sentence.id ? "primary" : "default"
-                      }
-                      size="md"
-                      variant="light"
-                      onClick={() => playAudio(sentence.audioUrl!, sentence.id)}
-                    >
-                      {playingAudio === sentence.id ? (
-                        <Pause className="w-4 h-4" />
-                      ) : (
-                        <Play className="w-4 h-4" />
-                      )}
-                    </Button>
-                  )}
-                  <Button
-                    isIconOnly
-                    color={
-                      recordingState.get(sentence.id)
-                        ? "danger"
-                        : preparingRecording === sentence.id
-                          ? "warning"
-                          : undefined
-                    }
-                    isDisabled={
-                      uploadingRecording === sentence.id ||
-                      preparingRecording === sentence.id
-                    }
-                    isLoading={uploadingRecording === sentence.id}
-                    size="md"
-                    variant="light"
-                    onClick={() => toggleRecording(sentence.id)}
-                  >
-                    <Mic className="w-4 h-4" />
-                  </Button>
-                </div>
               </div>
               <p className="text-default-600 text-base">
                 {sentence.chineseText || "(暂无中文翻译)"}
@@ -1137,7 +1102,7 @@ export default function SentenceCard({
                         }}
                       />
                       <div
-                        className="absolute top-1/2 -translate-y-1/2 w-3.5 h-3.5 bg-primary rounded-full shadow-md 
+                        className="absolute top-1/2 -translate-y-1/2 w-3.5 h-3.5 bg-primary rounded-full shadow-md
                                    transition-[width,height] duration-150 group-hover:w-4 group-hover:h-4 pointer-events-none z-10"
                         style={{
                           left: `calc(${((audioProgress.get(sentence.id) || 0) / (audioDuration.get(sentence.id) || 1)) * 100}% - 7px)`,
@@ -1154,6 +1119,47 @@ export default function SentenceCard({
                     </div>
                   </div>
                 )}
+
+              {/* 音频控制按钮 - 居中显示 */}
+              <div className="flex items-center justify-center gap-2 mt-3">
+                {sentence.audioUrl && (
+                  <Button
+                    isIconOnly
+                    color={
+                      playingAudio === sentence.id ? "primary" : "default"
+                    }
+                    size="md"
+                    variant="light"
+                    onClick={() => playAudio(sentence.audioUrl!, sentence.id)}
+                  >
+                    {playingAudio === sentence.id ? (
+                      <Pause className="w-4 h-4" />
+                    ) : (
+                      <Play className="w-4 h-4" />
+                    )}
+                  </Button>
+                )}
+                <Button
+                  isIconOnly
+                  color={
+                    recordingState.get(sentence.id)
+                      ? "danger"
+                      : preparingRecording === sentence.id
+                        ? "warning"
+                        : undefined
+                  }
+                  isDisabled={
+                    uploadingRecording === sentence.id ||
+                    preparingRecording === sentence.id
+                  }
+                  isLoading={uploadingRecording === sentence.id}
+                  size="md"
+                  variant="light"
+                  onClick={() => toggleRecording(sentence.id)}
+                >
+                  <Mic className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
 
             {sentence.notes && (
