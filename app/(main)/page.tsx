@@ -295,6 +295,17 @@ export default function Home() {
           </MotionCard>
         </MotionDiv>
       </section>
+      <footer className="w-full flex items-center justify-center py-3">
+        <Link
+          isExternal
+          className="flex items-center gap-1 text-current"
+          href="#"
+          title="Shadow"
+        >
+          <span className="text-default-600">Designed by</span>
+          <p className="text-primary">Terris</p>
+        </Link>
+      </footer>
     </div>
   );
 }

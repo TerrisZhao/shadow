@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Card, CardBody } from "@heroui/card";
 import { Chip } from "@heroui/chip";
 import { Button } from "@heroui/button";
@@ -191,6 +191,14 @@ export default function SentenceCard({
   } | null>(null);
   const [aiAssistantOpen, setAiAssistantOpen] = useState(false);
   const [deletingSentence, setDeletingSentence] = useState(false);
+  const [togglingFavorite, setTogglingFavorite] = useState(false);
+
+  // 同步外部传入的 generatingAudio 状态
+  useEffect(() => {
+    if (propGeneratingAudio !== null) {
+      setGeneratingAudio(propGeneratingAudio);
+    }
+  }, [propGeneratingAudio]);
 
   // 检查是否正在移除
   const isRemoving = removingItems.has(sentence.id);
@@ -288,6 +296,7 @@ export default function SentenceCard({
           cancelAnimationFrame(audioProgressAnimationRef.current);
           audioProgressAnimationRef.current = null;
         }
+
         return;
       }
 
@@ -304,13 +313,16 @@ export default function SentenceCard({
 
         // 创建新的音频元素
         const audio = new Audio(audioUrl);
+
         audioElementRef.current = audio;
         currentAudioSentenceRef.current = sentenceId;
 
         audio.onloadedmetadata = () => {
           setAudioDuration((prev) => {
             const newMap = new Map(prev);
+
             newMap.set(sentenceId, audio.duration);
+
             return newMap;
           });
         };
@@ -330,7 +342,9 @@ export default function SentenceCard({
           setPlayingAudio(null);
           setAudioProgress((prev) => {
             const newMap = new Map(prev);
+
             newMap.set(sentenceId, 0);
+
             return newMap;
           });
           audioElementRef.current = null;
@@ -356,7 +370,9 @@ export default function SentenceCard({
         if (audio.duration && !isNaN(audio.duration)) {
           setAudioDuration((prev) => {
             const newMap = new Map(prev);
+
             newMap.set(sentenceId, audio.duration);
+
             return newMap;
           });
         }
@@ -367,7 +383,9 @@ export default function SentenceCard({
         audioElementRef.current.currentTime = startTime;
         setAudioProgress((prev) => {
           const newMap = new Map(prev);
+
           newMap.set(sentenceId, startTime);
+
           return newMap;
         });
       }
@@ -384,7 +402,9 @@ export default function SentenceCard({
         ) {
           setAudioProgress((prev) => {
             const newMap = new Map(prev);
+
             newMap.set(sentenceId, audioElementRef.current!.currentTime);
+
             return newMap;
           });
           audioProgressAnimationRef.current =
@@ -529,6 +549,7 @@ export default function SentenceCard({
     // 添加一个缓冲时间，稍微提前一点开始播放
     // 避免漏掉句子开头的单词（0.2秒的缓冲）
     const bufferTime = 0.2;
+
     startTime = Math.max(0, startTime - bufferTime);
 
     // 从指定时间开始播放
@@ -552,6 +573,20 @@ export default function SentenceCard({
 
   // 确认删除句子
   const confirmDelete = async () => {
+    // 如果传入了回调，优先使用回调
+    if (onDelete) {
+      setDeletingSentence(true);
+      try {
+        await onDelete(sentence.id);
+      } finally {
+        setDeletingSentence(false);
+        setDeleteConfirmOpen(false);
+      }
+
+      return;
+    }
+
+    // 否则自己发送 API 请求
     setDeletingSentence(true);
     try {
       const response = await fetch(`/api/sentences/${sentence.id}`, {
@@ -563,11 +598,9 @@ export default function SentenceCard({
         if (onRefresh) {
           onRefresh();
         }
-        if (onDelete) {
-          onDelete(sentence.id);
-        }
       } else {
         const error = await response.json();
+
         showToast(error.error || "删除失败", "error");
       }
     } catch (error) {
@@ -583,8 +616,47 @@ export default function SentenceCard({
     sentenceId: number,
     currentFavorite: boolean,
   ) => {
+    // 如果传入了回调，优先使用回调
     if (onToggleFavorite) {
-      onToggleFavorite(sentenceId, currentFavorite);
+      setTogglingFavorite(true);
+      try {
+        await onToggleFavorite(sentenceId, currentFavorite);
+      } finally {
+        setTogglingFavorite(false);
+      }
+
+      return;
+    }
+
+    // 否则自己发送 API 请求
+    setTogglingFavorite(true);
+    try {
+      const response = await fetch(`/api/sentences/${sentenceId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          isFavorite: !currentFavorite,
+        }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+
+        showToast(result.message || "操作成功", "success");
+        if (onRefresh) {
+          onRefresh();
+        }
+      } else {
+        const error = await response.json();
+
+        showToast(error.error || "操作失败", "error");
+      }
+    } catch (error) {
+      showToast("操作失败，请重试", "error");
+    } finally {
+      setTogglingFavorite(false);
     }
   };
 
@@ -1102,6 +1174,8 @@ export default function SentenceCard({
                           openEditModal(sentence);
                         } else if (key === "ai") {
                           setAiAssistantOpen(true);
+                        } else if (key === "generate-audio") {
+                          generateAudio(sentence.id, sentence.englishText);
                         }
                       }}
                     >
@@ -1109,9 +1183,6 @@ export default function SentenceCard({
                         <DropdownItem
                           key="generate-audio"
                           isDisabled={generatingAudio === sentence.id}
-                          onClick={() =>
-                            generateAudio(sentence.id, sentence.englishText)
-                          }
                         >
                           {generatingAudio === sentence.id ? (
                             <div className="flex items-center gap-2">
@@ -1126,8 +1197,16 @@ export default function SentenceCard({
                           )}
                         </DropdownItem>
                       ) : null}
-                      <DropdownItem key="favorite">
-                        {sentence.isFavorite ? (
+                      <DropdownItem
+                        key="favorite"
+                        isDisabled={togglingFavorite}
+                      >
+                        {togglingFavorite ? (
+                          <div className="flex items-center gap-2">
+                            <Spinner size="sm" />
+                            <span>处理中...</span>
+                          </div>
+                        ) : sentence.isFavorite ? (
                           <div className="flex items-center gap-2">
                             <HeartOff className="w-4 h-4" />
                             <span>取消收藏</span>
@@ -1294,9 +1373,7 @@ export default function SentenceCard({
                 {sentence.audioUrl && (
                   <Button
                     isIconOnly
-                    color={
-                      playingAudio === sentence.id ? "primary" : "default"
-                    }
+                    color={playingAudio === sentence.id ? "primary" : "default"}
                     size="md"
                     variant="light"
                     onClick={() => playAudio(sentence.audioUrl!, sentence.id)}

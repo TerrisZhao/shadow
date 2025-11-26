@@ -29,7 +29,7 @@ interface Category {
 interface AddSentenceModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess: () => void;
+  onSuccess: (sentenceId?: number) => void;
 }
 
 export default function AddSentenceModal({
@@ -107,6 +107,7 @@ export default function AddSentenceModal({
       });
 
       if (response.ok) {
+        const data = await response.json();
         showToast("句子添加成功！", "success");
         setFormData({
           englishText: "",
@@ -116,7 +117,8 @@ export default function AddSentenceModal({
           notes: "",
           isShared: false,
         });
-        onSuccess();
+        // 传递新创建的句子ID，用于标记正在异步生成音频
+        onSuccess(data.sentence?.id);
         onClose();
       } else {
         const error = await response.json();

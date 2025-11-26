@@ -12,8 +12,12 @@ export default function SentencePage() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [selectedTab, setSelectedTab] = useState("shared");
+  const [newSentenceId, setNewSentenceId] = useState<number | null>(null);
 
-  const handleAddSuccess = () => {
+  const handleAddSuccess = (sentenceId?: number) => {
+    if (sentenceId) {
+      setNewSentenceId(sentenceId);
+    }
     setRefreshKey((prev) => prev + 1);
   };
 
@@ -48,6 +52,7 @@ export default function SentencePage() {
       {/* 句子列表 */}
       <SentenceListWithAI
         key={`${refreshKey}-${selectedTab}`}
+        newSentenceId={newSentenceId}
         tab={selectedTab}
       />
 
