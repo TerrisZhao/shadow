@@ -6,7 +6,7 @@ export const Logo = () => {
       alt="Shadow Logo"
       className="rounded-md"
       height={32}
-      src="/shadow.png"
+      src="/favicon.ico"
       width={32}
     />
   );
