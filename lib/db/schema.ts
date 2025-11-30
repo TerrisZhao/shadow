@@ -265,6 +265,47 @@ export const loginHistory = pgTable(
   }),
 );
 
+// 标签表
+export const tags = pgTable(
+  "tags",
+  {
+    id: serial("id").primaryKey(),
+    name: varchar("name", { length: 50 }).notNull(),
+    color: varchar("color", { length: 20 }).default("#3b82f6"), // 标签颜色
+    isPreset: boolean("is_preset").notNull().default(false), // 是否为预设标签
+    userId: integer("user_id"), // 自定义标签关联用户，预设标签为 null
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => ({
+    // 预设标签的名称全局唯一
+    presetNameIdx: uniqueIndex("tags_preset_name_idx")
+      .on(table.name)
+      .where(sql`${table.isPreset} = true`),
+    // 用户自定义标签在用户范围内名称唯一
+    userNameIdx: uniqueIndex("tags_user_name_idx")
+      .on(table.userId, table.name)
+      .where(sql`${table.isPreset} = false`),
+    userIdIdx: index("tags_user_id_idx").on(table.userId),
+    isPresetIdx: index("tags_is_preset_idx").on(table.isPreset),
+  }),
+);
+
+// 句子标签关联表
+export const sentenceTags = pgTable(
+  "sentence_tags",
+  {
+    sentenceId: integer("sentence_id").notNull(),
+    tagId: integer("tag_id").notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => ({
+    pk: primaryKey({ columns: [table.sentenceId, table.tagId] }),
+    sentenceIdIdx: index("sentence_tags_sentence_id_idx").on(table.sentenceId),
+    tagIdIdx: index("sentence_tags_tag_id_idx").on(table.tagId),
+  }),
+);
+
 // 导出所有表
 export const schema = {
   users,
@@ -279,4 +320,6 @@ export const schema = {
   userSceneFavorites,
   sceneSentences,
   loginHistory,
+  tags,
+  sentenceTags,
 };
