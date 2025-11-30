@@ -118,6 +118,7 @@ export default function SceneDetailPage() {
         showToast(!currentFavorite ? "已添加到收藏" : "已取消收藏", "success");
       } else {
         const error = await response.json();
+
         showToast(error.error || "操作失败", "error");
       }
     } catch (error) {
@@ -143,6 +144,7 @@ export default function SceneDetailPage() {
         router.push("/scene");
       } else {
         const error = await response.json();
+
         showToast(error.error || "删除失败", "error");
       }
     } catch (error) {

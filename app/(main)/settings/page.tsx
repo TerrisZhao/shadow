@@ -6,11 +6,27 @@ import { Button } from "@heroui/button";
 import { Input } from "@heroui/input";
 import { Switch } from "@heroui/switch";
 import { Select, SelectItem } from "@heroui/select";
-import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter } from "@heroui/modal";
+import {
+  Modal,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
+} from "@heroui/modal";
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import { addToast } from "@heroui/toast";
-import { X, Check, Sun, Moon, Monitor, Clock, MapPin, Smartphone, Monitor as MonitorIcon } from "lucide-react";
+import {
+  X,
+  Check,
+  Sun,
+  Moon,
+  Monitor,
+  Clock,
+  MapPin,
+  Smartphone,
+  Monitor as MonitorIcon,
+} from "lucide-react";
 import { useTheme } from "next-themes";
 
 import { title, subtitle } from "@/components/primitives";
@@ -34,7 +50,7 @@ export default function SettingsPage() {
   const router = useRouter();
   const { theme, setTheme } = useTheme();
   const [notifications, setNotifications] = useState(true);
-  
+
   // 用户信息编辑状态
   const [isEditingName, setIsEditingName] = useState(false);
   const [name, setName] = useState("");
@@ -93,11 +109,13 @@ export default function SettingsPage() {
   const handleUpdateName = async () => {
     if (!name.trim()) {
       showToast("姓名不能为空", "error");
+
       return;
     }
 
     if (name.trim() === session?.user?.name) {
       setIsEditingName(false);
+
       return;
     }
 
@@ -130,10 +148,7 @@ export default function SettingsPage() {
       setIsEditingName(false);
     } catch (error) {
       console.error("更新姓名失败:", error);
-      showToast(
-        error instanceof Error ? error.message : "更新失败",
-        "error"
-      );
+      showToast(error instanceof Error ? error.message : "更新失败", "error");
     } finally {
       setIsLoading(false);
     }
@@ -179,10 +194,7 @@ export default function SettingsPage() {
       showToast("主题设置更新成功", "success");
     } catch (error) {
       console.error("更新主题模式失败:", error);
-      showToast(
-        error instanceof Error ? error.message : "更新失败",
-        "error"
-      );
+      showToast(error instanceof Error ? error.message : "更新失败", "error");
     } finally {
       setIsUpdatingTheme(false);
     }
@@ -204,7 +216,7 @@ export default function SettingsPage() {
       console.error("获取登录历史失败:", error);
       showToast(
         error instanceof Error ? error.message : "获取登录历史失败",
-        "error"
+        "error",
       );
     } finally {
       setIsLoadingHistory(false);
@@ -220,6 +232,7 @@ export default function SettingsPage() {
   // 格式化日期
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
+
     return date.toLocaleString("zh-CN", {
       year: "numeric",
       month: "2-digit",
@@ -258,7 +271,7 @@ export default function SettingsPage() {
         </div>
         <div className="flex justify-center items-center h-64">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4" />
             <p className="text-default-500">加载中...</p>
           </div>
         </div>
@@ -277,7 +290,6 @@ export default function SettingsPage() {
         <h1 className={title()}>设置</h1>
       </div>
 
-
       <div className="space-y-6">
         <Card>
           <CardHeader>
@@ -288,38 +300,38 @@ export default function SettingsPage() {
               <div ref={nameEditRef} className="flex items-center gap-2">
                 <div className="flex-1">
                   <Input
-                    isReadOnly={!isEditingName}
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    onFocus={() => !isEditingName && setIsEditingName(true)}
-                    label="姓名"
-                    placeholder="输入您的姓名"
-                    variant={isEditingName ? "bordered" : "flat"}
                     classNames={{
                       input: "cursor-pointer",
                     }}
+                    isReadOnly={!isEditingName}
+                    label="姓名"
+                    placeholder="输入您的姓名"
+                    value={name}
+                    variant={isEditingName ? "bordered" : "flat"}
+                    onChange={(e) => setName(e.target.value)}
+                    onFocus={() => !isEditingName && setIsEditingName(true)}
                   />
                 </div>
                 {isEditingName && (
                   <div className="flex gap-2">
                     <Button
                       isIconOnly
-                      variant="light"
-                      color="danger"
-                      onClick={handleCancelEdit}
-                      isDisabled={isLoading}
                       className="min-w-10 w-10 h-10 rounded-lg"
+                      color="danger"
+                      isDisabled={isLoading}
+                      variant="light"
+                      onClick={handleCancelEdit}
                     >
                       <X size={18} />
                     </Button>
                     <Button
                       isIconOnly
-                      variant="light"
-                      color="success"
-                      onClick={handleUpdateName}
-                      isLoading={isLoading}
-                      isDisabled={!name.trim()}
                       className="min-w-10 w-10 h-10 rounded-lg"
+                      color="success"
+                      isDisabled={!name.trim()}
+                      isLoading={isLoading}
+                      variant="light"
+                      onClick={handleUpdateName}
                     >
                       <Check size={18} />
                     </Button>
@@ -330,9 +342,9 @@ export default function SettingsPage() {
             <Input
               isReadOnly
               defaultValue={session.user?.email || ""}
+              description="邮箱地址不可修改"
               label="邮箱"
               placeholder="输入您的邮箱"
-              description="邮箱地址不可修改"
             />
           </CardBody>
         </Card>
@@ -358,32 +370,33 @@ export default function SettingsPage() {
               <div>
                 <p className="text-medium font-medium">主题模式</p>
               </div>
-              <div style={{ width: '140px' }}>
+              <div style={{ width: "140px" }}>
                 <Select
-                  selectedKeys={[themeMode]}
-                  onSelectionChange={(keys) => {
-                    const selectedKey = Array.from(keys)[0] as string;
-                    if (selectedKey) {
-                      handleThemeModeChange(selectedKey);
-                    }
-                  }}
-                  isDisabled={isUpdatingTheme}
-                  size="sm"
                   classNames={{
                     trigger: "min-h-8 h-8 w-full",
                     value: "text-sm",
                     mainWrapper: "w-full",
                   }}
+                  isDisabled={isUpdatingTheme}
+                  selectedKeys={[themeMode]}
+                  size="sm"
+                  onSelectionChange={(keys) => {
+                    const selectedKey = Array.from(keys)[0] as string;
+
+                    if (selectedKey) {
+                      handleThemeModeChange(selectedKey);
+                    }
+                  }}
                 >
-                <SelectItem key="light" startContent={<Sun size={16} />}>
-                  浅色
-                </SelectItem>
-                <SelectItem key="dark" startContent={<Moon size={16} />}>
-                  深色
-                </SelectItem>
-                <SelectItem key="system" startContent={<Monitor size={16} />}>
-                  跟随系统
-                </SelectItem>
+                  <SelectItem key="light" startContent={<Sun size={16} />}>
+                    浅色
+                  </SelectItem>
+                  <SelectItem key="dark" startContent={<Moon size={16} />}>
+                    深色
+                  </SelectItem>
+                  <SelectItem key="system" startContent={<Monitor size={16} />}>
+                    跟随系统
+                  </SelectItem>
                 </Select>
               </div>
             </div>
@@ -395,8 +408,8 @@ export default function SettingsPage() {
             <h3 className="text-lg font-semibold">安全设置</h3>
           </CardHeader>
           <CardBody className="space-y-4">
-            <Button 
-              className="w-full justify-start" 
+            <Button
+              className="w-full justify-start"
               variant="flat"
               onClick={handleOpenLoginHistory}
             >
@@ -425,11 +438,11 @@ export default function SettingsPage() {
       </div>
 
       {/* 登录历史模态框 */}
-      <Modal 
-        isOpen={isLoginHistoryOpen} 
-        onOpenChange={setIsLoginHistoryOpen}
-        size="2xl"
+      <Modal
+        isOpen={isLoginHistoryOpen}
         scrollBehavior="inside"
+        size="2xl"
+        onOpenChange={setIsLoginHistoryOpen}
       >
         <ModalContent>
           <ModalHeader>
@@ -438,7 +451,7 @@ export default function SettingsPage() {
           <ModalBody>
             {isLoadingHistory ? (
               <div className="flex justify-center items-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
               </div>
             ) : loginHistory.length === 0 ? (
               <div className="text-center py-8 text-default-500">
@@ -462,11 +475,13 @@ export default function SettingsPage() {
                           </div>
                           <div className="text-sm text-default-500 mt-1">
                             {item.deviceType && (
-                              <span className="capitalize">{item.deviceType}</span>
+                              <span className="capitalize">
+                                {item.deviceType}
+                              </span>
                             )}
                             {item.ipAddress && (
                               <span className="ml-2">
-                                <MapPin size={12} className="inline mr-1" />
+                                <MapPin className="inline mr-1" size={12} />
                                 {item.ipAddress}
                               </span>
                             )}
@@ -478,9 +493,11 @@ export default function SettingsPage() {
                           <Clock size={12} />
                           {formatDate(item.createdAt)}
                         </div>
-                        <div className={`text-xs mt-1 ${
-                          item.isSuccessful ? "text-success" : "text-danger"
-                        }`}>
+                        <div
+                          className={`text-xs mt-1 ${
+                            item.isSuccessful ? "text-success" : "text-danger"
+                          }`}
+                        >
                           {item.isSuccessful ? "登录成功" : "登录失败"}
                         </div>
                       </div>
@@ -496,10 +513,7 @@ export default function SettingsPage() {
             )}
           </ModalBody>
           <ModalFooter>
-            <Button 
-              variant="flat" 
-              onClick={() => setIsLoginHistoryOpen(false)}
-            >
+            <Button variant="flat" onClick={() => setIsLoginHistoryOpen(false)}>
               关闭
             </Button>
           </ModalFooter>

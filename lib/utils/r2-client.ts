@@ -1,4 +1,8 @@
-import { S3Client, PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
+import {
+  S3Client,
+  PutObjectCommand,
+  DeleteObjectCommand,
+} from "@aws-sdk/client-s3";
 
 export interface R2Config {
   accessKeyId: string;
@@ -33,7 +37,8 @@ export function getR2Config(): R2Config | { error: string } {
 
   if (!accessKeyId || !secretAccessKey || !endpoint) {
     return {
-      error: "R2配置缺失：请设置 R2_ACCESS_KEY_ID、R2_SECRET_ACCESS_KEY 和 R2_ENDPOINT 环境变量",
+      error:
+        "R2配置缺失：请设置 R2_ACCESS_KEY_ID、R2_SECRET_ACCESS_KEY 和 R2_ENDPOINT 环境变量",
     };
   }
 
@@ -50,8 +55,10 @@ export function getR2Config(): R2Config | { error: string } {
  * 创建R2客户端
  */
 export function createR2Client(
-  config: R2Config
-): { client: S3Client; bucketName: string; publicBaseUrl: string } | { error: string } {
+  config: R2Config,
+):
+  | { client: S3Client; bucketName: string; publicBaseUrl: string }
+  | { error: string } {
   try {
     // 处理 Endpoint
     const endpointRaw = config.endpoint.replace(/\/$/, "");
@@ -70,7 +77,8 @@ export function createR2Client(
 
     if (!bucketName) {
       return {
-        error: "Bucket名称缺失：请在 R2_ENDPOINT 中包含bucket名称或设置 R2_BUCKET_NAME",
+        error:
+          "Bucket名称缺失：请在 R2_ENDPOINT 中包含bucket名称或设置 R2_BUCKET_NAME",
       };
     }
 
@@ -102,6 +110,7 @@ export function createR2Client(
     return { client, bucketName, publicBaseUrl };
   } catch (error) {
     console.error("创建R2客户端失败:", error);
+
     return { error: "创建R2客户端失败" };
   }
 }
@@ -113,15 +122,17 @@ export async function uploadToR2(
   objectKey: string,
   buffer: Buffer,
   contentType: string,
-  filename?: string
+  filename?: string,
 ): Promise<R2UploadResult> {
   try {
     const config = getR2Config();
+
     if ("error" in config) {
       return { success: false, error: config.error };
     }
 
     const clientResult = createR2Client(config);
+
     if ("error" in clientResult) {
       return { success: false, error: clientResult.error };
     }
@@ -138,7 +149,7 @@ export async function uploadToR2(
         ContentDisposition: filename
           ? `attachment; filename="${filename}"`
           : undefined,
-      })
+      }),
     );
 
     // 构建公开访问 URL
@@ -152,6 +163,7 @@ export async function uploadToR2(
     };
   } catch (error) {
     console.error("上传到R2失败:", error);
+
     return { success: false, error: "上传文件失败" };
   }
 }
@@ -159,16 +171,16 @@ export async function uploadToR2(
 /**
  * 从R2删除文件
  */
-export async function deleteFromR2(
-  objectKey: string
-): Promise<R2DeleteResult> {
+export async function deleteFromR2(objectKey: string): Promise<R2DeleteResult> {
   try {
     const config = getR2Config();
+
     if ("error" in config) {
       return { success: false, error: config.error };
     }
 
     const clientResult = createR2Client(config);
+
     if ("error" in clientResult) {
       return { success: false, error: clientResult.error };
     }
@@ -180,12 +192,13 @@ export async function deleteFromR2(
       new DeleteObjectCommand({
         Bucket: bucketName,
         Key: objectKey,
-      })
+      }),
     );
 
     return { success: true };
   } catch (error) {
     console.error("从R2删除文件失败:", error);
+
     return { success: false, error: "删除文件失败" };
   }
 }
@@ -193,7 +206,10 @@ export async function deleteFromR2(
 /**
  * 从URL中提取对象Key
  */
-export function extractKeyFromUrl(url: string, publicBaseUrl?: string): string | null {
+export function extractKeyFromUrl(
+  url: string,
+  publicBaseUrl?: string,
+): string | null {
   try {
     const urlObj = new URL(url);
     const pathname = urlObj.pathname;
@@ -201,6 +217,7 @@ export function extractKeyFromUrl(url: string, publicBaseUrl?: string): string |
     // 如果提供了 publicBaseUrl，尝试匹配并提取
     if (publicBaseUrl) {
       const baseUrlObj = new URL(publicBaseUrl);
+
       if (urlObj.host === baseUrlObj.host) {
         // 移除开头的 /
         return pathname.slice(1);
@@ -211,6 +228,7 @@ export function extractKeyFromUrl(url: string, publicBaseUrl?: string): string |
     return pathname.slice(1);
   } catch (error) {
     console.error("从URL提取Key失败:", error);
+
     return null;
   }
 }

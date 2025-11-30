@@ -75,14 +75,14 @@ export default function VoiceInputButton({
           if (event.error !== "no-speech" && event.error !== "aborted") {
             console.error("语音识别错误:", event.error);
           }
-          
+
           // 只有非 no-speech 和 aborted 错误才停止
           if (event.error !== "no-speech" && event.error !== "aborted") {
             setIsListening(false);
             isListeningRef.current = false;
             shouldStopRef.current = true;
           }
-          
+
           if (event.error === "not-allowed") {
             showToast("麦克风权限被拒绝，请在浏览器设置中允许访问", "error");
           } else if (event.error === "no-speech") {

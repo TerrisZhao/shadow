@@ -18,14 +18,16 @@ export default function LoginHistoryRecorder() {
   useEffect(() => {
     // 检查用户是否发生变化（重新登录）
     const currentUserId = (session?.user as any)?.id;
+
     if (currentUserId && currentUserId !== lastUserId.current) {
       // 用户发生变化，重置记录状态
       hasRecorded.current = false;
       lastUserId.current = currentUserId;
-      
+
       // 清除旧的localStorage记录
       if (lastUserId.current) {
         const oldRecordKey = `login_recorded_${lastUserId.current}`;
+
         localStorage.removeItem(oldRecordKey);
       }
     }
@@ -49,8 +51,10 @@ export default function LoginHistoryRecorder() {
       isRecording = true;
 
       const userId = (session?.user as any)?.id;
+
       if (!userId) {
         isRecording = false;
+
         return;
       }
 
@@ -58,27 +62,31 @@ export default function LoginHistoryRecorder() {
       const recordKey = `login_recorded_${userId}`;
       const lastRecordTime = localStorage.getItem(recordKey);
       const now = Date.now();
-      
+
       // 如果距离上次记录不到10分钟，跳过
-      if (lastRecordTime && (now - parseInt(lastRecordTime)) < 10 * 60 * 1000) {
+      if (lastRecordTime && now - parseInt(lastRecordTime) < 10 * 60 * 1000) {
         isRecording = false;
+
         return;
       }
 
       // 再次检查session是否稳定
       if (status !== "authenticated" || !session?.user) {
         isRecording = false;
+
         return;
       }
 
       // 获取用户代理和IP地址
       const userAgent = navigator.userAgent;
-      
+
       // 获取IP地址（通过第三方服务）
       let ipAddress = null;
+
       try {
         const ipResponse = await fetch("https://api.ipify.org?format=json");
         const ipData = await ipResponse.json();
+
         ipAddress = ipData.ip;
       } catch (error) {
         console.warn("无法获取IP地址:", error);

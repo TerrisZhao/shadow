@@ -97,8 +97,10 @@ export default function AddSceneModal({
         const data = await response.json();
         // 过滤掉已经选中的句子
         const filteredSentences = data.sentences.filter(
-          (sentence: Sentence) => !selectedSentences.some(s => s.id === sentence.id)
+          (sentence: Sentence) =>
+            !selectedSentences.some((s) => s.id === sentence.id),
         );
+
         setSearchResults(filteredSentences);
       }
     } catch (error) {
@@ -115,6 +117,7 @@ export default function AddSceneModal({
 
       if (response.ok) {
         const data = await response.json();
+
         setCategories(data.categories);
       }
     } catch (error) {
@@ -124,15 +127,15 @@ export default function AddSceneModal({
 
   // 添加句子到场景
   const addSentenceToScene = (sentence: Sentence) => {
-    setSelectedSentences(prev => [...prev, sentence]);
+    setSelectedSentences((prev) => [...prev, sentence]);
     // 从搜索结果中移除已添加的句子
-    setSearchResults(prev => prev.filter(s => s.id !== sentence.id));
+    setSearchResults((prev) => prev.filter((s) => s.id !== sentence.id));
     showToast(`已添加句子：${sentence.englishText}`, "success");
   };
 
   // 从场景中移除句子
   const removeSentenceFromScene = (sentenceId: number) => {
-    setSelectedSentences(prev => prev.filter(s => s.id !== sentenceId));
+    setSelectedSentences((prev) => prev.filter((s) => s.id !== sentenceId));
     showToast("已移除句子", "success");
   };
 
@@ -140,6 +143,7 @@ export default function AddSceneModal({
   const handleSubmit = async () => {
     if (!title.trim()) {
       showToast("请输入场景标题", "error");
+
       return;
     }
 
@@ -153,7 +157,7 @@ export default function AddSceneModal({
         body: JSON.stringify({
           title: title.trim(),
           description: description.trim() || null,
-          sentenceIds: selectedSentences.map(s => s.id),
+          sentenceIds: selectedSentences.map((s) => s.id),
         }),
       });
 
@@ -163,6 +167,7 @@ export default function AddSceneModal({
         handleClose();
       } else {
         const error = await response.json();
+
         showToast(error.error || "创建失败", "error");
       }
     } catch (error) {
@@ -189,6 +194,7 @@ export default function AddSceneModal({
   const handleNext = () => {
     if (!title.trim()) {
       showToast("请输入场景标题", "error");
+
       return;
     }
     setStep(2);
@@ -216,9 +222,9 @@ export default function AddSceneModal({
   return (
     <Modal
       isOpen={isOpen}
-      onClose={handleClose}
-      size="4xl"
       scrollBehavior="inside"
+      size="4xl"
+      onClose={handleClose}
     >
       <ModalContent>
         <ModalHeader className="flex flex-col gap-1">
@@ -228,12 +234,16 @@ export default function AddSceneModal({
             </h2>
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-1">
-                <div className={`w-2 h-2 rounded-full ${step === 1 ? 'bg-primary' : 'bg-default-300'}`} />
+                <div
+                  className={`w-2 h-2 rounded-full ${step === 1 ? "bg-primary" : "bg-default-300"}`}
+                />
                 <span className="text-xs text-default-500">基本信息</span>
               </div>
               <ArrowRight className="w-3 h-3 text-default-400" />
               <div className="flex items-center gap-1">
-                <div className={`w-2 h-2 rounded-full ${step === 2 ? 'bg-primary' : 'bg-default-300'}`} />
+                <div
+                  className={`w-2 h-2 rounded-full ${step === 2 ? "bg-primary" : "bg-default-300"}`}
+                />
                 <span className="text-xs text-default-500">选择句子</span>
               </div>
             </div>
@@ -245,18 +255,18 @@ export default function AddSceneModal({
             <div className="space-y-6">
               <div className="space-y-4">
                 <Input
+                  isRequired
                   label="场景标题"
                   placeholder="请输入场景标题"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  isRequired
                 />
                 <Textarea
                   label="场景描述"
+                  minRows={3}
                   placeholder="请输入场景描述（可选）"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  minRows={3}
                 />
               </div>
             </div>
@@ -266,7 +276,9 @@ export default function AddSceneModal({
               {/* 已选择的句子 */}
               {selectedSentences.length > 0 && (
                 <div className="space-y-3">
-                  <h3 className="text-lg font-medium">已选择的句子 ({selectedSentences.length})</h3>
+                  <h3 className="text-lg font-medium">
+                    已选择的句子 ({selectedSentences.length})
+                  </h3>
                   <div className="space-y-2">
                     {selectedSentences.map((sentence, index) => (
                       <Card key={sentence.id} className="p-3">
@@ -274,7 +286,7 @@ export default function AddSceneModal({
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
                               <div className="flex items-center gap-2 mb-2">
-                                <Chip size="sm" color="primary" variant="flat">
+                                <Chip color="primary" size="sm" variant="flat">
                                   {index + 1}
                                 </Chip>
                                 <Chip
@@ -287,15 +299,21 @@ export default function AddSceneModal({
                                   {sentence.category.name}
                                 </Chip>
                                 <Chip
-                                  size="sm"
                                   color={
-                                    sentence.difficulty === "easy" ? "success" :
-                                    sentence.difficulty === "medium" ? "warning" : "danger"
+                                    sentence.difficulty === "easy"
+                                      ? "success"
+                                      : sentence.difficulty === "medium"
+                                        ? "warning"
+                                        : "danger"
                                   }
+                                  size="sm"
                                   variant="flat"
                                 >
-                                  {sentence.difficulty === "easy" ? "简单" :
-                                   sentence.difficulty === "medium" ? "中等" : "困难"}
+                                  {sentence.difficulty === "easy"
+                                    ? "简单"
+                                    : sentence.difficulty === "medium"
+                                      ? "中等"
+                                      : "困难"}
                                 </Chip>
                               </div>
                               <p className="text-sm font-medium text-foreground">
@@ -307,10 +325,12 @@ export default function AddSceneModal({
                             </div>
                             <Button
                               isIconOnly
+                              color="danger"
                               size="sm"
                               variant="light"
-                              color="danger"
-                              onPress={() => removeSentenceFromScene(sentence.id)}
+                              onPress={() =>
+                                removeSentenceFromScene(sentence.id)
+                              }
                             >
                               <X className="w-4 h-4" />
                             </Button>
@@ -327,65 +347,71 @@ export default function AddSceneModal({
                 <h3 className="text-lg font-medium">搜索句子</h3>
                 <div className="flex gap-4">
                   <Input
+                    className="flex-1"
                     placeholder="搜索句子内容..."
+                    startContent={
+                      <Search className="w-4 h-4 text-default-400" />
+                    }
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    startContent={<Search className="w-4 h-4 text-default-400" />}
-                    className="flex-1"
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
+                      if (e.key === "Enter") {
                         searchSentences();
                       }
                     }}
                   />
                   <Button
                     color="primary"
-                    onPress={searchSentences}
                     isLoading={loadingSentences}
+                    onPress={searchSentences}
                   >
                     搜索
                   </Button>
                 </div>
-                
+
                 <div className="flex gap-4">
                   <Select
+                    className="w-48"
                     label="分类筛选"
                     placeholder="选择分类"
                     selectedKeys={new Set([selectedCategory])}
                     onSelectionChange={(keys) => {
                       const selectedKey = Array.from(keys)[0] as string;
+
                       setSelectedCategory(selectedKey);
                     }}
-                    className="w-48"
                   >
                     <SelectItem key="all" textValue="全部分类">
                       全部分类
                     </SelectItem>
-                    {categories.map((category) => (
-                      <SelectItem
-                        key={category.id.toString()}
-                        textValue={category.name}
-                      >
-                        <div className="flex items-center gap-2">
-                          <div
-                            className="w-3 h-3 rounded-full"
-                            style={{ backgroundColor: category.color }}
-                          />
-                          <span>{category.name}</span>
-                        </div>
-                      </SelectItem>
-                    )) as any}
+                    {
+                      categories.map((category) => (
+                        <SelectItem
+                          key={category.id.toString()}
+                          textValue={category.name}
+                        >
+                          <div className="flex items-center gap-2">
+                            <div
+                              className="w-3 h-3 rounded-full"
+                              style={{ backgroundColor: category.color }}
+                            />
+                            <span>{category.name}</span>
+                          </div>
+                        </SelectItem>
+                      )) as any
+                    }
                   </Select>
 
                   <Select
+                    className="w-48"
                     label="难度筛选"
                     placeholder="选择难度"
                     selectedKeys={new Set([selectedDifficulty])}
                     onSelectionChange={(keys) => {
                       const selectedKey = Array.from(keys)[0] as string;
+
                       setSelectedDifficulty(selectedKey);
                     }}
-                    className="w-48"
                   >
                     <SelectItem key="all" textValue="全部难度">
                       全部难度
@@ -421,7 +447,10 @@ export default function AddSceneModal({
                 ) : (
                   <div className="max-h-96 overflow-y-auto space-y-2 border border-default-200 rounded-lg p-4">
                     {searchResults.map((sentence) => (
-                      <Card key={sentence.id} className="p-3 hover:bg-default-50 transition-colors">
+                      <Card
+                        key={sentence.id}
+                        className="p-3 hover:bg-default-50 transition-colors"
+                      >
                         <CardBody className="p-0">
                           <div className="flex items-start justify-between">
                             <div className="flex-1 min-w-0">
@@ -436,15 +465,21 @@ export default function AddSceneModal({
                                   {sentence.category.name}
                                 </Chip>
                                 <Chip
-                                  size="sm"
                                   color={
-                                    sentence.difficulty === "easy" ? "success" :
-                                    sentence.difficulty === "medium" ? "warning" : "danger"
+                                    sentence.difficulty === "easy"
+                                      ? "success"
+                                      : sentence.difficulty === "medium"
+                                        ? "warning"
+                                        : "danger"
                                   }
+                                  size="sm"
                                   variant="flat"
                                 >
-                                  {sentence.difficulty === "easy" ? "简单" :
-                                   sentence.difficulty === "medium" ? "中等" : "困难"}
+                                  {sentence.difficulty === "easy"
+                                    ? "简单"
+                                    : sentence.difficulty === "medium"
+                                      ? "中等"
+                                      : "困难"}
                                 </Chip>
                               </div>
                               <p className="text-sm font-medium text-foreground">
@@ -456,8 +491,8 @@ export default function AddSceneModal({
                             </div>
                             <Button
                               isIconOnly
-                              size="sm"
                               color="primary"
+                              size="sm"
                               variant="flat"
                               onPress={() => addSentenceToScene(sentence)}
                             >
@@ -480,8 +515,8 @@ export default function AddSceneModal({
           {step === 1 ? (
             <Button
               color="primary"
-              onPress={handleNext}
               isDisabled={!title.trim()}
+              onPress={handleNext}
             >
               下一步
             </Button>
@@ -493,9 +528,9 @@ export default function AddSceneModal({
               </Button>
               <Button
                 color="primary"
-                onPress={handleSubmit}
-                isLoading={loading}
                 isDisabled={selectedSentences.length === 0}
+                isLoading={loading}
+                onPress={handleSubmit}
               >
                 创建场景
               </Button>

@@ -73,9 +73,7 @@ interface SentenceListProps {
   tab?: string;
 }
 
-export default function SentenceList({
-                                         tab = "shared",
-}: SentenceListProps) {
+export default function SentenceList({ tab = "shared" }: SentenceListProps) {
   const { data: session, status } = useSession();
   const [sentences, setSentences] = useState<Sentence[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -114,9 +112,9 @@ export default function SentenceList({
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const recordingStartTimeRef = useRef<number>(0);
-  const [recordingDuration, setRecordingDuration] = useState<Map<number, number>>(
-    new Map(),
-  ); // sentenceId -> duration in seconds
+  const [recordingDuration, setRecordingDuration] = useState<
+    Map<number, number>
+  >(new Map()); // sentenceId -> duration in seconds
   const recordingTimerRef = useRef<Map<number, NodeJS.Timeout>>(new Map());
   const audioProgressAnimationRef = useRef<number | null>(null); // 保存动画帧 ID
   const [sentenceRecordings, setSentenceRecordings] = useState<
@@ -218,8 +216,7 @@ export default function SentenceList({
 
         setCategories(data.categories);
       }
-    } catch (error) {
-    }
+    } catch (error) {}
   };
 
   useEffect(() => {
@@ -327,7 +324,11 @@ export default function SentenceList({
   };
 
   // 播放音频
-  const playAudio = async (audioUrl: string, sentenceId: number, startTime?: number) => {
+  const playAudio = async (
+    audioUrl: string,
+    sentenceId: number,
+    startTime?: number,
+  ) => {
     try {
       // 取消之前的动画帧
       if (audioProgressAnimationRef.current) {
@@ -359,7 +360,9 @@ export default function SentenceList({
       audio.onloadedmetadata = () => {
         setAudioDuration((prev) => {
           const newMap = new Map(prev);
+
           newMap.set(sentenceId, audio.duration);
+
           return newMap;
         });
       };
@@ -375,7 +378,7 @@ export default function SentenceList({
       // 等待音频加载元数据
       if (audio.readyState < 1) {
         await new Promise((resolve) => {
-          audio.addEventListener('loadedmetadata', resolve, { once: true });
+          audio.addEventListener("loadedmetadata", resolve, { once: true });
         });
       }
 
@@ -383,7 +386,9 @@ export default function SentenceList({
       if (audio.duration && !isNaN(audio.duration)) {
         setAudioDuration((prev) => {
           const newMap = new Map(prev);
+
           newMap.set(sentenceId, audio.duration);
+
           return newMap;
         });
       }
@@ -393,7 +398,9 @@ export default function SentenceList({
         audio.currentTime = startTime;
         setAudioProgress((prev) => {
           const newMap = new Map(prev);
+
           newMap.set(sentenceId, startTime);
+
           return newMap;
         });
       }
@@ -407,11 +414,14 @@ export default function SentenceList({
         if (!audio.paused && !audio.ended) {
           setAudioProgress((prev) => {
             const newMap = new Map(prev);
+
             newMap.set(sentenceId, audio.currentTime);
+
             return newMap;
           });
           // 继续下一帧
-          audioProgressAnimationRef.current = requestAnimationFrame(updateProgress);
+          audioProgressAnimationRef.current =
+            requestAnimationFrame(updateProgress);
         }
       };
 
@@ -455,7 +465,10 @@ export default function SentenceList({
   };
 
   // 更改音频播放进度
-  const handleAudioSeek = async (sentenceId: number, value: number | number[]) => {
+  const handleAudioSeek = async (
+    sentenceId: number,
+    value: number | number[],
+  ) => {
     const newTime = Array.isArray(value) ? value[0] : value;
 
     // 如果音频正在播放，直接跳转
@@ -463,13 +476,15 @@ export default function SentenceList({
       audioElementRef.current.currentTime = newTime;
       setAudioProgress((prev) => {
         const newMap = new Map(prev);
+
         newMap.set(sentenceId, newTime);
+
         return newMap;
       });
     } else {
       // 如果音频没有播放，从指定位置开始播放
       const sentence = sentences.find((s) => s.id === sentenceId);
-      
+
       if (sentence?.audioUrl) {
         await playAudio(sentence.audioUrl, sentenceId, newTime);
       }
@@ -737,7 +752,8 @@ export default function SentenceList({
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
       return {
         supported: false,
-        message: "您的浏览器不支持录音功能，请使用现代浏览器（Chrome、Firefox、Safari等）",
+        message:
+          "您的浏览器不支持录音功能，请使用现代浏览器（Chrome、Firefox、Safari等）",
       };
     }
 
@@ -760,6 +776,7 @@ export default function SentenceList({
     // 检查是否有其他句子正在准备或录音
     if (preparingRecording !== null && preparingRecording !== sentenceId) {
       showToast("请等待当前录音完成", "error");
+
       return;
     }
 
@@ -778,26 +795,26 @@ export default function SentenceList({
 
       // 步骤1: 先请求麦克风权限（Safari 需要更简单的配置）
       let stream: MediaStream;
-      
+
       try {
         // 优先尝试带音频增强的配置
-        stream = await navigator.mediaDevices.getUserMedia({ 
+        stream = await navigator.mediaDevices.getUserMedia({
           audio: {
             echoCancellation: true,
             noiseSuppression: true,
             sampleRate: 44100,
-          } 
+          },
         });
       } catch (constraintError) {
         // 如果失败，使用最简单的配置（Safari 可能不支持某些约束）
-        stream = await navigator.mediaDevices.getUserMedia({ 
-          audio: true
+        stream = await navigator.mediaDevices.getUserMedia({
+          audio: true,
         });
       }
 
       // 步骤3: 检查支持的格式（Safari 通常支持 audio/mp4）
       let mimeType = "";
-      
+
       // Safari 优先使用 mp4
       if (MediaRecorder.isTypeSupported("audio/mp4")) {
         mimeType = "audio/mp4";
@@ -808,7 +825,6 @@ export default function SentenceList({
       } else if (MediaRecorder.isTypeSupported("audio/ogg;codecs=opus")) {
         mimeType = "audio/ogg;codecs=opus";
       }
-
 
       // 步骤4: 创建 MediaRecorder 并开始录音
       const mediaRecorder = mimeType
@@ -828,7 +844,7 @@ export default function SentenceList({
       mediaRecorder.onstart = () => {
         // 清除准备中状态
         setPreparingRecording(null);
-        
+
         // 在这里开始计时，确保录音已经真正开始
         recordingStartTimeRef.current = Date.now();
         setRecordingState((prev) => new Map(prev).set(sentenceId, true));
@@ -892,16 +908,28 @@ export default function SentenceList({
       mediaRecorder.start();
     } catch (error: any) {
       setPreparingRecording(null);
-      
+
       let errorMessage = "无法访问麦克风";
 
-      if (error.name === "NotAllowedError" || error.name === "PermissionDeniedError") {
+      if (
+        error.name === "NotAllowedError" ||
+        error.name === "PermissionDeniedError"
+      ) {
         errorMessage = "麦克风权限被拒绝，请在浏览器设置中允许访问麦克风";
-      } else if (error.name === "NotFoundError" || error.name === "DevicesNotFoundError") {
+      } else if (
+        error.name === "NotFoundError" ||
+        error.name === "DevicesNotFoundError"
+      ) {
         errorMessage = "未找到麦克风设备，请检查是否连接了麦克风";
-      } else if (error.name === "NotReadableError" || error.name === "TrackStartError") {
+      } else if (
+        error.name === "NotReadableError" ||
+        error.name === "TrackStartError"
+      ) {
         errorMessage = "麦克风正被其他应用占用，请关闭其他使用麦克风的程序";
-      } else if (error.name === "OverconstrainedError" || error.name === "ConstraintNotSatisfiedError") {
+      } else if (
+        error.name === "OverconstrainedError" ||
+        error.name === "ConstraintNotSatisfiedError"
+      ) {
         errorMessage = "麦克风不支持请求的音频设置";
       } else if (error.name === "TypeError") {
         errorMessage = "浏览器不支持录音功能或需要在 HTTPS 环境下使用";
@@ -1003,6 +1031,7 @@ export default function SentenceList({
       // 检查是否有其他句子正在准备录音
       if (preparingRecording !== null && preparingRecording !== sentenceId) {
         showToast("请等待当前录音完成", "error");
+
         return;
       }
 
@@ -1012,7 +1041,7 @@ export default function SentenceList({
           stopRecording(id);
         }
       });
-      
+
       // 然后开始当前句子的录音
       startRecording(sentenceId);
     }
@@ -1021,9 +1050,7 @@ export default function SentenceList({
   // 获取句子的录音列表
   const fetchRecordings = async (sentenceId: number) => {
     try {
-      const response = await fetch(
-        `/api/recordings?sentenceId=${sentenceId}`,
-      );
+      const response = await fetch(`/api/recordings?sentenceId=${sentenceId}`);
 
       if (response.ok) {
         const data = await response.json();
@@ -1033,8 +1060,7 @@ export default function SentenceList({
         );
       } else {
       }
-    } catch (error) {
-    }
+    } catch (error) {}
   };
 
   // 切换录音列表展开/收起
@@ -1486,15 +1512,20 @@ export default function SentenceList({
                               <div className="mt-3 space-y-2 px-1">
                                 <div
                                   aria-label="音频播放进度条"
-                                  aria-valuemax={audioDuration.get(sentence.id) || 0}
+                                  aria-valuemax={
+                                    audioDuration.get(sentence.id) || 0
+                                  }
                                   aria-valuemin={0}
-                                  aria-valuenow={audioProgress.get(sentence.id) || 0}
+                                  aria-valuenow={
+                                    audioProgress.get(sentence.id) || 0
+                                  }
                                   aria-valuetext={`${formatTime(audioProgress.get(sentence.id) || 0)} / ${formatTime(audioDuration.get(sentence.id) || 0)}`}
                                   className="relative w-full h-1.5 bg-default-200 rounded-full cursor-pointer group"
                                   role="slider"
                                   tabIndex={0}
                                   onClick={(e) => {
-                                    const rect = e.currentTarget.getBoundingClientRect();
+                                    const rect =
+                                      e.currentTarget.getBoundingClientRect();
                                     const offsetX = e.clientX - rect.left;
                                     const percentage = offsetX / rect.width;
                                     const newTime =
@@ -1504,17 +1535,25 @@ export default function SentenceList({
                                     handleAudioSeek(sentence.id, newTime);
                                   }}
                                   onKeyDown={(e) => {
-                                    const duration = audioDuration.get(sentence.id) || 0;
-                                    const current = audioProgress.get(sentence.id) || 0;
+                                    const duration =
+                                      audioDuration.get(sentence.id) || 0;
+                                    const current =
+                                      audioProgress.get(sentence.id) || 0;
                                     // 对于短音频，使用更小的步进值（0.5秒）
                                     const step = 0.5;
-                                    
-                                    if (e.key === 'ArrowRight') {
+
+                                    if (e.key === "ArrowRight") {
                                       e.preventDefault();
-                                      handleAudioSeek(sentence.id, Math.min(current + step, duration));
-                                    } else if (e.key === 'ArrowLeft') {
+                                      handleAudioSeek(
+                                        sentence.id,
+                                        Math.min(current + step, duration),
+                                      );
+                                    } else if (e.key === "ArrowLeft") {
                                       e.preventDefault();
-                                      handleAudioSeek(sentence.id, Math.max(current - step, 0));
+                                      handleAudioSeek(
+                                        sentence.id,
+                                        Math.max(current - step, 0),
+                                      );
                                     }
                                   }}
                                 >
@@ -1644,7 +1683,9 @@ export default function SentenceList({
                           <Button
                             size="sm"
                             variant="light"
-                            onPress={() => toggleRecordingsExpanded(sentence.id)}
+                            onPress={() =>
+                              toggleRecordingsExpanded(sentence.id)
+                            }
                           >
                             <div className="flex items-center gap-1">
                               <Volume2 className="w-4 h-4" />

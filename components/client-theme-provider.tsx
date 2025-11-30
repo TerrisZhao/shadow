@@ -24,7 +24,10 @@ export function ClientThemeProvider({
     return <>{children}</>;
   }
 
-  const defaultThemeProps = { attribute: "class" as const, defaultTheme: "dark" };
+  const defaultThemeProps = {
+    attribute: "class" as const,
+    defaultTheme: "dark",
+  };
   const finalThemeProps = themeProps || defaultThemeProps;
 
   return (

@@ -8,6 +8,7 @@ export function parseUserAgent(userAgent: string) {
 
   // 检测设备类型
   let deviceType = "desktop";
+
   if (/mobile|android|iphone|ipod|blackberry|iemobile|opera mini/i.test(ua)) {
     deviceType = "mobile";
   } else if (/tablet|ipad|playbook|silk/i.test(ua)) {
@@ -16,6 +17,7 @@ export function parseUserAgent(userAgent: string) {
 
   // 检测浏览器
   let browser = "Unknown";
+
   if (ua.includes("chrome") && !ua.includes("edg")) {
     browser = "Chrome";
   } else if (ua.includes("firefox")) {
@@ -30,6 +32,7 @@ export function parseUserAgent(userAgent: string) {
 
   // 检测操作系统
   let os = "Unknown";
+
   if (ua.includes("windows")) {
     os = "Windows";
   } else if (ua.includes("mac os") || ua.includes("macos")) {
@@ -38,7 +41,11 @@ export function parseUserAgent(userAgent: string) {
     os = "Linux";
   } else if (ua.includes("android")) {
     os = "Android";
-  } else if (ua.includes("ios") || ua.includes("iphone") || ua.includes("ipad")) {
+  } else if (
+    ua.includes("ios") ||
+    ua.includes("iphone") ||
+    ua.includes("ipad")
+  ) {
     os = "iOS";
   }
 
@@ -57,10 +64,10 @@ export function getClientIP(request: NextRequest): string | null {
   const forwarded = request.headers.get("x-forwarded-for");
   const realIP = request.headers.get("x-real-ip");
   const cfConnectingIP = request.headers.get("cf-connecting-ip");
-  
+
   if (cfConnectingIP) return cfConnectingIP;
   if (realIP) return realIP;
   if (forwarded) return forwarded.split(",")[0].trim();
-  
+
   return null;
 }

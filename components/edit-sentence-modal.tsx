@@ -16,7 +16,6 @@ import { Checkbox } from "@heroui/checkbox";
 import { addToast } from "@heroui/toast";
 import { useSession } from "next-auth/react";
 
-
 interface CategoryOption {
   id: number;
   name: string;
@@ -106,7 +105,6 @@ export default function EditSentenceModal({
     }
   }, [sentence]);
 
-
   const fetchCategories = async () => {
     try {
       const response = await fetch("/api/categories");
@@ -126,6 +124,7 @@ export default function EditSentenceModal({
 
     if (!formData.englishText || !formData.categoryId) {
       showToast("请填写英文句子与分类", "error");
+
       return;
     }
 
@@ -170,12 +169,15 @@ export default function EditSentenceModal({
           <ModalBody className="gap-4">
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-2" htmlFor="edit-englishText">
+                <label
+                  className="block text-sm font-medium mb-2"
+                  htmlFor="edit-englishText"
+                >
                   英文句子 <span className="text-red-500">*</span>
                 </label>
                 <Textarea
-                  id="edit-englishText"
                   isRequired
+                  id="edit-englishText"
                   minRows={2}
                   placeholder="输入英文句子..."
                   value={formData.englishText}
@@ -186,8 +188,12 @@ export default function EditSentenceModal({
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2" htmlFor="edit-chineseText">
-                  中文翻译 <span className="text-default-400 text-xs">(可选)</span>
+                <label
+                  className="block text-sm font-medium mb-2"
+                  htmlFor="edit-chineseText"
+                >
+                  中文翻译{" "}
+                  <span className="text-default-400 text-xs">(可选)</span>
                 </label>
                 <Textarea
                   id="edit-chineseText"
@@ -201,13 +207,16 @@ export default function EditSentenceModal({
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2" htmlFor="edit-categoryId">
+                <label
+                  className="block text-sm font-medium mb-2"
+                  htmlFor="edit-categoryId"
+                >
                   分类 <span className="text-red-500">*</span>
                 </label>
                 <Select
-                  id="edit-categoryId"
                   isRequired
                   className="flex-1"
+                  id="edit-categoryId"
                   placeholder="选择分类"
                   selectedKeys={
                     formData.categoryId
@@ -244,7 +253,10 @@ export default function EditSentenceModal({
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2" htmlFor="edit-difficulty">
+                <label
+                  className="block text-sm font-medium mb-2"
+                  htmlFor="edit-difficulty"
+                >
                   难度等级
                 </label>
                 <Select
@@ -283,7 +295,12 @@ export default function EditSentenceModal({
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2" htmlFor="edit-notes">备注</label>
+                <label
+                  className="block text-sm font-medium mb-2"
+                  htmlFor="edit-notes"
+                >
+                  备注
+                </label>
                 <Textarea
                   id="edit-notes"
                   minRows={2}

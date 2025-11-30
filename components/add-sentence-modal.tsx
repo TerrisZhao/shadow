@@ -17,7 +17,6 @@ import { Checkbox } from "@heroui/checkbox";
 import { addToast } from "@heroui/toast";
 import { useSession } from "next-auth/react";
 
-
 interface Category {
   id: number;
   name: string;
@@ -73,7 +72,6 @@ export default function AddSentenceModal({
     }
   }, [isOpen]);
 
-
   const fetchCategories = async () => {
     try {
       const response = await fetch("/api/categories");
@@ -93,6 +91,7 @@ export default function AddSentenceModal({
 
     if (!formData.englishText || !formData.categoryId) {
       showToast("请填写英文句子与分类", "error");
+
       return;
     }
 
@@ -108,6 +107,7 @@ export default function AddSentenceModal({
 
       if (response.ok) {
         const data = await response.json();
+
         showToast("句子添加成功！", "success");
         setFormData({
           englishText: "",
@@ -182,12 +182,15 @@ export default function AddSentenceModal({
           <ModalBody className="gap-4">
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-2" htmlFor="englishText">
+                <label
+                  className="block text-sm font-medium mb-2"
+                  htmlFor="englishText"
+                >
                   英文句子 <span className="text-red-500">*</span>
                 </label>
                 <Textarea
-                  id="englishText"
                   isRequired
+                  id="englishText"
                   maxRows={4}
                   minRows={2}
                   value={formData.englishText}
@@ -198,8 +201,12 @@ export default function AddSentenceModal({
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2" htmlFor="chineseText">
-                  中文翻译 <span className="text-default-400 text-xs">(可选)</span>
+                <label
+                  className="block text-sm font-medium mb-2"
+                  htmlFor="chineseText"
+                >
+                  中文翻译{" "}
+                  <span className="text-default-400 text-xs">(可选)</span>
                 </label>
                 <Textarea
                   id="chineseText"
@@ -213,14 +220,17 @@ export default function AddSentenceModal({
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2" htmlFor="categoryId">
+                <label
+                  className="block text-sm font-medium mb-2"
+                  htmlFor="categoryId"
+                >
                   分类 <span className="text-red-500">*</span>
                 </label>
                 <div className="flex gap-2">
                   <Select
-                    id="categoryId"
                     isRequired
                     className="flex-1"
+                    id="categoryId"
                     placeholder="选择分类"
                     selectedKeys={
                       formData.categoryId
@@ -283,7 +293,10 @@ export default function AddSentenceModal({
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2" htmlFor="difficulty">
+                <label
+                  className="block text-sm font-medium mb-2"
+                  htmlFor="difficulty"
+                >
                   难度等级
                 </label>
                 <Select
@@ -322,7 +335,12 @@ export default function AddSentenceModal({
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2" htmlFor="notes">备注</label>
+                <label
+                  className="block text-sm font-medium mb-2"
+                  htmlFor="notes"
+                >
+                  备注
+                </label>
                 <Textarea
                   id="notes"
                   maxRows={3}

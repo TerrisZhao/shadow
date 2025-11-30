@@ -22,10 +22,7 @@ export async function POST(request: NextRequest) {
     const duration = formData.get("duration") as string;
 
     if (!audioFile || !sentenceId) {
-      return NextResponse.json(
-        { error: "缺少必要参数" },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: "缺少必要参数" }, { status: 400 });
     }
 
     // 配置 R2
@@ -38,10 +35,7 @@ export async function POST(request: NextRequest) {
       | undefined;
 
     if (!r2AccessKeyId || !r2SecretAccessKey || !r2EndpointEnv) {
-      return NextResponse.json(
-        { error: "R2配置缺失" },
-        { status: 500 },
-      );
+      return NextResponse.json({ error: "R2配置缺失" }, { status: 500 });
     }
 
     // 处理 Endpoint
@@ -63,10 +57,7 @@ export async function POST(request: NextRequest) {
     const bucketName = r2BucketNameEnv || bucketFromEndpoint;
 
     if (!bucketName) {
-      return NextResponse.json(
-        { error: "Bucket名称缺失" },
-        { status: 500 },
-      );
+      return NextResponse.json({ error: "Bucket名称缺失" }, { status: 500 });
     }
 
     // S3 客户端 endpoint
@@ -142,10 +133,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("录音上传失败:", error);
 
-    return NextResponse.json(
-      { error: "录音上传失败" },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "录音上传失败" }, { status: 500 });
   }
 }
 
@@ -187,9 +175,6 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error("获取录音列表失败:", error);
 
-    return NextResponse.json(
-      { error: "获取录音列表失败" },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "获取录音列表失败" }, { status: 500 });
   }
 }

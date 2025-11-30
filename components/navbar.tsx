@@ -124,10 +124,10 @@ export const Navbar = ({ minimal = false }: NavbarProps) => {
             <NavbarMenuItem key={`${item}-${index}`}>
               <Link
                 as={NextLink}
+                className="block w-full py-3 px-3 rounded-lg text-lg hover:bg-default-100"
                 color="foreground"
                 href={item.href}
                 size="lg"
-                className="block w-full py-3 px-3 rounded-lg text-lg hover:bg-default-100"
               >
                 {item.label}
               </Link>

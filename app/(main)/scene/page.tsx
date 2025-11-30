@@ -50,10 +50,7 @@ export default function ScenePage() {
   };
 
   // 获取场景列表
-  const fetchScenes = async (
-    page = 1,
-    tabFilter = "shared",
-  ) => {
+  const fetchScenes = async (page = 1, tabFilter = "shared") => {
     setLoading(true);
     try {
       const params = new URLSearchParams({
@@ -66,6 +63,7 @@ export default function ScenePage() {
 
       if (response.ok) {
         const data = await response.json();
+
         setScenes(data.scenes);
         setHasMore(data.pagination.hasMore);
         setTotalPages(
@@ -100,10 +98,7 @@ export default function ScenePage() {
   };
 
   // 切换收藏状态
-  const toggleFavorite = async (
-    sceneId: number,
-    currentFavorite: boolean,
-  ) => {
+  const toggleFavorite = async (sceneId: number, currentFavorite: boolean) => {
     try {
       const response = await fetch(`/api/scenes/${sceneId}`, {
         method: "PATCH",
@@ -126,6 +121,7 @@ export default function ScenePage() {
         showToast(!currentFavorite ? "已添加到收藏" : "已取消收藏", "success");
       } else {
         const error = await response.json();
+
         showToast(error.error || "操作失败", "error");
       }
     } catch (error) {
@@ -147,6 +143,7 @@ export default function ScenePage() {
         showToast("场景删除成功！", "success");
       } else {
         const error = await response.json();
+
         showToast(error.error || "删除失败", "error");
       }
     } catch (error) {
@@ -188,8 +185,10 @@ export default function ScenePage() {
   const isPrivateScene = (scene: Scene) => {
     if (session?.user && (session.user as any).id) {
       const currentUserId = parseInt((session.user as any).id);
+
       return !scene.isShared && scene.userId === currentUserId;
     }
+
     return false;
   };
 
@@ -289,10 +288,12 @@ export default function ScenePage() {
                       <div className="flex items-center gap-2">
                         <Button
                           isIconOnly
+                          color={scene.isFavorite ? "danger" : "default"}
                           size="sm"
                           variant="light"
-                          color={scene.isFavorite ? "danger" : "default"}
-                          onPress={() => toggleFavorite(scene.id, scene.isFavorite)}
+                          onPress={() =>
+                            toggleFavorite(scene.id, scene.isFavorite)
+                          }
                         >
                           {scene.isFavorite ? (
                             <Heart className="w-4 h-4" />
@@ -302,30 +303,34 @@ export default function ScenePage() {
                         </Button>
                         <Button
                           isIconOnly
+                          color="primary"
                           size="sm"
                           variant="light"
-                          color="primary"
                           onPress={() => router.push(`/scene/${scene.id}`)}
                         >
                           <Eye className="w-4 h-4" />
                         </Button>
-                        {(isPrivateScene(scene) || (isAdmin && scene.isShared)) && (
+                        {(isPrivateScene(scene) ||
+                          (isAdmin && scene.isShared)) && (
                           <Button
                             isIconOnly
+                            color="warning"
                             size="sm"
                             variant="light"
-                            color="warning"
-                            onPress={() => router.push(`/scene/${scene.id}/edit`)}
+                            onPress={() =>
+                              router.push(`/scene/${scene.id}/edit`)
+                            }
                           >
                             <Edit className="w-4 h-4" />
                           </Button>
                         )}
-                        {(isPrivateScene(scene) || (isAdmin && scene.isShared)) && (
+                        {(isPrivateScene(scene) ||
+                          (isAdmin && scene.isShared)) && (
                           <Button
                             isIconOnly
+                            color="danger"
                             size="sm"
                             variant="light"
-                            color="danger"
                             onPress={() => deleteScene(scene.id)}
                           >
                             <Trash2 className="w-4 h-4" />
@@ -347,12 +352,8 @@ export default function ScenePage() {
                       </div>
 
                       <div className="flex justify-between items-center text-sm text-default-400">
-                        <span>
-                          创建时间：{formatDate(scene.createdAt)}
-                        </span>
-                        <span>
-                          更新时间：{formatDate(scene.updatedAt)}
-                        </span>
+                        <span>创建时间：{formatDate(scene.createdAt)}</span>
+                        <span>更新时间：{formatDate(scene.updatedAt)}</span>
                       </div>
                     </div>
                   </CardBody>

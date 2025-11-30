@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { eq, and, isNull, desc } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 
 import { db } from "@/lib/db/drizzle";
 import { loginHistory } from "@/lib/db/schema";
@@ -14,10 +14,7 @@ export async function GET(request: NextRequest) {
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: "未授权访问" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "未授权访问" }, { status: 401 });
     }
 
     const { searchParams } = new URL(request.url);
@@ -64,9 +61,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error("获取登录历史失败:", error);
-    return NextResponse.json(
-      { error: "服务器内部错误" },
-      { status: 500 }
-    );
+
+    return NextResponse.json({ error: "服务器内部错误" }, { status: 500 });
   }
 }

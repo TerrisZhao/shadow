@@ -3,8 +3,8 @@ import { Metadata, Viewport } from "next";
 import clsx from "clsx";
 
 import { Providers } from "./providers";
-import LoginHistoryRecorder from "@/components/login-history-recorder";
 
+import LoginHistoryRecorder from "@/components/login-history-recorder";
 import { siteConfig } from "@/config/site";
 import { fontSans } from "@/config/fonts";
 
