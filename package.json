@@ -13,7 +13,6 @@
     "db:studio": "drizzle-kit studio",
     "db:init": "tsx scripts/init-db.ts",
     "db:init-categories": "tsx scripts/init-categories.ts",
-    "ai:test": "tsx scripts/test-ai.ts",
     "import:interview": "tsx scripts/import-interview-sentences.ts"
   },
   "dependencies": {

@@ -31,12 +31,10 @@ import {
   Mic,
   ChevronDown,
   ChevronUp,
-  Bot,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
 
 import EditSentenceModal from "./edit-sentence-modal";
-import AIAssistant from "./ai-assistant";
 
 interface Category {
   id: number;
@@ -189,7 +187,6 @@ export default function SentenceCard({
     recordingId: number;
     sentenceId: number;
   } | null>(null);
-  const [aiAssistantOpen, setAiAssistantOpen] = useState(false);
   const [deletingSentence, setDeletingSentence] = useState(false);
   const [togglingFavorite, setTogglingFavorite] = useState(false);
 
@@ -1172,8 +1169,6 @@ export default function SentenceCard({
                           toggleFavorite(sentence.id, sentence.isFavorite);
                         } else if (key === "edit") {
                           openEditModal(sentence);
-                        } else if (key === "ai") {
-                          setAiAssistantOpen(true);
                         } else if (key === "generate-audio") {
                           generateAudio(sentence.id, sentence.englishText);
                         }
@@ -1227,12 +1222,6 @@ export default function SentenceCard({
                           </div>
                         </DropdownItem>
                       ) : null}
-                      <DropdownItem key="ai">
-                        <div className="flex items-center gap-2">
-                          <Bot className="w-4 h-4" />
-                          <span>AI 学习助手</span>
-                        </div>
-                      </DropdownItem>
                       {currentIsPrivateSentence(sentence) ||
                       (currentIsAdmin && sentence.isShared) ? (
                         <DropdownItem key="delete" className="text-danger">
@@ -1674,13 +1663,6 @@ export default function SentenceCard({
           </ModalFooter>
         </ModalContent>
       </Modal>
-
-      {/* AI 学习助手模态框 */}
-      <AIAssistant
-        isOpen={aiAssistantOpen}
-        sentence={sentence.englishText}
-        onClose={() => setAiAssistantOpen(false)}
-      />
     </div>
   );
 }

@@ -75,11 +75,12 @@ export const sendMessage = async (
     model?: string;
     temperature?: number;
     maxTokens?: number;
-  }
+  },
 ) => {
   try {
     const model = options ? createChatModel(options) : chatModel;
     const response = await model.invoke(messages);
+
     return response.content as string;
   } catch (error) {
     console.error("OpenAI API 调用失败:", error);
@@ -98,17 +99,25 @@ export const analyzeSentence = async (sentence: string) => {
 };
 
 // 工具函数：翻译句子
-export const translateSentence = async (sentence: string, targetLang: "zh" | "en" = "zh") => {
+export const translateSentence = async (
+  sentence: string,
+  targetLang: "zh" | "en" = "zh",
+) => {
   const messages = [
     systemMessages.translator,
-    new HumanMessage(`请将以下句子翻译成${targetLang === "zh" ? "中文" : "英文"}：${sentence}`),
+    new HumanMessage(
+      `请将以下句子翻译成${targetLang === "zh" ? "中文" : "英文"}：${sentence}`,
+    ),
   ];
 
   return await sendMessage(messages);
 };
 
 // 工具函数：获取学习建议
-export const getLearningAdvice = async (sentence: string, userLevel: "beginner" | "intermediate" | "advanced" = "intermediate") => {
+export const getLearningAdvice = async (
+  sentence: string,
+  userLevel: "beginner" | "intermediate" | "advanced" = "intermediate",
+) => {
   const messages = [
     systemMessages.englishTutor,
     new HumanMessage(`
