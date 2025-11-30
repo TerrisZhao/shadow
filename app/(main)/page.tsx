@@ -16,7 +16,7 @@ import {
 
 import { title, subtitle } from "@/components/primitives";
 
-const MotionCard = motion(Card);
+const MotionCard = motion.create(Card);
 const MotionDiv = motion.div;
 
 export default function Home() {
@@ -37,7 +37,6 @@ export default function Home() {
       y: 0,
       transition: {
         duration: 0.5,
-        ease: "easeOut",
       },
     },
   };
