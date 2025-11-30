@@ -6,7 +6,7 @@ import { compare } from "bcryptjs";
 
 import { db } from "@/lib/db/drizzle";
 import { users, loginHistory } from "@/lib/db/schema";
-import { parseUserAgent, getClientIP } from "@/lib/utils/device-parser";
+import { parseUserAgent } from "@/lib/utils/device-parser";
 
 /**
  * 记录登录历史
@@ -16,11 +16,11 @@ async function recordLoginHistory(
   userAgent: string,
   ipAddress: string | null,
   isSuccessful: boolean = true,
-  failureReason?: string
+  failureReason?: string,
 ) {
   try {
     const { deviceType, browser, os } = parseUserAgent(userAgent);
-    
+
     await db.insert(loginHistory).values({
       userId,
       ipAddress,
@@ -45,12 +45,13 @@ function getClientInfo(req: any) {
   const forwarded = req?.headers?.["x-forwarded-for"];
   const realIP = req?.headers?.["x-real-ip"];
   const cfConnectingIP = req?.headers?.["cf-connecting-ip"];
-  
+
   let ipAddress = null;
+
   if (cfConnectingIP) ipAddress = cfConnectingIP;
   else if (realIP) ipAddress = realIP;
   else if (forwarded) ipAddress = forwarded.split(",")[0].trim();
-  
+
   return { userAgent, ipAddress };
 }
 
@@ -123,21 +124,24 @@ const authOptions = {
 
         if (existingUser.length === 0) {
           // 创建新用户
-          const newUser = await db.insert(users).values({
-            email: user.email!,
-            name: user.name || undefined,
-            provider: account.provider,
-            providerId: user.id,
-            passwordHash: null,
-            role: "user",
-          }).returning({ id: users.id });
+          const newUser = await db
+            .insert(users)
+            .values({
+              email: user.email!,
+              name: user.name || undefined,
+              provider: account.provider,
+              providerId: user.id,
+              passwordHash: null,
+              role: "user",
+            })
+            .returning({ id: users.id });
 
           // 记录登录历史
           if (newUser.length > 0) {
             await recordLoginHistory(
               newUser[0].id,
               user.userAgent || "Unknown",
-              user.ipAddress || null
+              user.ipAddress || null,
             );
           }
         } else {
@@ -162,7 +166,7 @@ const authOptions = {
           await recordLoginHistory(
             existingUserData.id,
             user.userAgent || "Unknown",
-            user.ipAddress || null
+            user.ipAddress || null,
           );
         }
 
@@ -219,7 +223,9 @@ const authOptions = {
         const dbUser = await db
           .select()
           .from(users)
-          .where(and(eq(users.id, parseInt(token.sub)), isNull(users.deletedAt)))
+          .where(
+            and(eq(users.id, parseInt(token.sub)), isNull(users.deletedAt)),
+          )
           .limit(1);
 
         if (dbUser.length > 0) {

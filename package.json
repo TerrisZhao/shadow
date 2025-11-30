@@ -1,5 +1,5 @@
 {
-  "name": "next-app-template",
+  "name": "shadow-english",
   "version": "0.0.1",
   "private": true,
   "scripts": {
@@ -9,11 +9,7 @@
     "lint": "eslint --fix",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "db:push": "drizzle-kit push",
-    "db:studio": "drizzle-kit studio",
-    "db:init": "tsx scripts/init-db.ts",
-    "db:init-categories": "tsx scripts/init-categories.ts",
-    "import:interview": "tsx scripts/import-interview-sentences.ts"
+    "ai:test": "tsx scripts/test-ai.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.887.0",
