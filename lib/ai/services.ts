@@ -4,6 +4,7 @@ import {
   translatorPrompt,
   learningAdvicePrompt,
   generalChatPrompt,
+  itQuestionTranslatorPrompt,
 } from "./prompts";
 
 /**
@@ -112,5 +113,44 @@ export async function getLearningAdvice(
   } catch (error) {
     console.error("获取学习建议失败:", error);
     throw new Error("学习建议服务暂时不可用，请稍后重试");
+  }
+}
+
+/**
+ * IT面试题翻译结果
+ */
+export interface ITQuestionTranslation {
+  english: string;
+  note?: string;
+}
+
+/**
+ * 翻译IT面试题（中文翻译成英文）
+ * @param question 中文IT面试题
+ * @returns 翻译结果（JSON格式）
+ */
+export async function translateITQuestion(
+  question: string,
+): Promise<ITQuestionTranslation> {
+  try {
+    const model = getChatModel();
+    const prompt = await itQuestionTranslatorPrompt.formatMessages({
+      question,
+    });
+    const response = await model.invoke(prompt);
+
+    // 解析JSON响应
+    const content = response.content as string;
+    // 尝试提取JSON（可能包含markdown代码块）
+    const jsonMatch = content.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      throw new Error("模型返回的不是有效的JSON格式");
+    }
+
+    const result = JSON.parse(jsonMatch[0]) as ITQuestionTranslation;
+    return result;
+  } catch (error) {
+    console.error("IT面试题翻译失败:", error);
+    throw new Error("IT面试题翻译服务暂时不可用，请稍后重试");
   }
 }
