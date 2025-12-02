@@ -557,7 +557,6 @@ export default function PracticePage() {
                   {/* 右侧：下一题 */}
                   <Button
                     color="primary"
-                    endContent={<SkipForward className="w-5 h-5" />}
                     isLoading={loading}
                     size="lg"
                     onPress={handleNext}
