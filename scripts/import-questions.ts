@@ -30,7 +30,7 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import * as schema from "../lib/db/schema";
 import { sentences, tags, sentenceTags, categories } from "../lib/db/schema";
-import { translateITQuestion } from "../lib/ai/services";
+import { translateChineseToEnglish } from "../lib/translator/deepl";
 import { eq, and, sql } from "drizzle-orm";
 
 // 直接创建数据库连接（避免使用可能为 null 的 db）
@@ -176,21 +176,21 @@ async function importQuestion(
   console.log(`\n正在处理: ${question.title}`);
 
   try {
-    // 1. 调用AI翻译服务
+    // 1. 调用 DeepL 翻译服务
     console.log("  → 正在翻译...");
-    const translation = await translateITQuestion(question.title);
-    console.log(`  ✓ 翻译完成: ${translation.english}`);
+    const englishText = await translateChineseToEnglish(question.title);
+    console.log(`  ✓ 翻译完成: ${englishText}`);
 
     // 2. 插入句子
     const insertedSentence = await db
       .insert(sentences)
       .values({
-        englishText: translation.english,
+        englishText: englishText,
         chineseText: question.title,
         categoryId,
         userId,
         difficulty: mapDifficulty(question.difficulty),
-        notes: translation.note || "",
+        notes: "", // DeepL 不提供翻译说明
         isShared: false,
       })
       .returning({ id: sentences.id });
