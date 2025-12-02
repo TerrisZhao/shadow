@@ -110,7 +110,17 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // 先查询句子列表，并检查当前用户是否收藏
+    // 先获取总记录数
+    const totalCountResult = await db
+      .select({ count: count() })
+      .from(sentences)
+      .innerJoin(categories, eq(sentences.categoryId, categories.id))
+      .where(and(...whereConditions));
+
+    const total = Number(totalCountResult[0]?.count || 0);
+    const totalPages = Math.ceil(total / limit);
+
+    // 查询当前页的句子列表，并检查当前用户是否收藏
     const sentencesList = await db
       .select({
         id: sentences.id,
@@ -180,7 +190,9 @@ export async function GET(request: NextRequest) {
       pagination: {
         page,
         limit,
-        hasMore: result.length === limit,
+        total,
+        totalPages,
+        hasMore: page < totalPages,
       },
     });
   } catch (error) {

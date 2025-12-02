@@ -195,10 +195,7 @@ export default function SentenceList({ tab = "shared" }: SentenceListProps) {
 
         setSentences(data.sentences);
         setHasMore(data.pagination.hasMore);
-        setTotalPages(
-          Math.ceil(data.sentences.length / limit) +
-            (data.pagination.hasMore ? 1 : 0),
-        );
+        setTotalPages(data.pagination.totalPages || 1);
       }
     } catch (error) {
     } finally {
