@@ -8,6 +8,7 @@ import {
   categories,
   recordings,
   userSentenceFavorites,
+  sentenceTags,
 } from "@/lib/db/schema";
 import { authOptions } from "@/lib/auth/config";
 import { generateTTS } from "@/lib/tts/generator";
@@ -51,6 +52,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const categoryId = searchParams.get("categoryId");
     const difficulty = searchParams.get("difficulty");
+    const tagId = searchParams.get("tagId"); // 标签 ID
     const search = searchParams.get("search"); // 搜索关键词
     const tab = searchParams.get("tab") || "shared"; // shared, custom, favorite
     const page = parseInt(searchParams.get("page") || "1");
@@ -106,6 +108,23 @@ export async function GET(request: NextRequest) {
           sql`${sentences.englishText} ILIKE ${searchTerm}`,
           sql`${sentences.chineseText} ILIKE ${searchTerm}`,
           sql`${sentences.notes} ILIKE ${searchTerm}`,
+        ),
+      );
+    }
+
+    // 添加标签筛选条件
+    if (tagId) {
+      whereConditions.push(
+        exists(
+          db
+            .select()
+            .from(sentenceTags)
+            .where(
+              and(
+                eq(sentenceTags.sentenceId, sentences.id),
+                eq(sentenceTags.tagId, parseInt(tagId)),
+              ),
+            ),
         ),
       );
     }
