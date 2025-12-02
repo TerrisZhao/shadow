@@ -148,7 +148,6 @@ function PracticeHistoryContent() {
         </div>
         <Button
           variant="flat"
-          startContent={<ArrowLeft className="w-4 h-4" />}
           onPress={handleBack}
         >
           继续练习
