@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Card, CardBody, CardHeader } from "@heroui/card";
 import { Button } from "@heroui/button";
@@ -27,7 +27,7 @@ const difficultyLabels: Record<string, string> = {
   hard: "困难",
 };
 
-export default function PracticeHistoryPage() {
+function PracticeHistoryContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [sentences, setSentences] = useState<Sentence[]>([]);
@@ -231,5 +231,19 @@ export default function PracticeHistoryPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function PracticeHistoryPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
+          <Spinner size="lg" />
+        </div>
+      }
+    >
+      <PracticeHistoryContent />
+    </Suspense>
   );
 }
