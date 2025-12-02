@@ -1,11 +1,73 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { eq, and } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 
 import { db } from "@/lib/db/drizzle";
-import { sentences, userSentenceFavorites } from "@/lib/db/schema";
+import { sentences, categories, userSentenceFavorites } from "@/lib/db/schema";
 import { authOptions } from "@/lib/auth/config";
 import { extractKeyFromUrl, deleteFromR2 } from "@/lib/utils/r2-client";
+
+// 获取单个句子详情
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "未授权" }, { status: 401 });
+    }
+
+    const resolvedParams = await params;
+    const sentenceId = parseInt(resolvedParams.id);
+
+    if (isNaN(sentenceId)) {
+      return NextResponse.json({ error: "无效的句子ID" }, { status: 400 });
+    }
+
+    const currentUserId = parseInt(session.user.id);
+
+    // 查询句子详情，包含分类信息
+    const sentenceData = await db
+      .select({
+        id: sentences.id,
+        englishText: sentences.englishText,
+        chineseText: sentences.chineseText,
+        difficulty: sentences.difficulty,
+        notes: sentences.notes,
+        isShared: sentences.isShared,
+        audioUrl: sentences.audioUrl,
+        userId: sentences.userId,
+        createdAt: sentences.createdAt,
+        updatedAt: sentences.updatedAt,
+        category: {
+          id: categories.id,
+          name: categories.name,
+          color: categories.color,
+        },
+        isFavorite: sql<boolean>`EXISTS (
+          SELECT 1 FROM ${userSentenceFavorites}
+          WHERE ${userSentenceFavorites.sentenceId} = ${sentences.id}
+          AND ${userSentenceFavorites.userId} = ${currentUserId}
+        )`,
+      })
+      .from(sentences)
+      .innerJoin(categories, eq(sentences.categoryId, categories.id))
+      .where(eq(sentences.id, sentenceId))
+      .limit(1);
+
+    if (sentenceData.length === 0) {
+      return NextResponse.json({ error: "句子不存在" }, { status: 404 });
+    }
+
+    return NextResponse.json({
+      sentence: sentenceData[0],
+    });
+  } catch (error) {
+    return NextResponse.json({ error: "获取句子失败" }, { status: 500 });
+  }
+}
 
 // 更新单个句子（PATCH用于部分更新）
 export async function PATCH(

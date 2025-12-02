@@ -14,6 +14,10 @@ export const siteConfig = {
       href: "/scene",
     },
     {
+      label: "练习",
+      href: "/practice",
+    },
+    {
       label: "统计",
       href: "/dashboard",
     },
@@ -26,6 +30,10 @@ export const siteConfig = {
     {
       label: "场景",
       href: "/scene",
+    },
+    {
+      label: "练习",
+      href: "/practice",
     },
     {
       label: "统计",
