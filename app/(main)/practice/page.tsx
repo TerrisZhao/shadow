@@ -4,7 +4,6 @@ import { useState, useEffect, useRef, Fragment } from "react";
 import { Button } from "@heroui/button";
 import { Select, SelectItem } from "@heroui/select";
 import { Switch } from "@heroui/switch";
-import { Card, CardBody } from "@heroui/card";
 import { Divider } from "@heroui/divider";
 import { addToast } from "@heroui/toast";
 import { motion, AnimatePresence } from "framer-motion";
@@ -63,6 +62,7 @@ export default function PracticePage() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [perfectMatch, setPerfectMatch] = useState(false);
   const similarityRef = useRef<HTMLSpanElement | null>(null);
+  const [showEnglishManually, setShowEnglishManually] = useState(false);
 
   // 加载分类列表
   useEffect(() => {
@@ -119,6 +119,7 @@ export default function PracticePage() {
       setUserTranscript("");
       setHasSpoken(false);
       setPerfectMatch(false);
+      setShowEnglishManually(false);
     } catch (error: any) {
       addToast({
         title: error.message || "获取句子失败",
@@ -334,72 +335,76 @@ export default function PracticePage() {
   // 配置界面
   if (!hasStarted) {
     return (
-      <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
-        <div className="w-full max-w-2xl">
-          <Card className="hover:shadow-md transition-shadow">
-            <CardBody className="gap-6 p-8">
-              <div className="text-center mb-4">
-                <h1 className="text-3xl font-bold mb-2">练习模式</h1>
-                <p className="text-default-500">
-                  选择练习条件，开始你的英语口语练习之旅
-                </p>
-              </div>
+      <div className="flex flex-col h-full overflow-hidden">
+        {/* 内容区域 */}
+        <div className="flex-1 flex items-center justify-center overflow-y-auto">
+          <div className="w-full max-w-2xl">
+            <div className="text-center mb-8">
+              <h1 className="text-3xl font-bold mb-2">练习模式</h1>
+              <p className="text-default-500">
+                选择练习条件，开始你的英语口语练习之旅
+              </p>
+            </div>
 
-              <Divider />
+            <Divider className="mb-8" />
 
-              <div className="space-y-6">
-                <Select
-                  label="选择难度"
-                  placeholder="请选择难度"
-                  selectedKeys={[selectedDifficulty]}
-                  onChange={(e) => setSelectedDifficulty(e.target.value)}
-                >
-                  {difficultyOptions.map((option) => (
-                    <SelectItem key={option.value}>{option.label}</SelectItem>
-                  ))}
-                </Select>
-
-                <Select
-                  label="选择分类"
-                  placeholder="请选择分类"
-                  selectedKeys={[selectedCategory]}
-                  onChange={(e) => setSelectedCategory(e.target.value)}
-                >
-                  <Fragment>
-                    <SelectItem key="all">全部分类</SelectItem>
-                    {categories.map((category) => (
-                      <SelectItem key={category.id.toString()}>
-                        {category.name}
-                      </SelectItem>
-                    ))}
-                  </Fragment>
-                </Select>
-
-                <div className="flex items-center justify-between p-4 bg-default-100 rounded-lg">
-                  <div>
-                    <p className="font-medium">显示英文原句</p>
-                    <p className="text-sm text-default-500">
-                      开启后会在开始时显示英文，关闭则只显示中文
-                    </p>
-                  </div>
-                  <Switch
-                    isSelected={showEnglish}
-                    onValueChange={setShowEnglish}
-                  />
-                </div>
-              </div>
-
-              <Button
-                className="w-full font-semibold"
-                color="primary"
-                size="lg"
-                startContent={<Play className="w-5 h-5" />}
-                onPress={handleStart}
+            <div className="space-y-6">
+              <Select
+                label="选择难度"
+                placeholder="请选择难度"
+                selectedKeys={[selectedDifficulty]}
+                onChange={(e) => setSelectedDifficulty(e.target.value)}
               >
-                开始练习
-              </Button>
-            </CardBody>
-          </Card>
+                {difficultyOptions.map((option) => (
+                  <SelectItem key={option.value}>{option.label}</SelectItem>
+                ))}
+              </Select>
+
+              <Select
+                label="选择分类"
+                placeholder="请选择分类"
+                selectedKeys={[selectedCategory]}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+              >
+                <Fragment>
+                  <SelectItem key="all">全部分类</SelectItem>
+                  {categories.map((category) => (
+                    <SelectItem key={category.id.toString()}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </Fragment>
+              </Select>
+
+              <div className="flex items-center justify-between p-4 bg-default-100 rounded-lg">
+                <div>
+                  <p className="font-medium">显示英文原句</p>
+                  <p className="text-sm text-default-500">
+                    开启后会在开始时显示英文，关闭则只显示中文
+                  </p>
+                </div>
+                <Switch
+                  isSelected={showEnglish}
+                  onValueChange={setShowEnglish}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 底部按钮固定区域 */}
+        <div className="bg-background">
+          <div className="max-w-2xl mx-auto py-4 flex justify-center">
+            <Button
+              className="font-semibold"
+              color="primary"
+              size="lg"
+              startContent={<Play className="w-5 h-5" />}
+              onPress={handleStart}
+            >
+              开始练习
+            </Button>
+          </div>
         </div>
       </div>
     );
@@ -407,70 +412,81 @@ export default function PracticePage() {
 
   // 练习界面
   return (
-    <div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
+    <div className="flex flex-col h-full overflow-hidden">
       <AnimatePresence mode="wait">
         {currentSentence && (
           <motion.div
             key={currentSentence.id}
             animate={{ opacity: 1, y: 0 }}
-            className="w-full max-w-4xl"
             exit={{ opacity: 0, y: -20 }}
             initial={{ opacity: 0, y: 20 }}
             transition={{ duration: 0.3 }}
+            className="flex flex-col h-full"
           >
-            <Card className="hover:shadow-md transition-shadow">
-              <CardBody className="gap-6 p-8">
-                {/* 顶部信息 */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span
-                      className="px-3 py-1 rounded-full text-sm font-medium"
-                      style={{
-                        backgroundColor: currentSentence.category.color + "20",
-                        color: currentSentence.category.color,
-                      }}
+            {/* 内容区域 */}
+            <div className="flex-1 flex flex-col overflow-y-auto py-6">
+              {/* 顶部信息 */}
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <span
+                    className="px-3 py-1 rounded-full text-sm font-medium"
+                    style={{
+                      backgroundColor: currentSentence.category.color + "20",
+                      color: currentSentence.category.color,
+                    }}
+                  >
+                    {currentSentence.category.name}
+                  </span>
+                  <span className="px-3 py-1 rounded-full text-sm font-medium bg-default-100">
+                    {difficultyLabels[currentSentence.difficulty] ||
+                      currentSentence.difficulty}
+                  </span>
+                </div>
+                <div className="text-sm text-default-500">
+                  已练习: {practiceHistory.length} 句
+                </div>
+              </div>
+
+              <Divider className="mb-6" />
+
+              {/* 中文句子 - 固定在顶部 */}
+              <div className="text-center mb-8">
+                <div className="flex items-center justify-center gap-3">
+                  <p className="text-2xl font-medium text-default-700">
+                    {currentSentence.chineseText || "无中文翻译"}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    {currentSentence.audioUrl && (
+                      <Button
+                        isIconOnly
+                        className="min-w-unit-8 w-8 h-8"
+                        color={isPlayingAudio ? "primary" : "default"}
+                        size="sm"
+                        variant="flat"
+                        onPress={handlePlayAudio}
+                      >
+                        <Volume2
+                          className={`w-4 h-4 ${isPlayingAudio ? "animate-pulse" : ""}`}
+                        />
+                      </Button>
+                    )}
+                    <Button
+                      size="sm"
+                      variant="flat"
+                      color={showEnglishManually ? "primary" : "default"}
+                      onPress={() => setShowEnglishManually(!showEnglishManually)}
                     >
-                      {currentSentence.category.name}
-                    </span>
-                    <span className="px-3 py-1 rounded-full text-sm font-medium bg-default-100">
-                      {difficultyLabels[currentSentence.difficulty] ||
-                        currentSentence.difficulty}
-                    </span>
-                  </div>
-                  <div className="text-sm text-default-500">
-                    已练习: {practiceHistory.length} 句
+                      {showEnglishManually ? "隐藏英文" : "显示英文"}
+                    </Button>
                   </div>
                 </div>
+              </div>
 
-                <Divider />
-
-                {/* 句子显示区域 */}
-                <div className="space-y-6 min-h-[200px]">
-                  {/* 中文句子 - 始终显示 */}
-                  <div className="text-center">
-                    <div className="flex items-center justify-center gap-3">
-                      <p className="text-2xl font-medium text-default-700">
-                        {currentSentence.chineseText || "无中文翻译"}
-                      </p>
-                      {currentSentence.audioUrl && (
-                        <Button
-                          isIconOnly
-                          className="min-w-unit-8 w-8 h-8"
-                          color={isPlayingAudio ? "primary" : "default"}
-                          size="sm"
-                          variant="flat"
-                          onPress={handlePlayAudio}
-                        >
-                          <Volume2
-                            className={`w-4 h-4 ${isPlayingAudio ? "animate-pulse" : ""}`}
-                          />
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* 英文句子 - 根据设置显示或在录音结束后显示 */}
-                  {(showEnglish || hasSpoken) && (
+              {/* 其他内容区域 - 垂直居中 */}
+              <div className="flex-1 flex items-center justify-center">
+                <div className="w-full max-w-4xl space-y-6">
+                  {/* 英文句子 - 根据设置显示或在录音结束后显示或手动切换显示 */}
+                  {(showEnglish || hasSpoken || showEnglishManually) && (
                     <motion.div
                       animate={{ opacity: 1, height: "auto" }}
                       className="text-center"
@@ -490,7 +506,7 @@ export default function PracticePage() {
                       initial={{ opacity: 0, y: 10 }}
                     >
                       <Divider />
-                      <div className="bg-default-50 p-4 rounded-lg">
+                      <div className="bg-default-50 p-4 rounded-lg text-center">
                         <p className="text-sm text-default-500 mb-1">
                           你的发音：
                         </p>
@@ -499,9 +515,6 @@ export default function PracticePage() {
 
                       {/* 相似度显示 */}
                       <div className="flex items-center justify-center gap-3">
-                        <span className="text-sm text-default-500">
-                          匹配度：
-                        </span>
                         <motion.span
                           ref={similarityRef}
                           animate={
@@ -531,11 +544,13 @@ export default function PracticePage() {
                     </motion.div>
                   )}
                 </div>
+              </div>
+            </div>
 
-                <Divider />
-
-                {/* 操作按钮 */}
-                <div className="flex items-center justify-between gap-4">
+            {/* 底部按钮固定区域 */}
+            <div className="border-t border-divider bg-background">
+              <div className="py-4">
+                <div className="flex items-center justify-between gap-4 max-w-4xl mx-auto">
                   {/* 左侧：结束练习 */}
                   <Button
                     className="text-default-400"
@@ -564,8 +579,8 @@ export default function PracticePage() {
                     下一题
                   </Button>
                 </div>
-              </CardBody>
-            </Card>
+              </div>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
