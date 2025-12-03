@@ -205,6 +205,14 @@ export default function PracticePage() {
     });
   };
 
+  const normalizeWord = (word: string): string => {
+    return word
+      .toLowerCase()
+      .replace(/-/g, "")
+      .replace(/[^\w\s]|_/g, "")
+      .trim();
+  };
+
   const calculateSimilarity = (str1: string, str2: string): number => {
     // 转换为小写，移除所有标点符号（包括连字符），只保留字母、数字和空格
     const s1 = str1
@@ -242,10 +250,38 @@ export default function PracticePage() {
     return Math.round((matches / maxLen) * 100);
   };
 
+  // 获取原句中每个单词的匹配状态
+  const getWordMatchStatus = (originalText: string, userText: string) => {
+    if (!userText) return [];
+
+    const originalWords = originalText.split(" ");
+    const userWords = userText
+      .toLowerCase()
+      .replace(/-/g, "")
+      .replace(/[^\w\s]|_/g, "")
+      .split(" ")
+      .filter((w) => w.length > 0);
+
+    return originalWords.map((word) => {
+      const normalizedWord = normalizeWord(word);
+      const isMatched = userWords.includes(normalizedWord);
+      
+      return {
+        original: word,
+        isMatched,
+      };
+    });
+  };
+
   const similarity =
     currentSentence && userTranscript
       ? calculateSimilarity(currentSentence.englishText, userTranscript)
       : 0;
+
+  const wordMatchStatus =
+    currentSentence && userTranscript
+      ? getWordMatchStatus(currentSentence.englishText, userTranscript)
+      : [];
 
   // 触发烟花效果
   const triggerConfetti = () => {
@@ -492,9 +528,25 @@ export default function PracticePage() {
                       className="text-center"
                       initial={{ opacity: 0, height: 0 }}
                     >
-                      <p className="text-xl text-primary font-medium">
-                        {currentSentence.englishText}
-                      </p>
+                      {hasSpoken && userTranscript ? (
+                        // 如果已经说过话，显示带标记的句子
+                        <p className="text-xl font-medium">
+                          {wordMatchStatus.map((wordStatus, index) => (
+                            <span
+                              key={index}
+                              className={wordStatus.isMatched ? "text-primary" : "text-danger"}
+                            >
+                              {wordStatus.original}
+                              {index < wordMatchStatus.length - 1 ? " " : ""}
+                            </span>
+                          ))}
+                        </p>
+                      ) : (
+                        // 否则正常显示
+                        <p className="text-xl text-primary font-medium">
+                          {currentSentence.englishText}
+                        </p>
+                      )}
                     </motion.div>
                   )}
 
