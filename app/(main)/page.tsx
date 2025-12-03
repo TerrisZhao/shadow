@@ -46,7 +46,7 @@ export default function Home() {
       {/* Hero Section */}
       <MotionDiv
         animate="visible"
-        className="flex flex-col items-center justify-center gap-6 text-center max-w-4xl px-6 min-h-screen"
+        className="flex flex-col items-center justify-center gap-6 text-center w-full px-6 min-h-screen bg-gradient-to-br from-blue-200 via-purple-200 to-blue-100 dark:from-blue-950/20 dark:via-purple-950/20 dark:to-blue-950/20 rounded-3xl"
         initial="hidden"
         variants={containerVariants}
       >
