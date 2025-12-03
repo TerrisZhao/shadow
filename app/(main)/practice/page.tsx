@@ -342,6 +342,26 @@ export default function PracticePage() {
     }
   }, [similarity]);
 
+  // 初始化语音列表（Safari/iOS 需要）
+  useEffect(() => {
+    // Safari 需要先触发 getVoices 来加载语音列表
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      // 立即获取一次
+      window.speechSynthesis.getVoices();
+      
+      // 监听 voiceschanged 事件（Safari 需要）
+      const handleVoicesChanged = () => {
+        window.speechSynthesis.getVoices();
+      };
+      
+      window.speechSynthesis.addEventListener('voiceschanged', handleVoicesChanged);
+      
+      return () => {
+        window.speechSynthesis.removeEventListener('voiceschanged', handleVoicesChanged);
+      };
+    }
+  }, []);
+
   // 组件卸载时清理语音合成
   useEffect(() => {
     return () => {
@@ -383,17 +403,39 @@ export default function PracticePage() {
 
   // 使用浏览器 TTS 播放单词发音
   const speakWord = async (word: string, index: number) => {
+    // 清理单词中的标点符号
+    const cleanWord = word.replace(/[^\w]/g, '').toLowerCase();
+
     // 停止当前正在播放的语音
     window.speechSynthesis.cancel();
+
+    // 创建语音合成实例 - 必须在异步操作之前创建，以保持用户交互上下文
+    const utterance = new SpeechSynthesisUtterance(cleanWord);
+    
+    // 设置语言为英语
+    utterance.lang = 'en-US';
+    
+    // 设置语速
+    utterance.rate = 0.8;
+
+    // 获取可用的语音列表，优先使用英语语音（Safari/iOS 需要）
+    const voices = window.speechSynthesis.getVoices();
+    const englishVoice = voices.find(voice => 
+      voice.lang.startsWith('en-') || voice.lang === 'en-US'
+    );
+    
+    if (englishVoice) {
+      utterance.voice = englishVoice;
+    }
+    
+    // 立即播放 - 在用户交互的同步上下文中
+    window.speechSynthesis.speak(utterance);
 
     // 设置当前点击的单词索引
     setClickedWordIndex(index);
     setWordPhonetic("");
 
-    // 清理单词中的标点符号
-    const cleanWord = word.replace(/[^\w]/g, '').toLowerCase();
-
-    // 获取音标
+    // 异步获取音标（不影响语音播放）
     try {
       const response = await fetch(
         `https://api.dictionaryapi.dev/api/v2/entries/en/${cleanWord}`
@@ -414,18 +456,6 @@ export default function PracticePage() {
     } catch (error) {
       // 静默处理错误，不显示任何信息
     }
-
-    // 创建语音合成实例
-    const utterance = new SpeechSynthesisUtterance(cleanWord);
-    
-    // 设置语言为英语
-    utterance.lang = 'en-US';
-    
-    // 设置语速（可选，1.0 是正常速度）
-    utterance.rate = 0.8;
-    
-    // 播放
-    window.speechSynthesis.speak(utterance);
   };
 
   // 配置界面
