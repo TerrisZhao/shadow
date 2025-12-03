@@ -65,7 +65,6 @@ export default function PracticePage() {
   const [showEnglishManually, setShowEnglishManually] = useState(false);
   const [clickedWordIndex, setClickedWordIndex] = useState<number | null>(null);
   const [wordPhonetic, setWordPhonetic] = useState<string>("");
-  const audioContextRef = useRef<AudioContext | null>(null);
 
   // 加载分类列表
   useEffect(() => {
@@ -169,11 +168,6 @@ export default function PracticePage() {
       return;
     }
 
-    // 确保 AudioContext 已初始化并激活（iOS 需要）
-    if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
-      audioContextRef.current.resume();
-    }
-
     // 如果正在播放，则停止
     if (isPlayingAudio && audioRef.current) {
       audioRef.current.pause();
@@ -185,20 +179,7 @@ export default function PracticePage() {
 
     // 创建或重用音频元素
     if (!audioRef.current) {
-      const audio = new Audio();
-      
-      // 设置音频属性，确保使用扬声器播放（移动设备）
-      audio.setAttribute('playsinline', 'true');
-      audio.setAttribute('x-webkit-airplay', 'allow');
-      
-      // 设置音频会话类别为播放（iOS）
-      // 这会让音频从扬声器而不是听筒播放
-      audio.preload = 'auto';
-      
-      // 设置音量，确保被识别为媒体音频
-      audio.volume = 1.0;
-      
-      audioRef.current = audio;
+      audioRef.current = new Audio();
     }
 
     const audio = audioRef.current;
@@ -213,15 +194,17 @@ export default function PracticePage() {
       setIsPlayingAudio(false);
     };
 
-    audio.onerror = () => {
+    audio.onerror = (e) => {
       setIsPlayingAudio(false);
+      console.error("音频播放错误:", e);
       addToast({
         title: "音频播放失败",
         color: "danger",
       });
     };
 
-    audio.play().catch(() => {
+    audio.play().catch((error) => {
+      console.error("音频播放失败:", error);
       addToast({
         title: "音频播放失败",
         color: "danger",
@@ -361,26 +344,8 @@ export default function PracticePage() {
     }
   }, [similarity]);
 
-  // 初始化音频上下文和语音列表（Safari/iOS 需要）
+  // 初始化语音列表（Safari/iOS 需要）
   useEffect(() => {
-    // 初始化 AudioContext（iOS 需要在用户交互后初始化）
-    const initAudioContext = () => {
-      if (!audioContextRef.current) {
-        try {
-          const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
-          if (AudioContext) {
-            audioContextRef.current = new AudioContext();
-            // 恢复音频上下文（如果被暂停）
-            if (audioContextRef.current.state === 'suspended') {
-              audioContextRef.current.resume();
-            }
-          }
-        } catch (error) {
-          console.warn('AudioContext initialization failed:', error);
-        }
-      }
-    };
-
     // Safari 需要先触发 getVoices 来加载语音列表
     if (typeof window !== 'undefined' && window.speechSynthesis) {
       // 立即获取一次
@@ -393,31 +358,16 @@ export default function PracticePage() {
       
       window.speechSynthesis.addEventListener('voiceschanged', handleVoicesChanged);
       
-      // 在首次用户交互时初始化音频上下文
-      const handleFirstInteraction = () => {
-        initAudioContext();
-        document.removeEventListener('touchstart', handleFirstInteraction);
-        document.removeEventListener('click', handleFirstInteraction);
-      };
-      
-      document.addEventListener('touchstart', handleFirstInteraction, { once: true });
-      document.addEventListener('click', handleFirstInteraction, { once: true });
-      
       return () => {
         window.speechSynthesis.removeEventListener('voiceschanged', handleVoicesChanged);
-        document.removeEventListener('touchstart', handleFirstInteraction);
-        document.removeEventListener('click', handleFirstInteraction);
       };
     }
   }, []);
 
-  // 组件卸载时清理语音合成和音频上下文
+  // 组件卸载时清理语音合成
   useEffect(() => {
     return () => {
       window.speechSynthesis.cancel();
-      if (audioContextRef.current) {
-        audioContextRef.current.close();
-      }
     };
   }, []);
 
