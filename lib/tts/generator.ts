@@ -82,7 +82,7 @@ export async function generateTTS(
 
     try {
       endpointUrl = new URL(endpointRaw);
-    } catch (_) {
+    } catch {
       return {
         success: false,
         error: "Invalid R2_ENDPOINT",

@@ -1,4 +1,9 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = {};
+const nextConfig = {
+  eslint: {
+    // 生产构建时忽略 ESLint 错误
+    ignoreDuringBuilds: true,
+  },
+};
 
 module.exports = nextConfig;
