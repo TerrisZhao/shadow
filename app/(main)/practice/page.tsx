@@ -63,6 +63,8 @@ export default function PracticePage() {
   const [perfectMatch, setPerfectMatch] = useState(false);
   const similarityRef = useRef<HTMLSpanElement | null>(null);
   const [showEnglishManually, setShowEnglishManually] = useState(false);
+  const [clickedWordIndex, setClickedWordIndex] = useState<number | null>(null);
+  const [wordPhonetic, setWordPhonetic] = useState<string>("");
 
   // 加载分类列表
   useEffect(() => {
@@ -120,6 +122,8 @@ export default function PracticePage() {
       setHasSpoken(false);
       setPerfectMatch(false);
       setShowEnglishManually(false);
+      setClickedWordIndex(null);
+      setWordPhonetic("");
     } catch (error: any) {
       addToast({
         title: error.message || "获取句子失败",
@@ -155,6 +159,8 @@ export default function PracticePage() {
     setUserTranscript("");
     setHasSpoken(false);
     setPerfectMatch(false);
+    setClickedWordIndex(null);
+    setWordPhonetic("");
   };
 
   const handlePlayAudio = () => {
@@ -336,6 +342,13 @@ export default function PracticePage() {
     }
   }, [similarity]);
 
+  // 组件卸载时清理语音合成
+  useEffect(() => {
+    return () => {
+      window.speechSynthesis.cancel();
+    };
+  }, []);
+
   const getSimilarityColor = (score: number) => {
     if (score === 100) return "secondary"; // 紫色
     if (score >= 80) return "success";
@@ -366,6 +379,53 @@ export default function PracticePage() {
     } else {
       router.push("/sentence");
     }
+  };
+
+  // 使用浏览器 TTS 播放单词发音
+  const speakWord = async (word: string, index: number) => {
+    // 停止当前正在播放的语音
+    window.speechSynthesis.cancel();
+
+    // 设置当前点击的单词索引
+    setClickedWordIndex(index);
+    setWordPhonetic("");
+
+    // 清理单词中的标点符号
+    const cleanWord = word.replace(/[^\w]/g, '').toLowerCase();
+
+    // 获取音标
+    try {
+      const response = await fetch(
+        `https://api.dictionaryapi.dev/api/v2/entries/en/${cleanWord}`
+      );
+      
+      if (response.ok) {
+        const data = await response.json();
+        // 尝试获取音标
+        const phonetic =
+          data[0]?.phonetic ||
+          data[0]?.phonetics?.find((p: any) => p.text)?.text ||
+          "";
+        // 只在有音标时才设置
+        if (phonetic) {
+          setWordPhonetic(phonetic);
+        }
+      }
+    } catch (error) {
+      // 静默处理错误，不显示任何信息
+    }
+
+    // 创建语音合成实例
+    const utterance = new SpeechSynthesisUtterance(cleanWord);
+    
+    // 设置语言为英语
+    utterance.lang = 'en-US';
+    
+    // 设置语速（可选，1.0 是正常速度）
+    utterance.rate = 0.8;
+    
+    // 播放
+    window.speechSynthesis.speak(utterance);
   };
 
   // 配置界面
@@ -530,21 +590,51 @@ export default function PracticePage() {
                     >
                       {hasSpoken && userTranscript ? (
                         // 如果已经说过话，显示带标记的句子
-                        <p className="text-xl font-medium">
+                        <p className="text-xl font-medium mb-8">
                           {wordMatchStatus.map((wordStatus, index) => (
-                            <span
-                              key={index}
-                              className={wordStatus.isMatched ? "text-primary" : "text-danger"}
-                            >
-                              {wordStatus.original}
-                              {index < wordMatchStatus.length - 1 ? " " : ""}
+                            <span key={index} className="inline-block relative mx-0.5 my-1">
+                              <span
+                                className={`${wordStatus.isMatched ? "text-primary" : "text-danger"} cursor-pointer hover:opacity-70 transition-opacity`}
+                                onClick={() => speakWord(wordStatus.original, index)}
+                                title="点击播放发音"
+                              >
+                                {wordStatus.original}
+                              </span>
+                              {clickedWordIndex === index && wordPhonetic && (
+                                <motion.span
+                                  animate={{ opacity: 1, y: 0 }}
+                                  initial={{ opacity: 0, y: -5 }}
+                                  className="absolute left-1/2 -translate-x-1/2 top-[calc(100%)] text-sm text-default-500 whitespace-nowrap pointer-events-none"
+                                >
+                                  {wordPhonetic}
+                                </motion.span>
+                              )}
                             </span>
                           ))}
                         </p>
                       ) : (
                         // 否则正常显示
-                        <p className="text-xl text-primary font-medium">
-                          {currentSentence.englishText}
+                        <p className="text-xl text-primary font-medium mb-8">
+                          {currentSentence.englishText.split(" ").map((word, index) => (
+                            <span key={index} className="inline-block relative mx-0.5 my-1">
+                              <span
+                                className="cursor-pointer hover:opacity-70 transition-opacity"
+                                onClick={() => speakWord(word, index)}
+                                title="点击播放发音"
+                              >
+                                {word}
+                              </span>
+                              {clickedWordIndex === index && wordPhonetic && (
+                                <motion.span
+                                  animate={{ opacity: 1, y: 0 }}
+                                  initial={{ opacity: 0, y: -5 }}
+                                  className="absolute left-1/2 -translate-x-1/2 top-[calc(80%)] text-sm text-default-500 whitespace-nowrap pointer-events-none"
+                                >
+                                  {wordPhonetic}
+                                </motion.span>
+                              )}
+                            </span>
+                          ))}
                         </p>
                       )}
                     </motion.div>
