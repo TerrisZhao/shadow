@@ -80,15 +80,15 @@ export default function Home() {
               开始学习
             </Button>
           </Link>
-          <Link href="/dashboard">
+          <Link href="/practice">
             <Button
               className="font-semibold"
               radius="full"
               size="lg"
-              startContent={<TrendingUp size={20} />}
+              startContent={<Target size={20} />}
               variant="bordered"
             >
-              查看统计
+              练习
             </Button>
           </Link>
         </MotionDiv>

@@ -465,7 +465,7 @@ export default function PracticePage() {
     return (
       <div className="flex flex-col h-full overflow-hidden">
         {/* 内容区域 */}
-        <div className="flex-1 flex items-center justify-center overflow-y-auto">
+        <div className="flex-1 flex justify-center overflow-y-auto">
           <div className="w-full max-w-2xl">
             <div className="text-center mb-8">
               <h1 className="text-3xl font-bold mb-2">练习模式</h1>
