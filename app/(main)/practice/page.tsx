@@ -507,9 +507,6 @@ export default function PracticePage() {
                     >
                       <Divider />
                       <div className="bg-default-50 p-4 rounded-lg text-center">
-                        <p className="text-sm text-default-500 mb-1">
-                          你的发音：
-                        </p>
                         <p className="text-lg font-medium">{userTranscript}</p>
                       </div>
 
@@ -548,7 +545,7 @@ export default function PracticePage() {
             </div>
 
             {/* 底部按钮固定区域 */}
-            <div className="border-t border-divider bg-background">
+            <div className="bg-background">
               <div className="py-4">
                 <div className="flex items-center justify-between gap-4 max-w-4xl mx-auto">
                   {/* 左侧：结束练习 */}
