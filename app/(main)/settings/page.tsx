@@ -320,7 +320,7 @@ export default function SettingsPage() {
                       color="danger"
                       isDisabled={isLoading}
                       variant="light"
-                      onClick={handleCancelEdit}
+                      onPress={handleCancelEdit}
                     >
                       <X size={18} />
                     </Button>
@@ -331,7 +331,7 @@ export default function SettingsPage() {
                       isDisabled={!name.trim()}
                       isLoading={isLoading}
                       variant="light"
-                      onClick={handleUpdateName}
+                      onPress={handleUpdateName}
                     >
                       <Check size={18} />
                     </Button>
@@ -411,7 +411,7 @@ export default function SettingsPage() {
             <Button
               className="w-full justify-start"
               variant="flat"
-              onClick={handleOpenLoginHistory}
+              onPress={handleOpenLoginHistory}
             >
               登录历史
             </Button>
@@ -513,7 +513,7 @@ export default function SettingsPage() {
             )}
           </ModalBody>
           <ModalFooter>
-            <Button variant="flat" onClick={() => setIsLoginHistoryOpen(false)}>
+            <Button variant="flat" onPress={() => setIsLoginHistoryOpen(false)}>
               关闭
             </Button>
           </ModalFooter>

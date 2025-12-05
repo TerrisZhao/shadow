@@ -627,7 +627,7 @@ export default function PracticePage() {
                             <span key={index} className="inline-block relative mx-0.5 my-1">
                               <span
                                 className={`${wordStatus.isMatched ? "text-primary" : "text-danger"} cursor-pointer hover:opacity-70 transition-opacity`}
-                                onClick={() => speakWord(wordStatus.original, index)}
+                                onPress={() => speakWord(wordStatus.original, index)}
                                 title="点击播放发音"
                               >
                                 {wordStatus.original}
@@ -651,7 +651,7 @@ export default function PracticePage() {
                             <span key={index} className="inline-block relative mx-0.5 my-1">
                               <span
                                 className="cursor-pointer hover:opacity-70 transition-opacity"
-                                onClick={() => speakWord(word, index)}
+                                onPress={() => speakWord(word, index)}
                                 title="点击播放发音"
                               >
                                 {word}

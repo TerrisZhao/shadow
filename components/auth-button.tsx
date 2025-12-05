@@ -48,17 +48,17 @@ export function AuthButton() {
           </DropdownItem>
           <DropdownItem
             key="dashboard"
-            onClick={() => router.push("/dashboard")}
+            onPress={() => router.push("/dashboard")}
           >
             仪表板
           </DropdownItem>
-          <DropdownItem key="settings" onClick={() => router.push("/settings")}>
+          <DropdownItem key="settings" onPress={() => router.push("/settings")}>
             设置
           </DropdownItem>
           <DropdownItem
             key="logout"
             color="danger"
-            onClick={() => signOut({ callbackUrl: "/" })}
+            onPress={() => signOut({ callbackUrl: "/" })}
           >
             登出
           </DropdownItem>
@@ -71,7 +71,7 @@ export function AuthButton() {
     <Button
       className="text-sm font-normal text-default-600 bg-default-100"
       variant="flat"
-      onClick={() => signIn()}
+      onPress={() => signIn()}
     >
       登录
     </Button>

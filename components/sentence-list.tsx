@@ -1372,7 +1372,7 @@ export default function SentenceList({ tab = "shared" }: SentenceListProps) {
                               <DropdownItem
                                 key="generate-audio"
                                 isDisabled={generatingAudio === sentence.id}
-                                onClick={() =>
+                                onPress={() =>
                                   generateAudio(
                                     sentence.id,
                                     sentence.englishText,
@@ -1449,7 +1449,7 @@ export default function SentenceList({ tab = "shared" }: SentenceListProps) {
                                   }
                                   size="md"
                                   variant="light"
-                                  onClick={() =>
+                                  onPress={() =>
                                     playAudio(sentence.audioUrl!, sentence.id)
                                   }
                                 >
@@ -1477,7 +1477,7 @@ export default function SentenceList({ tab = "shared" }: SentenceListProps) {
                                 isLoading={uploadingRecording === sentence.id}
                                 size="md"
                                 variant="light"
-                                onClick={() => toggleRecording(sentence.id)}
+                                onPress={() => toggleRecording(sentence.id)}
                               >
                                 {recordingState.get(sentence.id) ||
                                 preparingRecording === sentence.id ? (
@@ -1520,7 +1520,7 @@ export default function SentenceList({ tab = "shared" }: SentenceListProps) {
                                   className="relative w-full h-1.5 bg-default-200 rounded-full cursor-pointer group"
                                   role="slider"
                                   tabIndex={0}
-                                  onClick={(e) => {
+                                  onPress={(e) => {
                                     const rect =
                                       e.currentTarget.getBoundingClientRect();
                                     const offsetX = e.clientX - rect.left;
@@ -1731,7 +1731,7 @@ export default function SentenceList({ tab = "shared" }: SentenceListProps) {
                                           }
                                           size="sm"
                                           variant="flat"
-                                          onClick={() =>
+                                          onPress={() =>
                                             playRecording(
                                               recording.audioUrl,
                                               recording.id,
@@ -1777,7 +1777,7 @@ export default function SentenceList({ tab = "shared" }: SentenceListProps) {
                                         }
                                         size="sm"
                                         variant="light"
-                                        onClick={() =>
+                                        onPress={() =>
                                           openDeleteRecordingConfirm(
                                             recording.id,
                                             sentence.id,

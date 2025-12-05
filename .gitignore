@@ -44,3 +44,4 @@ bun.lockb
 .env
 app.log
 app-error.log
+ios/

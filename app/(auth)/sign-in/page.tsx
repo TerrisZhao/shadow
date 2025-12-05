@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { Button } from "@heroui/button";
 import { Card, CardBody, CardHeader } from "@heroui/card";
+import { Input } from "@heroui/input";
+import { Divider } from "@heroui/divider";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
@@ -55,7 +57,6 @@ export default function SignInPage() {
       <Card className="w-full max-w-md">
         <CardHeader className="flex flex-col gap-1 pb-0 pt-6 px-6">
           <h1 className={title({ size: "sm" })}>登录</h1>
-          <p className="text-small text-default-500">登录到您的账户以继续</p>
         </CardHeader>
         <CardBody className="gap-4 px-6 py-15">
           {error && (
@@ -68,7 +69,7 @@ export default function SignInPage() {
             className="w-full"
             isLoading={isLoading}
             variant="bordered"
-            onClick={handleGoogleSignIn}
+            onPress={handleGoogleSignIn}
           >
             <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
               <path
@@ -91,46 +92,41 @@ export default function SignInPage() {
             使用 Google 登录
           </Button>
 
-          {/* <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4">
             <Divider className="flex-1" />
             <p className="text-tiny text-default-500">或</p>
             <Divider className="flex-1" />
           </div>
 
-          <form onSubmit={handleCredentialsSignIn} className="flex flex-col gap-4">
+          <form
+            className="flex flex-col gap-4"
+            onSubmit={handleCredentialsSignIn}
+          >
             <Input
-              type="email"
+              isRequired
               label="邮箱"
               placeholder="输入您的邮箱"
+              type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              isRequired
             />
             <Input
-              type="password"
+              isRequired
               label="密码"
               placeholder="输入您的密码"
+              type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              isRequired
             />
             <Button
-              type="submit"
               color="primary"
-              isLoading={isLoading}
               isDisabled={!email || !password}
+              isLoading={isLoading}
+              type="submit"
             >
               登录
             </Button>
           </form>
-
-          <div className="text-center text-small text-default-500">
-            默认管理员账户：
-            <br />
-            邮箱: admin@example.com
-            <br />
-            密码: admin123456
-          </div> */}
         </CardBody>
       </Card>
     </div>

@@ -1266,7 +1266,7 @@ export default function SentenceCard({
                             }`}
                             role="button"
                             tabIndex={0}
-                            onClick={() => handleSentenceClick(index)}
+                            onPress={() => handleSentenceClick(index)}
                             onKeyDown={(e) => {
                               if (e.key === "Enter" || e.key === " ") {
                                 e.preventDefault();
@@ -1303,7 +1303,7 @@ export default function SentenceCard({
                       className="relative w-full h-1.5 bg-default-200 rounded-full cursor-pointer group"
                       role="slider"
                       tabIndex={0}
-                      onClick={(e) => {
+                      onPress={(e) => {
                         const rect = e.currentTarget.getBoundingClientRect();
                         const offsetX = e.clientX - rect.left;
                         const percentage = offsetX / rect.width;
@@ -1365,7 +1365,7 @@ export default function SentenceCard({
                     color={playingAudio === sentence.id ? "primary" : "default"}
                     size="md"
                     variant="light"
-                    onClick={() => playAudio(sentence.audioUrl!, sentence.id)}
+                    onPress={() => playAudio(sentence.audioUrl!, sentence.id)}
                   >
                     {playingAudio === sentence.id ? (
                       <Pause className="w-4 h-4" />
@@ -1390,7 +1390,7 @@ export default function SentenceCard({
                   isLoading={uploadingRecording === sentence.id}
                   size="md"
                   variant="light"
-                  onClick={() => toggleRecording(sentence.id)}
+                  onPress={() => toggleRecording(sentence.id)}
                 >
                   <Mic className="w-4 h-4" />
                 </Button>
@@ -1510,7 +1510,7 @@ export default function SentenceCard({
                             }
                             size="sm"
                             variant="flat"
-                            onClick={() =>
+                            onPress={() =>
                               playRecording(recording.audioUrl, recording.id)
                             }
                           >
@@ -1545,7 +1545,7 @@ export default function SentenceCard({
                           isLoading={deletingRecording === recording.id}
                           size="sm"
                           variant="light"
-                          onClick={() =>
+                          onPress={() =>
                             openDeleteRecordingConfirm(
                               recording.id,
                               sentence.id,

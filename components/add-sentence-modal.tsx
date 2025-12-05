@@ -267,7 +267,7 @@ export default function AddSentenceModal({
                   <Button
                     type="button"
                     variant="bordered"
-                    onClick={() => setShowNewCategory(!showNewCategory)}
+                    onPress={() => setShowNewCategory(!showNewCategory)}
                   >
                     {showNewCategory ? "取消" : "新建"}
                   </Button>
@@ -284,7 +284,7 @@ export default function AddSentenceModal({
                     <Button
                       color="primary"
                       type="button"
-                      onClick={handleCreateCategory}
+                      onPress={handleCreateCategory}
                     >
                       创建
                     </Button>

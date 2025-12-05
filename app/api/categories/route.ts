@@ -7,11 +7,18 @@ import { categories, users } from "@/lib/db/schema";
 import { authOptions } from "@/lib/auth/config";
 
 // 获取分类列表
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    // 尝试从 headers 获取（移动端）
+    let userIdStr = request.headers.get("x-user-id");
 
-    if (!session?.user?.id) {
+    // 如果没有，尝试从 session 获取（网页端）
+    if (!userIdStr) {
+      const session = await getServerSession(authOptions);
+      userIdStr = session?.user?.id;
+    }
+
+    if (!userIdStr) {
       return NextResponse.json({ error: "未授权" }, { status: 401 });
     }
 
@@ -22,7 +29,7 @@ export async function GET() {
       .where(inArray(users.role, ["admin", "owner"]));
 
     const adminUserIds = adminUsers.map((user: { id: any }) => user.id);
-    const currentUserId = parseInt(session.user.id);
+    const currentUserId = parseInt(userIdStr);
 
     // 获取预设分类、当前用户自定义分类和管理员创建的分类
     const result = await db
@@ -49,9 +56,16 @@ export async function GET() {
 // 创建新分类
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    // 尝试从 headers 获取（移动端）
+    let userIdStr = request.headers.get("x-user-id");
 
-    if (!session?.user?.id) {
+    // 如果没有，尝试从 session 获取（网页端）
+    if (!userIdStr) {
+      const session = await getServerSession(authOptions);
+      userIdStr = session?.user?.id;
+    }
+
+    if (!userIdStr) {
       return NextResponse.json({ error: "未授权" }, { status: 401 });
     }
 
@@ -62,7 +76,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "分类名称是必填项" }, { status: 400 });
     }
 
-    const currentUserId = parseInt(session.user.id);
+    const currentUserId = parseInt(userIdStr);
 
     // 检查分类名称唯一性
     // 1. 预设分类的名称全局唯一

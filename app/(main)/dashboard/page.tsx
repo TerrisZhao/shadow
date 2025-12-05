@@ -78,7 +78,7 @@ export default function DashboardPage() {
             <Button
               className="mt-4"
               variant="flat"
-              onClick={() => router.push("/profile")}
+              onPress={() => router.push("/profile")}
             >
               编辑资料
             </Button>
@@ -95,21 +95,21 @@ export default function DashboardPage() {
               <Button
                 className="w-full justify-start"
                 variant="flat"
-                onClick={() => router.push("/settings")}
+                onPress={() => router.push("/settings")}
               >
                 设置
               </Button>
               <Button
                 className="w-full justify-start"
                 variant="flat"
-                onClick={() => router.push("/help")}
+                onPress={() => router.push("/help")}
               >
                 帮助中心
               </Button>
               <Button
                 className="w-full justify-start"
                 variant="flat"
-                onClick={() => router.push("/about")}
+                onPress={() => router.push("/about")}
               >
                 关于我们
               </Button>

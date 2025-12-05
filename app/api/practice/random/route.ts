@@ -15,9 +15,16 @@ import { authOptions } from "@/lib/auth/config";
  */
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    // 尝试从 headers 获取（移动端）
+    let userIdStr = request.headers.get("x-user-id");
 
-    if (!session?.user?.id) {
+    // 如果没有，尝试从 session 获取（网页端）
+    if (!userIdStr) {
+      const session = await getServerSession(authOptions);
+      userIdStr = session?.user?.id;
+    }
+
+    if (!userIdStr) {
       return NextResponse.json({ error: "未授权" }, { status: 401 });
     }
 
@@ -26,7 +33,7 @@ export async function GET(request: NextRequest) {
     const categoryId = searchParams.get("categoryId");
     const excludeIdsStr = searchParams.get("excludeIds");
 
-    const currentUserId = parseInt(session.user.id);
+    const currentUserId = parseInt(userIdStr);
 
     // 构建查询条件
     const whereConditions = [
