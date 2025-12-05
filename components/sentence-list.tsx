@@ -1520,7 +1520,7 @@ export default function SentenceList({ tab = "shared" }: SentenceListProps) {
                                   className="relative w-full h-1.5 bg-default-200 rounded-full cursor-pointer group"
                                   role="slider"
                                   tabIndex={0}
-                                  onPress={(e) => {
+                                  onClick={(e) => {
                                     const rect =
                                       e.currentTarget.getBoundingClientRect();
                                     const offsetX = e.clientX - rect.left;

@@ -1266,7 +1266,7 @@ export default function SentenceCard({
                             }`}
                             role="button"
                             tabIndex={0}
-                            onPress={() => handleSentenceClick(index)}
+                            onClick={() => handleSentenceClick(index)}
                             onKeyDown={(e) => {
                               if (e.key === "Enter" || e.key === " ") {
                                 e.preventDefault();
@@ -1303,7 +1303,7 @@ export default function SentenceCard({
                       className="relative w-full h-1.5 bg-default-200 rounded-full cursor-pointer group"
                       role="slider"
                       tabIndex={0}
-                      onPress={(e) => {
+                      onClick={(e) => {
                         const rect = e.currentTarget.getBoundingClientRect();
                         const offsetX = e.clientX - rect.left;
                         const percentage = offsetX / rect.width;
