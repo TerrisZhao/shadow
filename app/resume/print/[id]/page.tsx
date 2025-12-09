@@ -423,10 +423,10 @@ export default async function PrintResumePage({
             </div>
           </div>
 
-          {/* Professional Summary */}
+          {/* Summary */}
           {resumeData.summary && (
             <div className="section">
-              <h2 className="section-title">Professional Summary</h2>
+              <h2 className="section-title">Summary</h2>
               <div className="section-content">{resumeData.summary}</div>
             </div>
           )}

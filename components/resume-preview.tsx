@@ -70,14 +70,14 @@ export const ResumePreview: React.FC<ResumePreviewProps> = ({
         </div>
       </div>
 
-      {/* Professional Summary */}
+      {/* Summary */}
       {data.summary && (
         <div className="mb-6">
           <h2
             className="text-xl font-bold mb-2 pb-1 border-b-2"
             style={{ color: themeColor, borderColor: themeColor }}
           >
-            PROFESSIONAL SUMMARY
+            Summary
           </h2>
           <p className="text-sm leading-relaxed text-gray-800">
             {data.summary}

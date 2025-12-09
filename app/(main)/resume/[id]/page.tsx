@@ -1126,14 +1126,14 @@ export default function ResumeEditPage({
           </CardBody>
         </Card>
 
-        {/* Professional Summary */}
+        {/* Summary */}
         <Card>
           <CardBody className="space-y-4">
-            <h3 className="text-lg font-semibold">Professional Summary</h3>
+            <h3 className="text-lg font-semibold">Summary</h3>
             <Textarea
               label="Summary"
               minRows={4}
-              placeholder="Write a brief professional summary highlighting your key achievements and career goals..."
+              placeholder="Write a brief Summary highlighting your key achievements and career goals..."
               value={resumeData.summary}
               onChange={(e) =>
                 setResumeData({ ...resumeData, summary: e.target.value })

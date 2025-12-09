@@ -47,7 +47,7 @@ export interface ResumeData {
   linkedin?: string;
   github?: string;
 
-  // Professional Summary
+  // Summary
   summary: string;
 
   // Key Skills
