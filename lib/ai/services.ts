@@ -143,11 +143,13 @@ export async function translateITQuestion(
     const content = response.content as string;
     // 尝试提取JSON（可能包含markdown代码块）
     const jsonMatch = content.match(/\{[\s\S]*\}/);
+
     if (!jsonMatch) {
       throw new Error("模型返回的不是有效的JSON格式");
     }
 
     const result = JSON.parse(jsonMatch[0]) as ITQuestionTranslation;
+
     return result;
   } catch (error) {
     console.error("IT面试题翻译失败:", error);

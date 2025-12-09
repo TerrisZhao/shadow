@@ -7,7 +7,7 @@ import { Switch } from "@heroui/switch";
 import { Divider } from "@heroui/divider";
 import { addToast } from "@heroui/toast";
 import { motion, AnimatePresence } from "framer-motion";
-import { Play, SkipForward, Volume2, X } from "lucide-react";
+import { Play, Volume2, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import confetti from "canvas-confetti";
 
@@ -273,7 +273,7 @@ export default function PracticePage() {
     return originalWords.map((word) => {
       const normalizedWord = normalizeWord(word);
       const isMatched = userWords.includes(normalizedWord);
-      
+
       return {
         original: word,
         isMatched,
@@ -304,7 +304,7 @@ export default function PracticePage() {
       particleCount: 100,
       spread: 70,
       origin: { x, y },
-      colors: ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6'],
+      colors: ["#10b981", "#3b82f6", "#f59e0b", "#ef4444", "#8b5cf6"],
     });
 
     // 延迟第二波
@@ -314,7 +314,7 @@ export default function PracticePage() {
         angle: 60,
         spread: 55,
         origin: { x: x - 0.1, y },
-        colors: ['#10b981', '#3b82f6', '#f59e0b'],
+        colors: ["#10b981", "#3b82f6", "#f59e0b"],
       });
     }, 150);
 
@@ -325,7 +325,7 @@ export default function PracticePage() {
         angle: 120,
         spread: 55,
         origin: { x: x + 0.1, y },
-        colors: ['#ef4444', '#8b5cf6', '#f59e0b'],
+        colors: ["#ef4444", "#8b5cf6", "#f59e0b"],
       });
     }, 300);
   };
@@ -340,6 +340,7 @@ export default function PracticePage() {
       const timer = setTimeout(() => {
         setPerfectMatch(false);
       }, 1500);
+
       return () => clearTimeout(timer);
     }
   }, [similarity]);
@@ -347,19 +348,25 @@ export default function PracticePage() {
   // 初始化语音列表（Safari/iOS 需要）
   useEffect(() => {
     // Safari 需要先触发 getVoices 来加载语音列表
-    if (typeof window !== 'undefined' && window.speechSynthesis) {
+    if (typeof window !== "undefined" && window.speechSynthesis) {
       // 立即获取一次
       window.speechSynthesis.getVoices();
-      
+
       // 监听 voiceschanged 事件（Safari 需要）
       const handleVoicesChanged = () => {
         window.speechSynthesis.getVoices();
       };
-      
-      window.speechSynthesis.addEventListener('voiceschanged', handleVoicesChanged);
-      
+
+      window.speechSynthesis.addEventListener(
+        "voiceschanged",
+        handleVoicesChanged,
+      );
+
       return () => {
-        window.speechSynthesis.removeEventListener('voiceschanged', handleVoicesChanged);
+        window.speechSynthesis.removeEventListener(
+          "voiceschanged",
+          handleVoicesChanged,
+        );
       };
     }
   }, []);
@@ -406,30 +413,30 @@ export default function PracticePage() {
   // 使用浏览器 TTS 播放单词发音
   const speakWord = async (word: string, index: number) => {
     // 清理单词中的标点符号
-    const cleanWord = word.replace(/[^\w]/g, '').toLowerCase();
+    const cleanWord = word.replace(/[^\w]/g, "").toLowerCase();
 
     // 停止当前正在播放的语音
     window.speechSynthesis.cancel();
 
     // 创建语音合成实例 - 必须在异步操作之前创建，以保持用户交互上下文
     const utterance = new SpeechSynthesisUtterance(cleanWord);
-    
+
     // 设置语言为英语
-    utterance.lang = 'en-US';
-    
+    utterance.lang = "en-US";
+
     // 设置语速
     utterance.rate = 0.8;
 
     // 获取可用的语音列表，优先使用英语语音（Safari/iOS 需要）
     const voices = window.speechSynthesis.getVoices();
-    const englishVoice = voices.find(voice => 
-      voice.lang.startsWith('en-') || voice.lang === 'en-US'
+    const englishVoice = voices.find(
+      (voice) => voice.lang.startsWith("en-") || voice.lang === "en-US",
     );
-    
+
     if (englishVoice) {
       utterance.voice = englishVoice;
     }
-    
+
     // 立即播放 - 在用户交互的同步上下文中
     window.speechSynthesis.speak(utterance);
 
@@ -440,9 +447,9 @@ export default function PracticePage() {
     // 异步获取音标（不影响语音播放）
     try {
       const response = await fetch(
-        `https://api.dictionaryapi.dev/api/v2/entries/en/${cleanWord}`
+        `https://api.dictionaryapi.dev/api/v2/entries/en/${cleanWord}`,
       );
-      
+
       if (response.ok) {
         const data = await response.json();
         // 尝试获取音标
@@ -450,6 +457,7 @@ export default function PracticePage() {
           data[0]?.phonetic ||
           data[0]?.phonetics?.find((p: any) => p.text)?.text ||
           "";
+
         // 只在有音标时才设置
         if (phonetic) {
           setWordPhonetic(phonetic);
@@ -546,10 +554,10 @@ export default function PracticePage() {
           <motion.div
             key={currentSentence.id}
             animate={{ opacity: 1, y: 0 }}
+            className="flex flex-col h-full"
             exit={{ opacity: 0, y: -20 }}
             initial={{ opacity: 0, y: 20 }}
             transition={{ duration: 0.3 }}
-            className="flex flex-col h-full"
           >
             {/* 内容区域 */}
             <div className="flex-1 flex flex-col overflow-y-auto py-6">
@@ -599,10 +607,12 @@ export default function PracticePage() {
                       </Button>
                     )}
                     <Button
+                      color={showEnglishManually ? "primary" : "default"}
                       size="sm"
                       variant="flat"
-                      color={showEnglishManually ? "primary" : "default"}
-                      onPress={() => setShowEnglishManually(!showEnglishManually)}
+                      onPress={() =>
+                        setShowEnglishManually(!showEnglishManually)
+                      }
                     >
                       {showEnglishManually ? "隐藏英文" : "显示英文"}
                     </Button>
@@ -624,19 +634,24 @@ export default function PracticePage() {
                         // 如果已经说过话，显示带标记的句子
                         <p className="text-xl font-medium mb-8">
                           {wordMatchStatus.map((wordStatus, index) => (
-                            <span key={index} className="inline-block relative mx-0.5 my-1">
+                            <span
+                              key={index}
+                              className="inline-block relative mx-0.5 my-1"
+                            >
                               <span
                                 className={`${wordStatus.isMatched ? "text-primary" : "text-danger"} cursor-pointer hover:opacity-70 transition-opacity`}
-                                onClick={() => speakWord(wordStatus.original, index)}
                                 title="点击播放发音"
+                                onClick={() =>
+                                  speakWord(wordStatus.original, index)
+                                }
                               >
                                 {wordStatus.original}
                               </span>
                               {clickedWordIndex === index && wordPhonetic && (
                                 <motion.span
                                   animate={{ opacity: 1, y: 0 }}
-                                  initial={{ opacity: 0, y: -5 }}
                                   className="absolute left-1/2 -translate-x-1/2 top-[calc(100%)] text-sm text-default-500 whitespace-nowrap pointer-events-none"
+                                  initial={{ opacity: 0, y: -5 }}
                                 >
                                   {wordPhonetic}
                                 </motion.span>
@@ -647,26 +662,31 @@ export default function PracticePage() {
                       ) : (
                         // 否则正常显示
                         <p className="text-xl text-primary font-medium mb-8">
-                          {currentSentence.englishText.split(" ").map((word, index) => (
-                            <span key={index} className="inline-block relative mx-0.5 my-1">
+                          {currentSentence.englishText
+                            .split(" ")
+                            .map((word, index) => (
                               <span
-                                className="cursor-pointer hover:opacity-70 transition-opacity"
-                                onClick={() => speakWord(word, index)}
-                                title="点击播放发音"
+                                key={index}
+                                className="inline-block relative mx-0.5 my-1"
                               >
-                                {word}
-                              </span>
-                              {clickedWordIndex === index && wordPhonetic && (
-                                <motion.span
-                                  animate={{ opacity: 1, y: 0 }}
-                                  initial={{ opacity: 0, y: -5 }}
-                                  className="absolute left-1/2 -translate-x-1/2 top-[calc(80%)] text-sm text-default-500 whitespace-nowrap pointer-events-none"
+                                <span
+                                  className="cursor-pointer hover:opacity-70 transition-opacity"
+                                  title="点击播放发音"
+                                  onClick={() => speakWord(word, index)}
                                 >
-                                  {wordPhonetic}
-                                </motion.span>
-                              )}
-                            </span>
-                          ))}
+                                  {word}
+                                </span>
+                                {clickedWordIndex === index && wordPhonetic && (
+                                  <motion.span
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="absolute left-1/2 -translate-x-1/2 top-[calc(80%)] text-sm text-default-500 whitespace-nowrap pointer-events-none"
+                                    initial={{ opacity: 0, y: -5 }}
+                                  >
+                                    {wordPhonetic}
+                                  </motion.span>
+                                )}
+                              </span>
+                            ))}
                         </p>
                       )}
                     </motion.div>
@@ -693,8 +713,8 @@ export default function PracticePage() {
                               ? { scale: [1, 1.2, 1], y: [0, -5, 0] }
                               : {}
                           }
-                          transition={{ duration: 0.6 }}
                           className={`text-2xl font-bold text-${getSimilarityColor(similarity)}`}
+                          transition={{ duration: 0.6 }}
                         >
                           {similarity}%
                         </motion.span>
@@ -702,11 +722,14 @@ export default function PracticePage() {
                           <motion.span
                             animate={
                               perfectMatch
-                                ? { rotate: [0, 15, -15, 0], scale: [1, 1.3, 1] }
+                                ? {
+                                    rotate: [0, 15, -15, 0],
+                                    scale: [1, 1.3, 1],
+                                  }
                                 : {}
                             }
-                            transition={{ duration: 0.6 }}
                             className="text-2xl"
+                            transition={{ duration: 0.6 }}
                           >
                             🎉
                           </motion.span>

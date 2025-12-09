@@ -24,11 +24,9 @@ export async function POST(request: NextRequest) {
 
     // 验证邮箱格式
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
     if (!emailRegex.test(email)) {
-      return NextResponse.json(
-        { error: "邮箱格式不正确" },
-        { status: 400 },
-      );
+      return NextResponse.json({ error: "邮箱格式不正确" }, { status: 400 });
     }
 
     // 验证密码长度
@@ -47,10 +45,7 @@ export async function POST(request: NextRequest) {
       .limit(1);
 
     if (existingUser.length > 0) {
-      return NextResponse.json(
-        { error: "该邮箱已被注册" },
-        { status: 409 },
-      );
+      return NextResponse.json({ error: "该邮箱已被注册" }, { status: 409 });
     }
 
     // 加密密码
@@ -75,10 +70,7 @@ export async function POST(request: NextRequest) {
       });
 
     if (newUser.length === 0) {
-      return NextResponse.json(
-        { error: "创建用户失败" },
-        { status: 500 },
-      );
+      return NextResponse.json({ error: "创建用户失败" }, { status: 500 });
     }
 
     return NextResponse.json({

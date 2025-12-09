@@ -21,6 +21,7 @@ export async function GET(request: NextRequest) {
     // 如果没有，尝试从 session 获取（网页端）
     if (!userIdStr) {
       const session = await getServerSession(authOptions);
+
       userIdStr = session?.user?.id;
     }
 
@@ -110,9 +111,6 @@ export async function GET(request: NextRequest) {
       totalAvailable: totalCount,
     });
   } catch (error) {
-    return NextResponse.json(
-      { error: "获取随机句子失败" },
-      { status: 500 },
-    );
+    return NextResponse.json({ error: "获取随机句子失败" }, { status: 500 });
   }
 }

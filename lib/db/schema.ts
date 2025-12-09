@@ -10,6 +10,7 @@ import {
   index,
   uniqueIndex,
   primaryKey,
+  json,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 
@@ -306,6 +307,115 @@ export const sentenceTags = pgTable(
   }),
 );
 
+// 简历表
+export const resumes = pgTable(
+  "resumes",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id").notNull(),
+    name: varchar("name", { length: 255 }).notNull(), // 简历名称
+    fullName: varchar("full_name", { length: 255 }),
+    preferredName: varchar("preferred_name", { length: 255 }),
+    phone: varchar("phone", { length: 50 }),
+    email: varchar("email", { length: 255 }),
+    location: varchar("location", { length: 255 }),
+    linkedin: varchar("linkedin", { length: 255 }),
+    github: varchar("github", { length: 255 }),
+    summary: text("summary"),
+    keySkills: json("key_skills").$type<string[]>().default([]), // JSON array
+    additionalInfo: text("additional_info"),
+    themeColor: varchar("theme_color", { length: 20 }).default("#000000"), // 主题颜色
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => ({
+    userIdIdx: index("resumes_user_id_idx").on(table.userId),
+    userIdCreatedAtIdx: index("resumes_user_id_created_at_idx").on(
+      table.userId,
+      table.createdAt,
+    ),
+  }),
+);
+
+// 工作经历表
+export const resumeWorkExperiences = pgTable(
+  "resume_work_experiences",
+  {
+    id: serial("id").primaryKey(),
+    resumeId: integer("resume_id").notNull(),
+    company: varchar("company", { length: 255 }),
+    position: varchar("position", { length: 255 }),
+    startDate: varchar("start_date", { length: 50 }),
+    endDate: varchar("end_date", { length: 50 }),
+    current: boolean("current").notNull().default(false),
+    responsibilities: json("responsibilities").$type<string[]>().default([]),
+    order: integer("order").notNull().default(0), // 显示顺序
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => ({
+    resumeIdIdx: index("resume_work_experiences_resume_id_idx").on(
+      table.resumeId,
+    ),
+    resumeIdOrderIdx: index("resume_work_experiences_resume_id_order_idx").on(
+      table.resumeId,
+      table.order,
+    ),
+  }),
+);
+
+// 教育背景表
+export const resumeEducation = pgTable(
+  "resume_education",
+  {
+    id: serial("id").primaryKey(),
+    resumeId: integer("resume_id").notNull(),
+    school: varchar("school", { length: 255 }),
+    degree: varchar("degree", { length: 255 }),
+    major: varchar("major", { length: 255 }),
+    startDate: varchar("start_date", { length: 50 }),
+    endDate: varchar("end_date", { length: 50 }),
+    current: boolean("current").notNull().default(false),
+    gpa: varchar("gpa", { length: 50 }),
+    order: integer("order").notNull().default(0),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => ({
+    resumeIdIdx: index("resume_education_resume_id_idx").on(table.resumeId),
+    resumeIdOrderIdx: index("resume_education_resume_id_order_idx").on(
+      table.resumeId,
+      table.order,
+    ),
+  }),
+);
+
+// 项目经历表
+export const resumeProjects = pgTable(
+  "resume_projects",
+  {
+    id: serial("id").primaryKey(),
+    resumeId: integer("resume_id").notNull(),
+    name: varchar("name", { length: 255 }),
+    role: varchar("role", { length: 255 }),
+    startDate: varchar("start_date", { length: 50 }),
+    endDate: varchar("end_date", { length: 50 }),
+    current: boolean("current").notNull().default(false),
+    description: text("description"),
+    technologies: json("technologies").$type<string[]>().default([]),
+    order: integer("order").notNull().default(0),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => ({
+    resumeIdIdx: index("resume_projects_resume_id_idx").on(table.resumeId),
+    resumeIdOrderIdx: index("resume_projects_resume_id_order_idx").on(
+      table.resumeId,
+      table.order,
+    ),
+  }),
+);
+
 // 导出所有表
 export const schema = {
   users,
@@ -322,4 +432,8 @@ export const schema = {
   loginHistory,
   tags,
   sentenceTags,
+  resumes,
+  resumeWorkExperiences,
+  resumeEducation,
+  resumeProjects,
 };

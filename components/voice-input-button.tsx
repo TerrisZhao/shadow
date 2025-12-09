@@ -87,7 +87,7 @@ export default function VoiceInputButton({
 
         recognition.onerror = (event: any) => {
           isStartingRef.current = false;
-          
+
           if (event.error === "not-allowed") {
             showToast("麦克风权限被拒绝，请在浏览器设置中允许访问", "error");
             setIsListening(false);
@@ -106,12 +106,12 @@ export default function VoiceInputButton({
 
         recognition.onend = () => {
           isStartingRef.current = false;
-          
+
           // 如果识别结束时还没有发送最终结果，但有临时结果，将临时结果作为最终结果发送
           if (!hasFinalResultRef.current && lastTranscriptRef.current) {
             onTranscript(lastTranscriptRef.current, true);
           }
-          
+
           // 非连续模式下，识别结束后自动停止
           setIsListening(false);
           isListeningRef.current = false;
@@ -139,6 +139,7 @@ export default function VoiceInputButton({
   const startRecognition = () => {
     if (!recognitionRef.current) {
       showToast("您的浏览器不支持语音识别", "error");
+
       return;
     }
 
@@ -150,19 +151,19 @@ export default function VoiceInputButton({
     try {
       isStartingRef.current = true;
       isListeningRef.current = true;
-      
+
       // 通知父组件录音已开始
       if (onRecordingStart) {
         onRecordingStart();
       }
-      
+
       recognitionRef.current.start();
       setIsListening(true);
       showToast("开始语音输入...", "success");
     } catch (error: any) {
       isStartingRef.current = false;
       isListeningRef.current = false;
-      
+
       // 如果是因为已经在运行，先停止再重启
       if (error.message && error.message.includes("already")) {
         try {
@@ -185,7 +186,7 @@ export default function VoiceInputButton({
       isListeningRef.current = false;
       recognitionRef.current.stop();
       setIsListening(false);
-      
+
       // 通知父组件录音已停止
       if (onRecordingStop) {
         onRecordingStop();

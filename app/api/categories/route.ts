@@ -15,6 +15,7 @@ export async function GET(request: NextRequest) {
     // 如果没有，尝试从 session 获取（网页端）
     if (!userIdStr) {
       const session = await getServerSession(authOptions);
+
       userIdStr = session?.user?.id;
     }
 
@@ -62,6 +63,7 @@ export async function POST(request: NextRequest) {
     // 如果没有，尝试从 session 获取（网页端）
     if (!userIdStr) {
       const session = await getServerSession(authOptions);
+
       userIdStr = session?.user?.id;
     }
 

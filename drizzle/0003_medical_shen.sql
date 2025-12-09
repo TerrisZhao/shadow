@@ -1,0 +1,1 @@
+ALTER TABLE "resumes" ADD COLUMN "theme_color" varchar(20) DEFAULT '#1e40af';

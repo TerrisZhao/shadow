@@ -15,6 +15,27 @@
       "when": 1764502292854,
       "tag": "0001_slim_darkhawk",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1765189458618,
+      "tag": "0002_worthless_speedball",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1765190971886,
+      "tag": "0003_medical_shen",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1765268235284,
+      "tag": "0004_organic_rage",
+      "breakpoints": true
     }
   ]
 }

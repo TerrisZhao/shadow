@@ -2,11 +2,11 @@
 
 import { useState, useEffect, useRef, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Card, CardBody, CardHeader } from "@heroui/card";
+import { Card, CardBody } from "@heroui/card";
 import { Button } from "@heroui/button";
 import { Spinner } from "@heroui/spinner";
 import { Chip } from "@heroui/chip";
-import { ArrowLeft, Calendar, Volume2, Pause } from "lucide-react";
+import { Calendar, Volume2, Pause } from "lucide-react";
 
 interface Sentence {
   id: number;
@@ -37,6 +37,7 @@ function PracticeHistoryContent() {
 
   useEffect(() => {
     const ids = searchParams.get("ids");
+
     if (ids) {
       fetchSentences(ids);
     } else {
@@ -48,17 +49,17 @@ function PracticeHistoryContent() {
     setLoading(true);
     try {
       const ids = idsStr.split(",").map((id) => parseInt(id));
-      
+
       // 逐个获取句子详情
       const sentencePromises = ids.map((id) =>
-        fetch(`/api/sentences/${id}`).then((res) => res.json())
+        fetch(`/api/sentences/${id}`).then((res) => res.json()),
       );
-      
+
       const results = await Promise.all(sentencePromises);
       const validSentences = results
         .filter((result) => result.sentence)
         .map((result) => result.sentence);
-      
+
       setSentences(validSentences);
     } catch (error) {
       // 静默处理错误
@@ -85,6 +86,7 @@ function PracticeHistoryContent() {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
       setPlayingId(null);
+
       return;
     }
 
@@ -100,6 +102,7 @@ function PracticeHistoryContent() {
     }
 
     const audio = audioRef.current;
+
     audio.src = sentence.audioUrl;
 
     audio.onplay = () => {
@@ -146,10 +149,7 @@ function PracticeHistoryContent() {
             <span>共练习 {sentences.length} 个句子</span>
           </div>
         </div>
-        <Button
-          variant="flat"
-          onPress={handleBack}
-        >
+        <Button variant="flat" onPress={handleBack}>
           继续练习
         </Button>
       </div>
@@ -159,11 +159,7 @@ function PracticeHistoryContent() {
         <Card className="hover:shadow-md transition-shadow">
           <CardBody className="text-center py-12">
             <p className="text-default-500 text-lg">还没有练习记录</p>
-            <Button
-              color="primary"
-              className="mt-4"
-              onPress={handleBack}
-            >
+            <Button className="mt-4" color="primary" onPress={handleBack}>
               开始练习
             </Button>
           </CardBody>
@@ -171,7 +167,10 @@ function PracticeHistoryContent() {
       ) : (
         <div className="space-y-4">
           {sentences.map((sentence, index) => (
-            <Card key={sentence.id} className="hover:shadow-md transition-shadow">
+            <Card
+              key={sentence.id}
+              className="hover:shadow-md transition-shadow"
+            >
               <CardBody className="gap-4">
                 {/* 序号和标签 */}
                 <div className="flex items-center justify-between">
@@ -189,7 +188,8 @@ function PracticeHistoryContent() {
                       {sentence.category.name}
                     </Chip>
                     <Chip size="sm" variant="flat">
-                      {difficultyLabels[sentence.difficulty] || sentence.difficulty}
+                      {difficultyLabels[sentence.difficulty] ||
+                        sentence.difficulty}
                     </Chip>
                   </div>
                 </div>
@@ -209,11 +209,13 @@ function PracticeHistoryContent() {
                     {sentence.audioUrl && (
                       <Button
                         isIconOnly
+                        className="min-w-unit-8 w-8 h-8 shrink-0"
+                        color={
+                          playingId === sentence.id ? "primary" : "default"
+                        }
                         size="sm"
                         variant="flat"
-                        color={playingId === sentence.id ? "primary" : "default"}
                         onPress={() => handlePlayAudio(sentence)}
-                        className="min-w-unit-8 w-8 h-8 shrink-0"
                       >
                         {playingId === sentence.id ? (
                           <Pause className="w-4 h-4" />

@@ -204,7 +204,13 @@ export default function SentenceListWithAI({
 
   // 处理分页变化
   const handlePageChange = (page: number) => {
-    fetchSentences(page, selectedCategory, selectedDifficulty, tab, selectedTag);
+    fetchSentences(
+      page,
+      selectedCategory,
+      selectedDifficulty,
+      tab,
+      selectedTag,
+    );
   };
 
   // 处理分类变化

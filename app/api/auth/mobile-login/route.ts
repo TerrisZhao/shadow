@@ -31,10 +31,7 @@ export async function POST(request: NextRequest) {
       .limit(1);
 
     if (result.length === 0) {
-      return NextResponse.json(
-        { error: "邮箱或密码错误" },
-        { status: 401 },
-      );
+      return NextResponse.json({ error: "邮箱或密码错误" }, { status: 401 });
     }
 
     const user = result[0];
@@ -59,18 +56,12 @@ export async function POST(request: NextRequest) {
         "密码错误",
       );
 
-      return NextResponse.json(
-        { error: "邮箱或密码错误" },
-        { status: 401 },
-      );
+      return NextResponse.json({ error: "邮箱或密码错误" }, { status: 401 });
     }
 
     // 检查用户是否被禁用
     if (!user.isActive) {
-      return NextResponse.json(
-        { error: "账号已被禁用" },
-        { status: 403 },
-      );
+      return NextResponse.json({ error: "账号已被禁用" }, { status: 403 });
     }
 
     // 生成 JWT token
