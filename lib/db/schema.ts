@@ -349,6 +349,7 @@ export const resumeWorkExperiences = pgTable(
     startDate: varchar("start_date", { length: 50 }),
     endDate: varchar("end_date", { length: 50 }),
     current: boolean("current").notNull().default(false),
+    description: text("description"), // 公司或项目的总体描述
     responsibilities: json("responsibilities").$type<string[]>().default([]),
     order: integer("order").notNull().default(0), // 显示顺序
     createdAt: timestamp("created_at").notNull().defaultNow(),

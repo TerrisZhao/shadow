@@ -726,6 +726,7 @@ export default function ResumeEditPage({
       startDate: "",
       endDate: "",
       current: false,
+      description: "",
       responsibilities: [""],
     };
 
@@ -1388,6 +1389,22 @@ export default function ResumeEditPage({
                     />
                     <span className="text-sm">Current Position</span>
                   </label>
+                  <Divider />
+                  <div className="space-y-2">
+                    <div className="text-sm font-medium">Company/Project Description</div>
+                    <Textarea
+                      minRows={2}
+                      placeholder="Brief description of the company or project (e.g., company background, industry, or project overview)..."
+                      value={exp.description || ""}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        handleUpdateWorkExperience(
+                          exp.id,
+                          "description",
+                          e.target.value,
+                        )
+                      }
+                    />
+                  </div>
                   <Divider />
                   <div className="space-y-2">
                     <div className="flex justify-between items-center">

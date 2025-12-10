@@ -155,6 +155,11 @@ export const ResumePreview: React.FC<ResumePreviewProps> = ({
                     {exp.current ? "Present" : exp.endDate || "End Date"}
                   </div>
                 </div>
+                {exp.description && (
+                  <p className="text-sm text-gray-700 mb-2 italic">
+                    {exp.description}
+                  </p>
+                )}
                 {exp.responsibilities.filter((r) => r.trim()).length > 0 && (
                   <ul className="list-disc list-inside space-y-1 ml-2">
                     {exp.responsibilities

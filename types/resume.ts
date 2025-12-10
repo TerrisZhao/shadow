@@ -6,6 +6,7 @@ export interface WorkExperience {
   startDate: string;
   endDate?: string; // Optional for current position
   current?: boolean;
+  description?: string; // Overall description of the company or role
   responsibilities: string[];
 }
 

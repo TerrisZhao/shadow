@@ -43,6 +43,13 @@
       "when": 1765321557308,
       "tag": "0005_flaky_ender_wiggin",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1765351655415,
+      "tag": "0006_opposite_roxanne_simpson",
+      "breakpoints": true
     }
   ]
 }
