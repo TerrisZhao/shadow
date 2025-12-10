@@ -321,6 +321,7 @@ export const resumes = pgTable(
     location: varchar("location", { length: 255 }),
     linkedin: varchar("linkedin", { length: 255 }),
     github: varchar("github", { length: 255 }),
+    website: varchar("website", { length: 255 }),
     summary: text("summary"),
     keySkills: json("key_skills").$type<string[]>().default([]), // JSON array
     additionalInfo: text("additional_info"),

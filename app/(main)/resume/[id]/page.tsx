@@ -170,7 +170,7 @@ function SortableResponsibilityItem({
         minRows={2}
         placeholder="Describe your responsibility or achievement..."
         value={responsibility}
-        onChange={(e) => onUpdate(e.target.value)}
+        onChange={(e: React.ChangeEvent<HTMLInputElement>) => onUpdate(e.target.value)}
       />
       <Button
         isIconOnly
@@ -244,7 +244,7 @@ function SortableGroup({
                 className="flex-1"
                 size="sm"
                 value={group.groupName}
-                onChange={(e) => onUpdateName(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => onUpdateName(e.target.value)}
               />
             </div>
             <Button
@@ -261,7 +261,7 @@ function SortableGroup({
             <Input
               placeholder="Add skill and press Enter"
               size="sm"
-              onKeyDown={(e) => {
+              onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
                 if (e.key === "Enter") {
                   e.preventDefault();
                   const input = e.target as HTMLInputElement;
@@ -338,6 +338,7 @@ export default function ResumeEditPage({
     location: "",
     linkedin: "",
     github: "",
+    website: "",
     summary: "",
     keySkills: [],
     workExperience: [],
@@ -408,6 +409,7 @@ export default function ResumeEditPage({
             location: resume.location || "",
             linkedin: resume.linkedin || "",
             github: resume.github || "",
+            website: resume.website || "",
             summary: resume.summary || "",
             keySkills: skills,
             workExperience: resume.workExperience || [],
@@ -459,6 +461,7 @@ export default function ResumeEditPage({
               location: data.location,
               linkedin: data.linkedin,
               github: data.github,
+              website: data.website,
               summary: data.summary,
               keySkills: data.keySkills,
               workExperience: data.workExperience,
@@ -1011,10 +1014,10 @@ export default function ResumeEditPage({
                 size="sm"
                 value={resumeData.name}
                 onBlur={() => setIsEditingName(false)}
-                onChange={(e) =>
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setResumeData({ ...resumeData, name: e.target.value })
                 }
-                onKeyDown={(e) => {
+                onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
                   if (e.key === "Enter") {
                     e.preventDefault();
                     setIsEditingName(false);
@@ -1066,7 +1069,7 @@ export default function ResumeEditPage({
                 label="Full Name"
                 placeholder="John Doe"
                 value={resumeData.fullName}
-                onChange={(e) =>
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setResumeData({ ...resumeData, fullName: e.target.value })
                 }
               />
@@ -1074,7 +1077,7 @@ export default function ResumeEditPage({
                 label="Preferred Name"
                 placeholder="John (Optional)"
                 value={resumeData.preferredName}
-                onChange={(e) =>
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setResumeData({
                     ...resumeData,
                     preferredName: e.target.value,
@@ -1085,7 +1088,7 @@ export default function ResumeEditPage({
                 label="Phone"
                 placeholder="+1 (555) 123-4567"
                 value={resumeData.phone}
-                onChange={(e) =>
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setResumeData({ ...resumeData, phone: e.target.value })
                 }
               />
@@ -1094,7 +1097,7 @@ export default function ResumeEditPage({
                 placeholder="john.doe@example.com"
                 type="email"
                 value={resumeData.email}
-                onChange={(e) =>
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setResumeData({ ...resumeData, email: e.target.value })
                 }
               />
@@ -1102,7 +1105,7 @@ export default function ResumeEditPage({
                 label="Location"
                 placeholder="San Francisco, CA"
                 value={resumeData.location}
-                onChange={(e) =>
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setResumeData({ ...resumeData, location: e.target.value })
                 }
               />
@@ -1110,7 +1113,7 @@ export default function ResumeEditPage({
                 label="LinkedIn"
                 placeholder="linkedin.com/in/johndoe"
                 value={resumeData.linkedin}
-                onChange={(e) =>
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setResumeData({ ...resumeData, linkedin: e.target.value })
                 }
               />
@@ -1118,8 +1121,16 @@ export default function ResumeEditPage({
                 label="GitHub"
                 placeholder="github.com/johndoe"
                 value={resumeData.github}
-                onChange={(e) =>
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setResumeData({ ...resumeData, github: e.target.value })
+                }
+              />
+              <Input
+                label="Website"
+                placeholder="example.com"
+                value={resumeData.website}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setResumeData({ ...resumeData, website: e.target.value })
                 }
               />
             </div>
@@ -1131,11 +1142,11 @@ export default function ResumeEditPage({
           <CardBody className="space-y-4">
             <h3 className="text-lg font-semibold">Summary</h3>
             <Textarea
-              label="Summary"
+              // label="Summary"
               minRows={4}
               placeholder="Write a brief Summary highlighting your key achievements and career goals..."
               value={resumeData.summary}
-              onChange={(e) =>
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                 setResumeData({ ...resumeData, summary: e.target.value })
               }
             />
@@ -1163,8 +1174,8 @@ export default function ResumeEditPage({
                   <Input
                     placeholder="Add a skill and press Enter"
                     value={currentSkill}
-                    onChange={(e) => setCurrentSkill(e.target.value)}
-                    onKeyDown={(e) => {
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCurrentSkill(e.target.value)}
+                    onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
                       if (e.key === "Enter") {
                         e.preventDefault();
                         handleAddSkill();
@@ -1317,7 +1328,7 @@ export default function ResumeEditPage({
                       label="Company"
                       placeholder="Company Name"
                       value={exp.company}
-                      onChange={(e) =>
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                         handleUpdateWorkExperience(
                           exp.id,
                           "company",
@@ -1329,7 +1340,7 @@ export default function ResumeEditPage({
                       label="Position"
                       placeholder="Software Engineer"
                       value={exp.position}
-                      onChange={(e) =>
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                         handleUpdateWorkExperience(
                           exp.id,
                           "position",
@@ -1341,7 +1352,7 @@ export default function ResumeEditPage({
                       label="Start Date"
                       placeholder="Jan 2020"
                       value={exp.startDate}
-                      onChange={(e) =>
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                         handleUpdateWorkExperience(
                           exp.id,
                           "startDate",
@@ -1354,7 +1365,7 @@ export default function ResumeEditPage({
                       label="End Date"
                       placeholder="Dec 2022"
                       value={exp.endDate || ""}
-                      onChange={(e) =>
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                         handleUpdateWorkExperience(
                           exp.id,
                           "endDate",
@@ -1395,7 +1406,7 @@ export default function ResumeEditPage({
                     <DndContext
                       collisionDetection={closestCenter}
                       sensors={sensors}
-                      onDragEnd={(event) => handleResponsibilityDragEnd(exp.id, event)}
+                      onDragEnd={(event: DragEndEvent) => handleResponsibilityDragEnd(exp.id, event)}
                     >
                       <SortableContext
                         items={exp.responsibilities.map((_, i) => `${exp.id}-resp-${i}`)}
@@ -1461,7 +1472,7 @@ export default function ResumeEditPage({
                       label="School"
                       placeholder="University Name"
                       value={edu.school}
-                      onChange={(e) =>
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                         handleUpdateEducation(edu.id, "school", e.target.value)
                       }
                     />
@@ -1469,7 +1480,7 @@ export default function ResumeEditPage({
                       label="Degree"
                       placeholder="Bachelor of Science"
                       value={edu.degree}
-                      onChange={(e) =>
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                         handleUpdateEducation(edu.id, "degree", e.target.value)
                       }
                     />
@@ -1477,7 +1488,7 @@ export default function ResumeEditPage({
                       label="Major"
                       placeholder="Computer Science"
                       value={edu.major}
-                      onChange={(e) =>
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                         handleUpdateEducation(edu.id, "major", e.target.value)
                       }
                     />
@@ -1485,7 +1496,7 @@ export default function ResumeEditPage({
                       label="GPA (Optional)"
                       placeholder="3.8/4.0"
                       value={edu.gpa || ""}
-                      onChange={(e) =>
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                         handleUpdateEducation(edu.id, "gpa", e.target.value)
                       }
                     />
@@ -1493,7 +1504,7 @@ export default function ResumeEditPage({
                       label="Start Date"
                       placeholder="Sep 2016"
                       value={edu.startDate}
-                      onChange={(e) =>
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                         handleUpdateEducation(
                           edu.id,
                           "startDate",
@@ -1506,7 +1517,7 @@ export default function ResumeEditPage({
                       label="End Date"
                       placeholder="Jun 2020"
                       value={edu.endDate || ""}
-                      onChange={(e) =>
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                         handleUpdateEducation(edu.id, "endDate", e.target.value)
                       }
                     />
@@ -1568,7 +1579,7 @@ export default function ResumeEditPage({
                       label="Project Name"
                       placeholder="E-commerce Platform"
                       value={proj.name}
-                      onChange={(e) =>
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                         handleUpdateProject(proj.id, "name", e.target.value)
                       }
                     />
@@ -1576,7 +1587,7 @@ export default function ResumeEditPage({
                       label="Role"
                       placeholder="Lead Developer"
                       value={proj.role}
-                      onChange={(e) =>
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                         handleUpdateProject(proj.id, "role", e.target.value)
                       }
                     />
@@ -1584,7 +1595,7 @@ export default function ResumeEditPage({
                       label="Start Date"
                       placeholder="Jan 2023"
                       value={proj.startDate}
-                      onChange={(e) =>
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                         handleUpdateProject(
                           proj.id,
                           "startDate",
@@ -1597,7 +1608,7 @@ export default function ResumeEditPage({
                       label="End Date"
                       placeholder="Jun 2023"
                       value={proj.endDate || ""}
-                      onChange={(e) =>
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                         handleUpdateProject(proj.id, "endDate", e.target.value)
                       }
                     />
@@ -1621,7 +1632,7 @@ export default function ResumeEditPage({
                     minRows={3}
                     placeholder="Describe the project and your contributions..."
                     value={proj.description}
-                    onChange={(e) =>
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                       handleUpdateProject(
                         proj.id,
                         "description",
@@ -1635,7 +1646,7 @@ export default function ResumeEditPage({
                     <div className="flex gap-2">
                       <Input
                         placeholder="Add technology and press Enter"
-                        onKeyDown={(e) => {
+                        onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
                           if (e.key === "Enter") {
                             e.preventDefault();
                             const input = e.target as HTMLInputElement;
@@ -1681,7 +1692,7 @@ export default function ResumeEditPage({
               minRows={4}
               placeholder="Add any additional information like certifications, languages, awards, etc."
               value={resumeData.additionalInfo}
-              onChange={(e) =>
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                 setResumeData({ ...resumeData, additionalInfo: e.target.value })
               }
             />
@@ -1703,6 +1714,7 @@ export default function ResumeEditPage({
 
       {/* Preview Modal */}
       <Modal
+        hideCloseButton
         isOpen={isOpen}
         scrollBehavior="inside"
         size="5xl"
@@ -1781,7 +1793,7 @@ export default function ResumeEditPage({
                       className="absolute inset-0 opacity-0 cursor-pointer"
                       type="color"
                       value={resumeData.themeColor}
-                      onChange={(e) => {
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                         setResumeData({
                           ...resumeData,
                           themeColor: e.target.value,

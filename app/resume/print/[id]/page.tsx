@@ -1,7 +1,7 @@
 import type { InferSelectModel } from "drizzle-orm";
 
 import { eq } from "drizzle-orm";
-import { Mail, Phone, MapPin, Linkedin, Github } from "lucide-react";
+import { Mail, Phone, MapPin, Linkedin, Github, Globe } from "lucide-react";
 
 import { ResumeData } from "@/types/resume";
 import { db } from "@/lib/db/drizzle";
@@ -76,6 +76,7 @@ async function getResumeData(
       location: resume.location || "",
       linkedin: resume.linkedin || "",
       github: resume.github || "",
+      website: resume.website || "",
       summary: resume.summary || "",
       keySkills: resume.keySkills || [],
       workExperience: workExperience.map((exp: WorkExperience) => ({
@@ -345,6 +346,7 @@ export default async function PrintResumePage({
 
           /* Responsibilities / Bullet points */
           .responsibilities {
+            list-style-type: disc;
             list-style-position: outside;
             padding-left: 20px;
             margin-top: 6px;
@@ -418,6 +420,12 @@ export default async function PrintResumePage({
                 <div className="contact-item">
                   <Github className="contact-icon" size={14} />
                   <span>{resumeData.github}</span>
+                </div>
+              )}
+              {resumeData.website && (
+                <div className="contact-item">
+                  <Globe className="contact-icon" size={14} />
+                  <span>{resumeData.website}</span>
                 </div>
               )}
             </div>

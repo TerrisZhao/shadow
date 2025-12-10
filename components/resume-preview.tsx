@@ -1,5 +1,5 @@
 import React from "react";
-import { Mail, Phone, MapPin, Linkedin, Github } from "lucide-react";
+import { Mail, Phone, MapPin, Linkedin, Github, Globe } from "lucide-react";
 
 import { ResumeData } from "@/types/resume";
 
@@ -65,6 +65,12 @@ export const ResumePreview: React.FC<ResumePreviewProps> = ({
             <div className="flex items-center gap-1">
               <Github size={14} style={{ color: themeColor }} />
               <span>{data.github}</span>
+            </div>
+          )}
+          {data.website && (
+            <div className="flex items-center gap-1">
+              <Globe size={14} style={{ color: themeColor }} />
+              <span>{data.website}</span>
             </div>
           )}
         </div>

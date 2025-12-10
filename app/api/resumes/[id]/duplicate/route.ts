@@ -54,6 +54,7 @@ export async function POST(
         location: originalResume.location,
         linkedin: originalResume.linkedin,
         github: originalResume.github,
+        website: originalResume.website,
         summary: originalResume.summary,
         keySkills: originalResume.keySkills,
         additionalInfo: originalResume.additionalInfo,

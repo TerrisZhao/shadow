@@ -70,6 +70,7 @@ export async function POST(request: NextRequest) {
         location: data?.location || "",
         linkedin: data?.linkedin || "",
         github: data?.github || "",
+        website: data?.website || "",
         summary: data?.summary || "",
         keySkills: data?.keySkills || [],
         additionalInfo: data?.additionalInfo || "",
@@ -167,7 +168,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // 只允许更新特定字段
-    const allowedFields = ["phone", "email", "location", "linkedin", "github"];
+    const allowedFields = ["phone", "email", "location", "linkedin", "github", "website"];
     const updateData: any = {};
 
     for (const field of allowedFields) {
