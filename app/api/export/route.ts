@@ -63,6 +63,7 @@ export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
   const resumeId = searchParams.get("id");
   const themeColor = searchParams.get("themeColor");
+  const language = searchParams.get("language") || "en";
 
   if (!resumeId) {
     return NextResponse.json(
@@ -94,6 +95,7 @@ export async function GET(request: NextRequest) {
     if (themeColor) {
       printUrl.searchParams.set("themeColor", themeColor);
     }
+    printUrl.searchParams.set("language", language);
 
     console.log(`Navigating to: ${printUrl.toString()}`);
 
@@ -113,7 +115,7 @@ export async function GET(request: NextRequest) {
 
           return true; // Fallback if fonts API not available
         },
-        { timeout: 5000 },
+        { timeout: 8000 },
       );
       console.log("Fonts loaded successfully");
     } catch (error) {
@@ -126,15 +128,15 @@ export async function GET(request: NextRequest) {
         () => {
           return document.body.getAttribute("data-ready") === "true";
         },
-        { timeout: 3000 },
+        { timeout: 5000 },
       );
       console.log("Page ready signal received");
     } catch (error) {
       console.log("Ready signal timeout, proceeding with fixed delay");
     }
 
-    // Extra delay to ensure everything is rendered
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    // Extra delay to ensure everything is rendered (especially for web fonts)
+    await new Promise((resolve) => setTimeout(resolve, 2000));
 
     console.log("Generating PDF...");
 

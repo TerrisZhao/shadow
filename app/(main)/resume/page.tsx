@@ -50,6 +50,11 @@ export default function ResumeListPage() {
     onOpen: onBatchOpen,
     onClose: onBatchClose,
   } = useDisclosure();
+  const {
+    isOpen: isDeleteOpen,
+    onOpen: onDeleteOpen,
+    onClose: onDeleteClose,
+  } = useDisclosure();
   const [resumes, setResumes] = useState<Resume[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [newResumeName, setNewResumeName] = useState("");
@@ -57,6 +62,11 @@ export default function ResumeListPage() {
   const [selectedResumes, setSelectedResumes] = useState<Set<number>>(
     new Set(),
   );
+  const [deleteTarget, setDeleteTarget] = useState<{
+    type: "single" | "batch";
+    resumeId?: number;
+  } | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Batch update fields
   const [batchPhone, setBatchPhone] = useState("");
@@ -178,36 +188,74 @@ export default function ResumeListPage() {
   };
 
   // Delete resume
-  const handleDelete = async (resumeId: number) => {
-    if (!confirm("Are you sure you want to delete this resume?")) {
-      return;
-    }
+  const handleDelete = (resumeId: number) => {
+    setDeleteTarget({ type: "single", resumeId });
+    onDeleteOpen();
+  };
 
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+
+    setIsDeleting(true);
     try {
-      const response = await fetch(`/api/resumes/${resumeId}`, {
-        method: "DELETE",
-      });
-
-      if (response.ok) {
-        addToast({
-          title: "Resume deleted successfully",
-          color: "success",
+      if (deleteTarget.type === "single" && deleteTarget.resumeId) {
+        // Single delete
+        const response = await fetch(`/api/resumes/${deleteTarget.resumeId}`, {
+          method: "DELETE",
         });
+
+        if (response.ok) {
+          addToast({
+            title: "Resume deleted successfully",
+            color: "success",
+          });
+          void fetchResumes();
+          setSelectedResumes((prev) => {
+            const newSet = new Set(prev);
+
+            newSet.delete(deleteTarget.resumeId!);
+
+            return newSet;
+          });
+        } else {
+          const data = await response.json();
+
+          addToast({
+            title: data.error || "Failed to delete resume",
+            color: "danger",
+          });
+        }
+      } else if (deleteTarget.type === "batch") {
+        // Batch delete
+        const deletePromises = Array.from(selectedResumes).map((resumeId) =>
+          fetch(`/api/resumes/${resumeId}`, {
+            method: "DELETE",
+          }),
+        );
+
+        const results = await Promise.allSettled(deletePromises);
+
+        const successes = results.filter(
+          (r) => r.status === "fulfilled" && r.value.ok,
+        ).length;
+        const failures = results.length - successes;
+
+        if (successes > 0) {
+          addToast({
+            title: `Successfully deleted ${successes} resume${successes > 1 ? "s" : ""}`,
+            color: "success",
+          });
+        }
+
+        if (failures > 0) {
+          addToast({
+            title: `Failed to delete ${failures} resume${failures > 1 ? "s" : ""}`,
+            color: "danger",
+          });
+        }
+
+        setSelectedResumes(new Set());
         void fetchResumes();
-        setSelectedResumes((prev) => {
-          const newSet = new Set(prev);
-
-          newSet.delete(resumeId);
-
-          return newSet;
-        });
-      } else {
-        const data = await response.json();
-
-        addToast({
-          title: data.error || "Failed to delete resume",
-          color: "danger",
-        });
       }
     } catch (error) {
       console.error("Error deleting resume:", error);
@@ -215,6 +263,10 @@ export default function ResumeListPage() {
         title: "Failed to delete resume",
         color: "danger",
       });
+    } finally {
+      setIsDeleting(false);
+      onDeleteClose();
+      setDeleteTarget(null);
     }
   };
 
@@ -314,6 +366,21 @@ export default function ResumeListPage() {
     }
   };
 
+  // Batch delete
+  const handleBatchDelete = () => {
+    if (selectedResumes.size === 0) {
+      addToast({
+        title: "Please select at least one resume",
+        color: "warning",
+      });
+
+      return;
+    }
+
+    setDeleteTarget({ type: "batch" });
+    onDeleteOpen();
+  };
+
   // Format date
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -344,9 +411,14 @@ export default function ResumeListPage() {
         <h1 className={title()}>My Resumes</h1>
         <div className="flex gap-2">
           {selectedResumes.size > 0 && (
-            <Button color="secondary" variant="flat" onPress={onBatchOpen}>
-              Batch Update ({selectedResumes.size})
-            </Button>
+            <>
+              <Button color="danger" variant="flat" onPress={handleBatchDelete}>
+                Delete ({selectedResumes.size})
+              </Button>
+              <Button color="secondary" variant="flat" onPress={onBatchOpen}>
+                Batch Update ({selectedResumes.size})
+              </Button>
+            </>
           )}
           <Button
             color="primary"
@@ -560,6 +632,35 @@ export default function ResumeListPage() {
               onPress={handleBatchUpdate}
             >
               Update All
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      {/* Delete Confirmation Modal */}
+      <Modal isOpen={isDeleteOpen} onClose={onDeleteClose}>
+        <ModalContent>
+          <ModalHeader>Confirm Delete</ModalHeader>
+          <ModalBody>
+            <p className="text-default-700">
+              {deleteTarget?.type === "single"
+                ? "Are you sure you want to delete this resume?"
+                : `Are you sure you want to delete ${selectedResumes.size} resume${selectedResumes.size > 1 ? "s" : ""}?`}
+            </p>
+            <p className="text-sm text-default-500 mt-2">
+              This action cannot be undone.
+            </p>
+          </ModalBody>
+          <ModalFooter>
+            <Button variant="flat" onPress={onDeleteClose}>
+              Cancel
+            </Button>
+            <Button
+              color="danger"
+              isLoading={isDeleting}
+              onPress={confirmDelete}
+            >
+              Delete
             </Button>
           </ModalFooter>
         </ModalContent>

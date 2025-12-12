@@ -2,22 +2,30 @@ import React from "react";
 import { Mail, Phone, MapPin, Linkedin, Github, Globe } from "lucide-react";
 
 import { ResumeData } from "@/types/resume";
+import { Language, getResumeTranslation } from "@/lib/resume-i18n";
 
 interface ResumePreviewProps {
   data: ResumeData;
   themeColor?: string;
+  language?: Language;
 }
 
 export const ResumePreview: React.FC<ResumePreviewProps> = ({
   data,
   themeColor = "#000000",
+  language = "en",
 }) => {
+  const t = getResumeTranslation(language);
+  const fontFamily = language === "zh"
+    ? "'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', 'SimHei', sans-serif"
+    : "-apple-system, BlinkMacSystemFont, 'Noto Sans', 'Inter', 'Segoe UI', 'Roboto', 'Arial', sans-serif";
+
   return (
     <div
       className="bg-white text-black p-8 mx-auto"
       id="resume-preview"
       style={{
-        fontFamily: "Arial, sans-serif",
+        fontFamily,
         backgroundColor: "#ffffff",
         color: "#000000",
         padding: "2rem",
@@ -83,7 +91,7 @@ export const ResumePreview: React.FC<ResumePreviewProps> = ({
             className="text-xl font-bold mb-2 pb-1 border-b-2"
             style={{ color: themeColor, borderColor: themeColor }}
           >
-            Summary
+            {t.summary}
           </h2>
           <p className="text-sm leading-relaxed text-gray-800">
             {data.summary}
@@ -98,7 +106,7 @@ export const ResumePreview: React.FC<ResumePreviewProps> = ({
             className="text-xl font-bold mb-2 pb-1 border-b-2"
             style={{ color: themeColor, borderColor: themeColor }}
           >
-            KEY SKILLS
+            {t.keySkills}
           </h2>
           {typeof data.keySkills[0] === "string" ? (
             // Simple list format
@@ -133,7 +141,7 @@ export const ResumePreview: React.FC<ResumePreviewProps> = ({
             className="text-xl font-bold mb-2 pb-1 border-b-2"
             style={{ color: themeColor, borderColor: themeColor }}
           >
-            WORK EXPERIENCE
+            {t.workExperience}
           </h2>
           <div className="space-y-4">
             {data.workExperience.map((exp) => (
@@ -152,7 +160,7 @@ export const ResumePreview: React.FC<ResumePreviewProps> = ({
                   </div>
                   <div className="text-sm text-gray-600">
                     {exp.startDate} -{" "}
-                    {exp.current ? "Present" : exp.endDate || "End Date"}
+                    {exp.current ? t.present : exp.endDate || "End Date"}
                   </div>
                 </div>
                 {exp.description && (
@@ -184,7 +192,7 @@ export const ResumePreview: React.FC<ResumePreviewProps> = ({
             className="text-xl font-bold mb-2 pb-1 border-b-2"
             style={{ color: themeColor, borderColor: themeColor }}
           >
-            EDUCATION
+            {t.education}
           </h2>
           <div className="space-y-3">
             {data.education.map((edu) => (
@@ -199,13 +207,13 @@ export const ResumePreview: React.FC<ResumePreviewProps> = ({
                     </h3>
                     <p className="text-sm text-gray-700">
                       {edu.degree || "Degree"}
-                      {edu.major && ` in ${edu.major}`}
-                      {edu.gpa && ` - GPA: ${edu.gpa}`}
+                      {edu.major && ` ${t.in} ${edu.major}`}
+                      {edu.gpa && ` - ${t.gpa}: ${edu.gpa}`}
                     </p>
                   </div>
                   <div className="text-sm text-gray-600">
                     {edu.startDate} -{" "}
-                    {edu.current ? "Present" : edu.endDate || "End Date"}
+                    {edu.current ? t.present : edu.endDate || "End Date"}
                   </div>
                 </div>
               </div>
@@ -221,7 +229,7 @@ export const ResumePreview: React.FC<ResumePreviewProps> = ({
             className="text-xl font-bold mb-2 pb-1 border-b-2"
             style={{ color: themeColor, borderColor: themeColor }}
           >
-            PROJECTS
+            {t.projects}
           </h2>
           <div className="space-y-4">
             {data.projects.map((proj) => (
@@ -240,7 +248,7 @@ export const ResumePreview: React.FC<ResumePreviewProps> = ({
                   </div>
                   <div className="text-sm text-gray-600">
                     {proj.startDate} -{" "}
-                    {proj.current ? "Present" : proj.endDate || "End Date"}
+                    {proj.current ? t.present : proj.endDate || "End Date"}
                   </div>
                 </div>
                 {proj.description && (
@@ -250,7 +258,7 @@ export const ResumePreview: React.FC<ResumePreviewProps> = ({
                 )}
                 {proj.technologies.length > 0 && (
                   <p className="text-sm text-gray-700">
-                    <span className="font-semibold">Technologies:</span>{" "}
+                    <span className="font-semibold">{t.technologies}:</span>{" "}
                     {proj.technologies.join(", ")}
                   </p>
                 )}
@@ -267,7 +275,7 @@ export const ResumePreview: React.FC<ResumePreviewProps> = ({
             className="text-xl font-bold mb-2 pb-1 border-b-2"
             style={{ color: themeColor, borderColor: themeColor }}
           >
-            ADDITIONAL INFORMATION
+            {t.additionalInfo}
           </h2>
           <p className="text-sm leading-relaxed text-gray-800 whitespace-pre-line">
             {data.additionalInfo}

@@ -11,6 +11,7 @@ import {
   resumeEducation,
   resumeProjects,
 } from "@/lib/db/schema";
+import { Language, getResumeTranslation } from "@/lib/resume-i18n";
 
 type WorkExperience = InferSelectModel<typeof resumeWorkExperiences>;
 type Education = InferSelectModel<typeof resumeEducation>;
@@ -18,7 +19,7 @@ type Project = InferSelectModel<typeof resumeProjects>;
 
 interface ResumePageProps {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ themeColor?: string }>;
+  searchParams: Promise<{ themeColor?: string; language?: string }>;
 }
 
 async function getResumeData(
@@ -143,13 +144,22 @@ export default async function PrintResumePage({
 
   const themeColor =
     resolvedSearchParams.themeColor || resumeData.themeColor || "#000000";
+  const language =
+    (resolvedSearchParams.language as Language) || "en";
+  const t = getResumeTranslation(language);
 
   return (
-    <html lang="en">
+    <html lang={language === "zh" ? "zh-CN" : "en"}>
       <head>
         <title>{`${resumeData.fullName || "Resume"} - Resume`}</title>
         <meta charSet="utf-8" />
         <meta content="width=device-width, initial-scale=1" name="viewport" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=Noto+Sans:wght@400;500;600;700&display=swap"
+          rel="stylesheet"
+        />
         <style
           dangerouslySetInnerHTML={{
             __html: `
@@ -164,7 +174,9 @@ export default async function PrintResumePage({
           }
 
           body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', 'Roboto', sans-serif;
+            font-family: ${language === "zh"
+              ? "'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', 'SimHei', sans-serif"
+              : "-apple-system, BlinkMacSystemFont, 'Noto Sans', 'Inter', 'Segoe UI', 'Roboto', sans-serif"};
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
             background: white !important;
@@ -434,7 +446,7 @@ export default async function PrintResumePage({
           {/* Summary */}
           {resumeData.summary && (
             <div className="section">
-              <h2 className="section-title">Summary</h2>
+              <h2 className="section-title">{t.summary}</h2>
               <div className="section-content">{resumeData.summary}</div>
             </div>
           )}
@@ -442,7 +454,7 @@ export default async function PrintResumePage({
           {/* Key Skills */}
           {resumeData.keySkills.length > 0 && (
             <div className="section">
-              <h2 className="section-title">Key Skills</h2>
+              <h2 className="section-title">{t.keySkills}</h2>
               <div className="section-content">
                 {typeof resumeData.keySkills[0] === "string" ? (
                   // Simple list format
@@ -481,7 +493,7 @@ export default async function PrintResumePage({
           {/* Work Experience */}
           {resumeData.workExperience.length > 0 && (
             <div className="section">
-              <h2 className="section-title">Work Experience</h2>
+              <h2 className="section-title">{t.workExperience}</h2>
               <div className="section-content">
                 {resumeData.workExperience.map((exp) => (
                   <div key={exp.id} className="entry">
@@ -496,7 +508,7 @@ export default async function PrintResumePage({
                       </div>
                       <div className="entry-date">
                         {exp.startDate} -{" "}
-                        {exp.current ? "Present" : exp.endDate || "End Date"}
+                        {exp.current ? t.present : exp.endDate || "End Date"}
                       </div>
                     </div>
                     {exp.responsibilities.filter((r) => r.trim()).length >
@@ -518,7 +530,7 @@ export default async function PrintResumePage({
           {/* Education */}
           {resumeData.education.length > 0 && (
             <div className="section">
-              <h2 className="section-title">Education</h2>
+              <h2 className="section-title">{t.education}</h2>
               <div className="section-content">
                 {resumeData.education.map((edu) => (
                   <div key={edu.id} className="entry">
@@ -529,13 +541,13 @@ export default async function PrintResumePage({
                         </div>
                         <div className="entry-subtitle">
                           {edu.degree || "Degree"}
-                          {edu.major && ` in ${edu.major}`}
-                          {edu.gpa && ` - GPA: ${edu.gpa}`}
+                          {edu.major && ` ${t.in} ${edu.major}`}
+                          {edu.gpa && ` - ${t.gpa}: ${edu.gpa}`}
                         </div>
                       </div>
                       <div className="entry-date">
                         {edu.startDate} -{" "}
-                        {edu.current ? "Present" : edu.endDate || "End Date"}
+                        {edu.current ? t.present : edu.endDate || "End Date"}
                       </div>
                     </div>
                   </div>
@@ -547,7 +559,7 @@ export default async function PrintResumePage({
           {/* Projects */}
           {resumeData.projects.length > 0 && (
             <div className="section">
-              <h2 className="section-title">Projects</h2>
+              <h2 className="section-title">{t.projects}</h2>
               <div className="section-content">
                 {resumeData.projects.map((proj) => (
                   <div key={proj.id} className="entry">
@@ -562,7 +574,7 @@ export default async function PrintResumePage({
                       </div>
                       <div className="entry-date">
                         {proj.startDate} -{" "}
-                        {proj.current ? "Present" : proj.endDate || "End Date"}
+                        {proj.current ? t.present : proj.endDate || "End Date"}
                       </div>
                     </div>
                     {proj.description && (
@@ -572,7 +584,7 @@ export default async function PrintResumePage({
                     )}
                     {proj.technologies.length > 0 && (
                       <div className="technologies">
-                        <strong>Technologies:</strong>{" "}
+                        <strong>{t.technologies}:</strong>{" "}
                         {proj.technologies.join(", ")}
                       </div>
                     )}
@@ -585,7 +597,7 @@ export default async function PrintResumePage({
           {/* Additional Information */}
           {resumeData.additionalInfo && (
             <div className="section">
-              <h2 className="section-title">Additional Information</h2>
+              <h2 className="section-title">{t.additionalInfo}</h2>
               <div className="section-content whitespace-pre-line">
                 {resumeData.additionalInfo}
               </div>

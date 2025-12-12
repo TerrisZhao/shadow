@@ -360,6 +360,7 @@ export default function ResumeEditPage({
   const [isEditingName, setIsEditingName] = useState(false);
   const [activeSkillId, setActiveSkillId] = useState<string | null>(null);
   const [activeGroupId, setActiveGroupId] = useState<string | null>(null);
+  const [previewLanguage, setPreviewLanguage] = useState<"en" | "zh">("en");
 
   // Configure drag sensors
   const sensors = useSensors(
@@ -944,6 +945,7 @@ export default function ResumeEditPage({
       if (resumeData.themeColor) {
         exportUrl.searchParams.set("themeColor", resumeData.themeColor);
       }
+      exportUrl.searchParams.set("language", previewLanguage);
 
       // Fetch PDF from API
       const response = await fetch(exportUrl.toString());
@@ -1738,12 +1740,31 @@ export default function ResumeEditPage({
         onClose={onClose}
       >
         <ModalContent>
-          <ModalHeader>
+          <ModalHeader className="flex justify-between items-center">
             <span>Resume Preview</span>
+            <div className="flex gap-2">
+              <Button
+                color={previewLanguage === "en" ? "primary" : "default"}
+                size="sm"
+                variant={previewLanguage === "en" ? "solid" : "flat"}
+                onPress={() => setPreviewLanguage("en")}
+              >
+                English
+              </Button>
+              <Button
+                color={previewLanguage === "zh" ? "primary" : "default"}
+                size="sm"
+                variant={previewLanguage === "zh" ? "solid" : "flat"}
+                onPress={() => setPreviewLanguage("zh")}
+              >
+                中文
+              </Button>
+            </div>
           </ModalHeader>
           <ModalBody>
             <ResumePreview
               data={resumeData}
+              language={previewLanguage}
               themeColor={resumeData.themeColor}
             />
           </ModalBody>
