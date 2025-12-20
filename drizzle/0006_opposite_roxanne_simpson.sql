@@ -1,1 +1,0 @@
-ALTER TABLE "resume_work_experiences" ADD COLUMN "description" text;

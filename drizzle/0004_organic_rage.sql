@@ -1,1 +1,0 @@
-ALTER TABLE "resumes" ALTER COLUMN "theme_color" SET DEFAULT '#000000';

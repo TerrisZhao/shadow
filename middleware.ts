@@ -12,7 +12,6 @@ export async function middleware(request: NextRequest) {
     "/sign-in",
     "/api/auth",
     "/api/auth/mobile-login",
-    "/resume/print/", // PDF 打印页面（Puppeteer 内部访问，需公开）
   ];
 
   const isPublicPath = publicPaths.some((publicPath) =>

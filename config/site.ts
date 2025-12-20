@@ -21,10 +21,6 @@ export const siteConfig = {
       label: "统计",
       href: "/dashboard",
     },
-    {
-      label: "简历",
-      href: "/resume",
-    },
   ],
   navMenuItems: [
     {
@@ -42,10 +38,6 @@ export const siteConfig = {
     {
       label: "统计",
       href: "/dashboard",
-    },
-    {
-      label: "简历",
-      href: "/resume",
     },
     {
       label: "设置",
