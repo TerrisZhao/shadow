@@ -7,11 +7,18 @@ import { db } from "@/lib/db/drizzle";
 import { users, loginHistory } from "@/lib/db/schema";
 import { parseUserAgent } from "@/lib/utils/device-parser";
 
-const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+// 支持多个客户端 ID (Web 和 iOS)
+const VALID_CLIENT_IDS = [
+  process.env.GOOGLE_CLIENT_ID,
+  process.env.GOOGLE_IOS_CLIENT_ID,
+].filter(Boolean) as string[];
+
+const googleClient = new OAuth2Client();
 
 /**
  * 移动端 Google 登录 API
  * 为 iOS/Android 应用提供 Google OAuth 认证
+ * 支持验证多个 Google 客户端 ID (Web 和移动端)
  */
 export async function POST(request: NextRequest) {
   try {
@@ -25,12 +32,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 验证 Google ID Token
+    // 验证 Google ID Token (支持多个客户端 ID)
     let googleUser;
     try {
       const ticket = await googleClient.verifyIdToken({
         idToken,
-        audience: process.env.GOOGLE_CLIENT_ID,
+        audience: VALID_CLIENT_IDS,
       });
       const payload = ticket.getPayload();
 
