@@ -105,6 +105,7 @@ export const categories = pgTable(
     userId: integer("user_id"), // 自定义分类关联用户
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
+    deletedAt: timestamp("deleted_at"), // 软删除
   },
   (table) => ({
     // 预设分类的名称全局唯一
