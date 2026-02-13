@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { eq, asc, and, sql } from "drizzle-orm";
+import { eq, asc, and, sql, isNull } from "drizzle-orm";
 
 import { authOptions } from "@/lib/auth/config";
 import { db } from "@/lib/db/drizzle";
@@ -87,7 +87,7 @@ export async function GET(
       .from(sceneSentences)
       .innerJoin(sentences, eq(sceneSentences.sentenceId, sentences.id))
       .innerJoin(categories, eq(sentences.categoryId, categories.id))
-      .where(eq(sceneSentences.sceneId, sceneId))
+      .where(and(eq(sceneSentences.sceneId, sceneId), isNull(categories.deletedAt)))
       .orderBy(asc(sceneSentences.order));
 
     return NextResponse.json({

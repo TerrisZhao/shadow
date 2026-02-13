@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { eq, and, desc, or, count, inArray, exists, sql } from "drizzle-orm";
+import { eq, and, desc, or, count, inArray, exists, sql, isNull } from "drizzle-orm";
 
 import { db } from "@/lib/db/drizzle";
 import {
@@ -134,7 +134,7 @@ export async function GET(request: NextRequest) {
       .select({ count: count() })
       .from(sentences)
       .innerJoin(categories, eq(sentences.categoryId, categories.id))
-      .where(and(...whereConditions));
+      .where(and(isNull(categories.deletedAt), ...whereConditions));
 
     const total = Number(totalCountResult[0]?.count || 0);
     const totalPages = Math.ceil(total / limit);
@@ -166,7 +166,7 @@ export async function GET(request: NextRequest) {
       })
       .from(sentences)
       .innerJoin(categories, eq(sentences.categoryId, categories.id))
-      .where(and(...whereConditions))
+      .where(and(isNull(categories.deletedAt), ...whereConditions))
       .orderBy(desc(sentences.createdAt))
       .limit(limit)
       .offset(offset);
@@ -245,11 +245,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 验证分类是否存在
+    // 验证分类是否存在且未被删除
     const category = await db
       .select()
       .from(categories)
-      .where(eq(categories.id, categoryId))
+      .where(and(eq(categories.id, categoryId), isNull(categories.deletedAt)))
       .limit(1);
 
     if (category.length === 0) {

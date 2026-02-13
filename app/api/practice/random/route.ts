@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { eq, and, sql, notInArray } from "drizzle-orm";
+import { eq, and, sql, notInArray, isNull } from "drizzle-orm";
 
 import { db } from "@/lib/db/drizzle";
 import { sentences, categories } from "@/lib/db/schema";
@@ -95,7 +95,7 @@ export async function GET(request: NextRequest) {
       })
       .from(sentences)
       .innerJoin(categories, eq(sentences.categoryId, categories.id))
-      .where(and(...whereConditions))
+      .where(and(isNull(categories.deletedAt), ...whereConditions))
       .limit(1)
       .offset(randomOffset);
 

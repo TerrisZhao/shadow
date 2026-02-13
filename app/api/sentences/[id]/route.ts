@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and, sql, isNull } from "drizzle-orm";
 
 import { db } from "@/lib/db/drizzle";
 import { sentences, categories, userSentenceFavorites } from "@/lib/db/schema";
@@ -54,7 +54,7 @@ export async function GET(
       })
       .from(sentences)
       .innerJoin(categories, eq(sentences.categoryId, categories.id))
-      .where(eq(sentences.id, sentenceId))
+      .where(and(eq(sentences.id, sentenceId), isNull(categories.deletedAt)))
       .limit(1);
 
     if (sentenceData.length === 0) {
