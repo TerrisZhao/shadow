@@ -11,6 +11,7 @@
     "db:migrate": "drizzle-kit migrate",
     "ai:test": "tsx scripts/test-ai.ts",
     "import:questions": "tsx scripts/import-questions.ts",
+    "translate:allsentence": "tsx scripts/translate-sentences.ts",
     "test:deepl": "tsx scripts/test-deepl.ts"
   },
   "dependencies": {
