@@ -27,15 +27,19 @@ export async function POST(request: NextRequest) {
     const currentUserId = parseInt(userIdStr);
 
     const body = await request.json();
-    const { sentenceIds } = body as { sentenceIds: number[] };
 
-    if (!Array.isArray(sentenceIds) || sentenceIds.length === 0) {
+    type SentenceLog = { sentenceId: number; score?: number; transcript?: string };
+    const sentences: SentenceLog[] = body.sentences ?? [];
+
+    if (!Array.isArray(sentences) || sentences.length === 0) {
       return NextResponse.json({ logged: 0 });
     }
 
-    const rows = sentenceIds.map((sentenceId) => ({
+    const rows = sentences.map(({ sentenceId, score, transcript }) => ({
       userId: currentUserId,
       sentenceId,
+      score: score ?? null,
+      transcript: transcript ?? null,
     }));
 
     await db.insert(practiceLogs).values(rows);

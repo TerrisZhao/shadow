@@ -15,6 +15,13 @@
       "when": 1771233193232,
       "tag": "0001_special_imperial_guard",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1771237956717,
+      "tag": "0002_lush_mockingbird",
+      "breakpoints": true
     }
   ]
 }

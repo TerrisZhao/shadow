@@ -197,6 +197,8 @@ export const practiceLogs = pgTable(
     id: serial("id").primaryKey(),
     userId: integer("user_id").notNull(),
     sentenceId: integer("sentence_id").notNull(),
+    score: integer("score"),
+    transcript: text("transcript"),
     practicedAt: timestamp("practiced_at").notNull().defaultNow(),
   },
   (table) => ({
