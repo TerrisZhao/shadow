@@ -1,0 +1,55 @@
+2025-11-26T00:06:08: [Error: Unable to optimize image and unable to fallback to upstream image] {
+2025-11-26T00:06:08:   statusCode: 400
+2025-11-26T00:06:08: }
+2025-12-02T19:07:23:  ⨯ The requested resource isn't a valid image for /shadow.png received null
+2025-12-02T19:07:23: [Error: The requested resource isn't a valid image.] { statusCode: 400 }
+2025-12-03T00:59:10:  ⨯ The requested resource isn't a valid image for /shadow.png received null
+2025-12-03T00:59:10: [Error: The requested resource isn't a valid image.] { statusCode: 400 }
+2026-01-18T11:49:21: JWT verification failed: bl: "exp" claim timestamp check failed
+2026-01-18T11:49:21:     at <unknown> (.next/server/middleware.js:13:59436)
+2026-01-18T11:49:21:     at bN (.next/server/middleware.js:13:59775)
+2026-01-18T11:49:21:     at async bO (.next/server/middleware.js:13:60248)
+2026-01-18T11:49:21:     at async handler (.next/server/middleware.js:13:61284)
+2026-01-18T11:49:21:     at async (.next/server/middleware.js:13:37680)
+2026-01-18T11:49:21:     at async bc (.next/server/middleware.js:13:34080) {
+2026-01-18T11:49:21:   code: 'ERR_JWT_EXPIRED',
+2026-01-18T11:49:21:   claim: 'exp',
+2026-01-18T11:49:21:   reason: 'check_failed',
+2026-01-18T11:49:21:   payload: {
+2026-01-18T11:49:21:   userId: 3,
+2026-01-18T11:49:21:   email: 'tt@t.com',
+2026-01-18T11:49:21:   role: 'user',
+2026-01-18T11:49:21:   iat: 1765092473,
+2026-01-18T11:49:21:   exp: 1767684473
+2026-01-18T11:49:21: }
+2026-01-18T11:49:21: }
+2026-01-18T15:55:15: Google token verification failed: Error: Wrong recipient, payload audience != requiredAudience
+2026-01-18T15:55:15:     at o.verifySignedJwtWithCertsAsync (.next/server/app/api/auth/mobile-google-login/route.js:1:103904)
+2026-01-18T15:55:15:     at async o.verifyIdTokenAsync (.next/server/app/api/auth/mobile-google-login/route.js:1:99834)
+2026-01-18T15:55:15:     at async C (.next/server/app/api/auth/mobile-google-login/route.js:1:45000)
+2026-01-18T15:55:15:     at async k (.next/server/app/api/auth/mobile-google-login/route.js:1:49625)
+2026-01-18T15:55:15:     at async g (.next/server/app/api/auth/mobile-google-login/route.js:1:50628)
+2026-01-18T15:55:15:     at async J (.next/server/app/api/auth/mobile-google-login/route.js:1:51750)
+2026-01-18T15:55:42: Google token verification failed: Error: Wrong recipient, payload audience != requiredAudience
+2026-01-18T15:55:42:     at o.verifySignedJwtWithCertsAsync (.next/server/app/api/auth/mobile-google-login/route.js:1:103904)
+2026-01-18T15:55:42:     at async o.verifyIdTokenAsync (.next/server/app/api/auth/mobile-google-login/route.js:1:99834)
+2026-01-18T15:55:42:     at async C (.next/server/app/api/auth/mobile-google-login/route.js:1:45000)
+2026-01-18T15:55:42:     at async k (.next/server/app/api/auth/mobile-google-login/route.js:1:49625)
+2026-01-18T15:55:42:     at async g (.next/server/app/api/auth/mobile-google-login/route.js:1:50628)
+2026-01-18T15:55:42:     at async J (.next/server/app/api/auth/mobile-google-login/route.js:1:51750)
+2026-01-29T06:48:08: (node:40243) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-01-29T06:48:08: (Use `node --trace-deprecation ...` to show where the warning was created)
+2026-02-03T15:54:00: (node:95818) TimeoutNegativeWarning: -28782383.823935043 is a negative number.
+2026-02-03T15:54:00: Timeout duration was set to 1.
+2026-02-03T15:54:00: (Use `node --trace-warnings ...` to show where the warning was created)
+2026-02-09T18:57:05: (node:95818) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-02-10T16:27:18: (node:96494) TimeoutNegativeWarning: -16850407.574140247 is a negative number.
+2026-02-10T16:27:18: Timeout duration was set to 1.
+2026-02-10T16:27:18: (Use `node --trace-warnings ...` to show where the warning was created)
+2026-02-14T07:48:18: (node:96494) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+2026-02-14T16:14:21: (node:1426) TimeoutNegativeWarning: -26029329.38629485 is a negative number.
+2026-02-14T16:14:21: Timeout duration was set to 1.
+2026-02-14T16:14:21: (Use `node --trace-warnings ...` to show where the warning was created)
+2026-02-16T07:24:27: (node:95389) TimeoutNegativeWarning: -58759299.14585037 is a negative number.
+2026-02-16T07:24:27: Timeout duration was set to 1.
+2026-02-16T07:24:27: (Use `node --trace-warnings ...` to show where the warning was created)
