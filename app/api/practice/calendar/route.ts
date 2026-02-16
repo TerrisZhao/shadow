@@ -30,13 +30,16 @@ export async function GET(request: NextRequest) {
     const now = new Date();
     const year = parseInt(searchParams.get("year") ?? String(now.getFullYear()));
     const month = parseInt(searchParams.get("month") ?? String(now.getMonth() + 1));
+    const rawOffset = parseInt(searchParams.get("utcOffset") ?? "0");
+    const utcOffset = isNaN(rawOffset) || rawOffset < -840 || rawOffset > 840 ? 0 : rawOffset;
 
-    const startDate = new Date(year, month - 1, 1);
-    const endDate = new Date(year, month, 1);
+    // 月份 UTC 范围：本地零点对应的 UTC 时刻
+    const startDate = new Date(Date.UTC(year, month - 1, 1) - utcOffset * 60 * 1000);
+    const endDate = new Date(Date.UTC(year, month, 1) - utcOffset * 60 * 1000);
 
     const rows = await db
       .selectDistinct({
-        date: sql<string>`TO_CHAR(${practiceLogs.practicedAt} AT TIME ZONE 'UTC', 'YYYY-MM-DD')`,
+        date: sql<string>`TO_CHAR(${practiceLogs.practicedAt} + (${sql.raw(String(utcOffset))} * INTERVAL '1 minute'), 'YYYY-MM-DD')`,
       })
       .from(practiceLogs)
       .where(

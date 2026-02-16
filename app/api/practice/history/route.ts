@@ -27,30 +27,23 @@ export async function GET(request: NextRequest) {
     const currentUserId = parseInt(userIdStr);
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get("page") ?? "0");
+    const rawOffset = parseInt(searchParams.get("utcOffset") ?? "0");
+    const utcOffset = isNaN(rawOffset) || rawOffset < -840 || rawOffset > 840 ? 0 : rawOffset;
 
-    // 计算目标日期（UTC）
+    // 计算目标日期（用户本地时区）
     const now = new Date();
-    const targetDate = new Date(now);
-    targetDate.setUTCDate(targetDate.getUTCDate() - page);
+    // 将 now 平移到用户本地时间，取本地日期分量
+    const localNow = new Date(now.getTime() + utcOffset * 60 * 1000);
+    const localYear = localNow.getUTCFullYear();
+    const localMonth = localNow.getUTCMonth();
+    const localDay = localNow.getUTCDate();
 
-    const dayStart = new Date(
-      Date.UTC(
-        targetDate.getUTCFullYear(),
-        targetDate.getUTCMonth(),
-        targetDate.getUTCDate(),
-        0, 0, 0, 0,
-      ),
-    );
-    const dayEnd = new Date(
-      Date.UTC(
-        targetDate.getUTCFullYear(),
-        targetDate.getUTCMonth(),
-        targetDate.getUTCDate() + 1,
-        0, 0, 0, 0,
-      ),
-    );
+    // 目标本地日的零点（UTC 表示）= 本地零点对应的 UTC 时刻
+    const targetLocalMidnightUTC = new Date(Date.UTC(localYear, localMonth, localDay - page));
+    const dayStart = new Date(targetLocalMidnightUTC.getTime() - utcOffset * 60 * 1000);
+    const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
 
-    const dateStr = dayStart.toISOString().slice(0, 10);
+    const dateStr = targetLocalMidnightUTC.toISOString().slice(0, 10);
 
     // 查询当天记录（JOIN sentences + categories）
     const records = await db
