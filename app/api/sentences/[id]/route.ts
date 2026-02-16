@@ -275,6 +275,26 @@ export async function PUT(
       );
     }
 
+    // 验证目标分类存在且未被删除
+    const newCategoryId = parseInt(categoryId);
+    const targetCategory = await db
+      .select()
+      .from(categories)
+      .where(and(eq(categories.id, newCategoryId), isNull(categories.deletedAt)))
+      .limit(1);
+
+    if (targetCategory.length === 0) {
+      return NextResponse.json({ error: "目标分类不存在" }, { status: 400 });
+    }
+
+    // 普通用户只能将句子移动到自己创建的分类
+    if (!isAdmin && targetCategory[0].userId !== currentUserId) {
+      return NextResponse.json(
+        { error: "您只能将句子移动到自己创建的分类" },
+        { status: 403 },
+      );
+    }
+
     // 构建更新对象
     const updateData: any = {
       englishText,
@@ -282,7 +302,7 @@ export async function PUT(
         typeof chineseText === "string" && chineseText.trim()
           ? chineseText.trim()
           : null,
-      categoryId: parseInt(categoryId),
+      categoryId: newCategoryId,
       difficulty: difficulty || "medium",
       notes: notes ? String(notes) : null,
       updatedAt: new Date(),
@@ -300,16 +320,9 @@ export async function PUT(
       .where(eq(sentences.id, sentenceId))
       .returning();
 
-    // 查询 category 信息（iOS 客户端需要嵌套的 category 对象）
-    const categoryResult = await db
-      .select()
-      .from(categories)
-      .where(eq(categories.id, parseInt(categoryId)))
-      .limit(1);
-
     const sentenceWithCategory = {
       ...updatedSentence[0],
-      category: categoryResult[0] ?? null,
+      category: targetCategory[0],
     };
 
     return NextResponse.json({

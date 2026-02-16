@@ -305,6 +305,14 @@ export async function POST(request: NextRequest) {
 
     // 只有管理员可以创建共享句子
     const isAdmin = userRole && ["admin", "owner"].includes(userRole);
+
+    // 普通用户只能在自己创建的分类下添加句子
+    if (!isAdmin && categoryResult[0].userId !== currentUserId) {
+      return NextResponse.json(
+        { error: "您只能在自己创建的分类下添加句子" },
+        { status: 403 },
+      );
+    }
     const shouldBeShared = isAdmin && isShared === true;
 
     const newSentence = await db
