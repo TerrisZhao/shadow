@@ -3,18 +3,33 @@ import { getServerSession } from "next-auth";
 import { eq, and, isNull } from "drizzle-orm";
 
 import { db } from "@/lib/db/drizzle";
-import { categories } from "@/lib/db/schema";
+import { categories, users } from "@/lib/db/schema";
 import { authOptions } from "@/lib/auth/config";
 
-// 获取当前用户 ID（支持移动端 x-user-id header 和网页端 session）
-async function resolveUserId(request: NextRequest): Promise<string | null> {
+// 获取当前用户 ID 和 role（支持移动端 x-user-id header 和网页端 session）
+async function resolveUser(
+  request: NextRequest,
+): Promise<{ userId: string; role: string | undefined } | null> {
   const fromHeader = request.headers.get("x-user-id");
 
-  if (fromHeader) return fromHeader;
+  if (fromHeader) {
+    const userRecord = await db
+      .select({ role: users.role })
+      .from(users)
+      .where(eq(users.id, parseInt(fromHeader)))
+      .limit(1);
+
+    return { userId: fromHeader, role: userRecord[0]?.role ?? undefined };
+  }
 
   const session = await getServerSession(authOptions);
 
-  return session?.user?.id ?? null;
+  if (!session?.user?.id) return null;
+
+  return {
+    userId: session.user.id,
+    role: (session.user as any)?.role ?? undefined,
+  };
 }
 
 // 编辑分类
@@ -23,9 +38,9 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const userIdStr = await resolveUserId(request);
+    const user = await resolveUser(request);
 
-    if (!userIdStr) {
+    if (!user) {
       return NextResponse.json({ error: "未授权" }, { status: 401 });
     }
 
@@ -43,7 +58,8 @@ export async function PUT(
       return NextResponse.json({ error: "分类名称是必填项" }, { status: 400 });
     }
 
-    const currentUserId = parseInt(userIdStr);
+    const currentUserId = parseInt(user.userId);
+    const isAdmin = user.role === "admin" || user.role === "owner";
 
     // 查找分类，确认存在且未被删除
     const existing = await db
@@ -58,16 +74,16 @@ export async function PUT(
 
     const category = existing[0];
 
-    // 预设分类不允许编辑
-    if (category.isPreset) {
+    // 预设分类只有 admin/owner 可以编辑
+    if (category.isPreset && !isAdmin) {
       return NextResponse.json(
         { error: "预设分类不能编辑" },
         { status: 403 },
       );
     }
 
-    // 只有分类所有者可以编辑
-    if (category.userId !== currentUserId) {
+    // 非预设分类只有所有者或 admin/owner 可以编辑
+    if (!category.isPreset && category.userId !== currentUserId && !isAdmin) {
       return NextResponse.json(
         { error: "无权限编辑此分类" },
         { status: 403 },
@@ -100,9 +116,9 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const userIdStr = await resolveUserId(request);
+    const user = await resolveUser(request);
 
-    if (!userIdStr) {
+    if (!user) {
       return NextResponse.json({ error: "未授权" }, { status: 401 });
     }
 
@@ -113,7 +129,8 @@ export async function DELETE(
       return NextResponse.json({ error: "无效的分类ID" }, { status: 400 });
     }
 
-    const currentUserId = parseInt(userIdStr);
+    const currentUserId = parseInt(user.userId);
+    const isAdmin = user.role === "admin" || user.role === "owner";
 
     // 查找分类，确认存在且未被删除
     const existing = await db
@@ -128,16 +145,16 @@ export async function DELETE(
 
     const category = existing[0];
 
-    // 预设分类不允许删除
-    if (category.isPreset) {
+    // 预设分类只有 admin/owner 可以删除
+    if (category.isPreset && !isAdmin) {
       return NextResponse.json(
         { error: "预设分类不能删除" },
         { status: 403 },
       );
     }
 
-    // 只有分类所有者可以删除
-    if (category.userId !== currentUserId) {
+    // 非预设分类只有所有者或 admin/owner 可以删除
+    if (!category.isPreset && category.userId !== currentUserId && !isAdmin) {
       return NextResponse.json(
         { error: "无权限删除此分类" },
         { status: 403 },
