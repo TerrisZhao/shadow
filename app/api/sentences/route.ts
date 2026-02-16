@@ -9,6 +9,7 @@ import {
   recordings,
   userSentenceFavorites,
   sentenceTags,
+  users,
 } from "@/lib/db/schema";
 import { authOptions } from "@/lib/auth/config";
 import { generateTTS } from "@/lib/tts/generator";
@@ -257,6 +258,15 @@ export async function POST(request: NextRequest) {
 
       userIdStr = session?.user?.id;
       userRole = (session?.user as any)?.role;
+    } else {
+      // mobile auth：从数据库补查 role
+      const userRecord = await db
+        .select({ role: users.role })
+        .from(users)
+        .where(eq(users.id, parseInt(userIdStr)))
+        .limit(1);
+
+      userRole = userRecord[0]?.role ?? undefined;
     }
 
     if (!userIdStr) {

@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { eq, and, sql, isNull } from "drizzle-orm";
 
 import { db } from "@/lib/db/drizzle";
-import { sentences, categories, userSentenceFavorites } from "@/lib/db/schema";
+import { sentences, categories, userSentenceFavorites, users } from "@/lib/db/schema";
 import { authOptions } from "@/lib/auth/config";
 import { extractKeyFromUrl, deleteFromR2 } from "@/lib/utils/r2-client";
 
@@ -206,6 +206,15 @@ export async function PUT(
 
       userIdStr = session?.user?.id;
       userRole = (session?.user as any)?.role;
+    } else {
+      // mobile auth：从数据库补查 role
+      const userRecord = await db
+        .select({ role: users.role })
+        .from(users)
+        .where(eq(users.id, parseInt(userIdStr)))
+        .limit(1);
+
+      userRole = userRecord[0]?.role ?? undefined;
     }
 
     if (!userIdStr) {
@@ -329,6 +338,15 @@ export async function DELETE(
 
       userIdStr = session?.user?.id;
       userRole = (session?.user as any)?.role;
+    } else {
+      // mobile auth：从数据库补查 role
+      const userRecord = await db
+        .select({ role: users.role })
+        .from(users)
+        .where(eq(users.id, parseInt(userIdStr)))
+        .limit(1);
+
+      userRole = userRecord[0]?.role ?? undefined;
     }
 
     if (!userIdStr) {
