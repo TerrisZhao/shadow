@@ -43,9 +43,18 @@ async function generateTTSAsync(text: string, sentenceId: number) {
 // 获取句子列表
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    // 支持移动端（x-user-id header）和网页端（session）两种认证方式
+    let userIdStr = request.headers.get("x-user-id");
+    let userRole: string | undefined;
 
-    if (!session?.user?.id) {
+    if (!userIdStr) {
+      const session = await getServerSession(authOptions);
+
+      userIdStr = session?.user?.id;
+      userRole = (session?.user as any)?.role;
+    }
+
+    if (!userIdStr) {
       return NextResponse.json({ error: "未授权" }, { status: 401 });
     }
 
@@ -54,18 +63,32 @@ export async function GET(request: NextRequest) {
     const difficulty = searchParams.get("difficulty");
     const tagId = searchParams.get("tagId"); // 标签 ID
     const search = searchParams.get("search"); // 搜索关键词
-    const tab = searchParams.get("tab") || "shared"; // shared, custom, favorite
-    const page = parseInt(searchParams.get("page") || "1");
-    const limit = parseInt(searchParams.get("limit") || "10");
+    const rawTab = searchParams.get("tab"); // 未传则为 null
+    const rawPage = searchParams.get("page");
+    const rawLimit = searchParams.get("limit");
+
+    // 移动端不传 tab 时，返回全部可见句子（共享 + 用户自己的）
+    const isMobileRequest = !!request.headers.get("x-user-id");
+    const tab = rawTab ?? (isMobileRequest ? "all" : "shared");
+
+    // 移动端不传分页参数时，返回全部（不限制条数）
+    const paginated = rawPage !== null || rawLimit !== null;
+    const page = parseInt(rawPage || "1");
+    const limit = parseInt(rawLimit || "10");
     const offset = (page - 1) * limit;
 
-    const currentUserId = parseInt(session.user.id);
+    const currentUserId = parseInt(userIdStr);
 
     // 构建 where 条件：根据 tab 参数筛选不同的句子
     const whereConditions = [];
 
     // 根据 tab 类型添加筛选条件
-    if (tab === "shared") {
+    if (tab === "all") {
+      // 全部：共享句子 + 用户自己的句子（移动端资源库使用）
+      whereConditions.push(
+        or(eq(sentences.isShared, true), eq(sentences.userId, currentUserId)),
+      );
+    } else if (tab === "shared") {
       // 共享库：显示所有标记为共享的句子
       whereConditions.push(eq(sentences.isShared, true));
     } else if (tab === "custom") {
@@ -139,8 +162,8 @@ export async function GET(request: NextRequest) {
     const total = Number(totalCountResult[0]?.count || 0);
     const totalPages = Math.ceil(total / limit);
 
-    // 查询当前页的句子列表，并检查当前用户是否收藏
-    const sentencesList = await db
+    // 查询句子列表，并检查当前用户是否收藏
+    const baseQuery = db
       .select({
         id: sentences.id,
         englishText: sentences.englishText,
@@ -167,9 +190,12 @@ export async function GET(request: NextRequest) {
       .from(sentences)
       .innerJoin(categories, eq(sentences.categoryId, categories.id))
       .where(and(isNull(categories.deletedAt), ...whereConditions))
-      .orderBy(desc(sentences.createdAt))
-      .limit(limit)
-      .offset(offset);
+      .orderBy(desc(sentences.createdAt));
+
+    // 移动端不传分页参数时返回全部，否则分页
+    const sentencesList = paginated
+      ? await baseQuery.limit(limit).offset(offset)
+      : await baseQuery;
 
     // 获取每个句子的录音数量 - 修复SQL注入
     const sentenceIds = sentencesList.map((s: { id: number }) => s.id);
@@ -222,9 +248,18 @@ export async function GET(request: NextRequest) {
 // 创建新句子
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    // 支持移动端（x-user-id header）和网页端（session）两种认证方式
+    let userIdStr = request.headers.get("x-user-id");
+    let userRole: string | undefined;
 
-    if (!session?.user?.id) {
+    if (!userIdStr) {
+      const session = await getServerSession(authOptions);
+
+      userIdStr = session?.user?.id;
+      userRole = (session?.user as any)?.role;
+    }
+
+    if (!userIdStr) {
       return NextResponse.json({ error: "未授权" }, { status: 401 });
     }
 
@@ -245,22 +280,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const currentUserId = parseInt(userIdStr);
+
     // 验证分类是否存在且未被删除
-    const category = await db
+    const categoryResult = await db
       .select()
       .from(categories)
       .where(and(eq(categories.id, categoryId), isNull(categories.deletedAt)))
       .limit(1);
 
-    if (category.length === 0) {
+    if (categoryResult.length === 0) {
       return NextResponse.json({ error: "指定的分类不存在" }, { status: 400 });
     }
 
-    // 检查用户是否为管理员
-    const user = session.user as any;
-    const isAdmin = user.role && ["admin", "owner"].includes(user.role);
-
     // 只有管理员可以创建共享句子
+    const isAdmin = userRole && ["admin", "owner"].includes(userRole);
     const shouldBeShared = isAdmin && isShared === true;
 
     const newSentence = await db
@@ -272,7 +306,7 @@ export async function POST(request: NextRequest) {
             ? chineseText.trim()
             : null,
         categoryId: parseInt(categoryId),
-        userId: parseInt(session.user.id),
+        userId: currentUserId,
         difficulty: difficulty || "medium",
         notes: notes ? String(notes) : null,
         isShared: shouldBeShared,
@@ -288,9 +322,15 @@ export async function POST(request: NextRequest) {
       );
     });
 
+    // 返回带 category 的完整句子对象（iOS 客户端需要）
+    const sentenceWithCategory = {
+      ...newSentence[0],
+      category: categoryResult[0],
+    };
+
     return NextResponse.json({
       message: "句子添加成功",
-      sentence: newSentence[0],
+      sentence: sentenceWithCategory,
     });
   } catch (error) {
     return NextResponse.json({ error: "创建句子失败" }, { status: 500 });

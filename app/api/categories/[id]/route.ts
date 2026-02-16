@@ -1,0 +1,156 @@
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
+import { eq, and, isNull } from "drizzle-orm";
+
+import { db } from "@/lib/db/drizzle";
+import { categories } from "@/lib/db/schema";
+import { authOptions } from "@/lib/auth/config";
+
+// 获取当前用户 ID（支持移动端 x-user-id header 和网页端 session）
+async function resolveUserId(request: NextRequest): Promise<string | null> {
+  const fromHeader = request.headers.get("x-user-id");
+
+  if (fromHeader) return fromHeader;
+
+  const session = await getServerSession(authOptions);
+
+  return session?.user?.id ?? null;
+}
+
+// 编辑分类
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  try {
+    const userIdStr = await resolveUserId(request);
+
+    if (!userIdStr) {
+      return NextResponse.json({ error: "未授权" }, { status: 401 });
+    }
+
+    const resolvedParams = await params;
+    const categoryId = parseInt(resolvedParams.id);
+
+    if (isNaN(categoryId)) {
+      return NextResponse.json({ error: "无效的分类ID" }, { status: 400 });
+    }
+
+    const body = await request.json();
+    const { name, color, description } = body;
+
+    if (!name || !name.trim()) {
+      return NextResponse.json({ error: "分类名称是必填项" }, { status: 400 });
+    }
+
+    const currentUserId = parseInt(userIdStr);
+
+    // 查找分类，确认存在且未被删除
+    const existing = await db
+      .select()
+      .from(categories)
+      .where(and(eq(categories.id, categoryId), isNull(categories.deletedAt)))
+      .limit(1);
+
+    if (existing.length === 0) {
+      return NextResponse.json({ error: "分类不存在" }, { status: 404 });
+    }
+
+    const category = existing[0];
+
+    // 预设分类不允许编辑
+    if (category.isPreset) {
+      return NextResponse.json(
+        { error: "预设分类不能编辑" },
+        { status: 403 },
+      );
+    }
+
+    // 只有分类所有者可以编辑
+    if (category.userId !== currentUserId) {
+      return NextResponse.json(
+        { error: "无权限编辑此分类" },
+        { status: 403 },
+      );
+    }
+
+    const updated = await db
+      .update(categories)
+      .set({
+        name: name.trim(),
+        color: color || category.color,
+        description: description?.trim() || null,
+        updatedAt: new Date(),
+      })
+      .where(eq(categories.id, categoryId))
+      .returning();
+
+    return NextResponse.json({
+      message: "分类更新成功",
+      category: updated[0],
+    });
+  } catch (error) {
+    return NextResponse.json({ error: "更新分类失败" }, { status: 500 });
+  }
+}
+
+// 删除分类（软删除）
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  try {
+    const userIdStr = await resolveUserId(request);
+
+    if (!userIdStr) {
+      return NextResponse.json({ error: "未授权" }, { status: 401 });
+    }
+
+    const resolvedParams = await params;
+    const categoryId = parseInt(resolvedParams.id);
+
+    if (isNaN(categoryId)) {
+      return NextResponse.json({ error: "无效的分类ID" }, { status: 400 });
+    }
+
+    const currentUserId = parseInt(userIdStr);
+
+    // 查找分类，确认存在且未被删除
+    const existing = await db
+      .select()
+      .from(categories)
+      .where(and(eq(categories.id, categoryId), isNull(categories.deletedAt)))
+      .limit(1);
+
+    if (existing.length === 0) {
+      return NextResponse.json({ error: "分类不存在" }, { status: 404 });
+    }
+
+    const category = existing[0];
+
+    // 预设分类不允许删除
+    if (category.isPreset) {
+      return NextResponse.json(
+        { error: "预设分类不能删除" },
+        { status: 403 },
+      );
+    }
+
+    // 只有分类所有者可以删除
+    if (category.userId !== currentUserId) {
+      return NextResponse.json(
+        { error: "无权限删除此分类" },
+        { status: 403 },
+      );
+    }
+
+    await db
+      .update(categories)
+      .set({ deletedAt: new Date() })
+      .where(eq(categories.id, categoryId));
+
+    return NextResponse.json({ message: "分类删除成功" });
+  } catch (error) {
+    return NextResponse.json({ error: "删除分类失败" }, { status: 500 });
+  }
+}

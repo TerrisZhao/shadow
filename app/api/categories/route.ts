@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { eq, or, and, desc, inArray, isNull } from "drizzle-orm";
+import { eq, or, and, desc, inArray, isNull, count, getTableColumns } from "drizzle-orm";
 
 import { db } from "@/lib/db/drizzle";
-import { categories, users } from "@/lib/db/schema";
+import { categories, sentences, users } from "@/lib/db/schema";
 import { authOptions } from "@/lib/auth/config";
 
 // 获取分类列表
@@ -32,10 +32,14 @@ export async function GET(request: NextRequest) {
     const adminUserIds = adminUsers.map((user: { id: any }) => user.id);
     const currentUserId = parseInt(userIdStr);
 
-    // 获取预设分类、当前用户自定义分类和管理员创建的分类（排除软删除）
+    // 获取预设分类、当前用户自定义分类和管理员创建的分类（排除软删除），附带句子条数
     const result = await db
-      .select()
+      .select({
+        ...getTableColumns(categories),
+        sentence_count: count(sentences.id),
+      })
       .from(categories)
+      .leftJoin(sentences, eq(sentences.categoryId, categories.id))
       .where(
         and(
           isNull(categories.deletedAt),
@@ -49,6 +53,7 @@ export async function GET(request: NextRequest) {
           ),
         ),
       )
+      .groupBy(categories.id)
       .orderBy(desc(categories.isPreset), desc(categories.createdAt));
 
     return NextResponse.json({ categories: result });

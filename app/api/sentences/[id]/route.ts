@@ -197,9 +197,18 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const session = await getServerSession(authOptions);
+    // 支持移动端（x-user-id header）和网页端（session）两种认证方式
+    let userIdStr = request.headers.get("x-user-id");
+    let userRole: string | undefined;
 
-    if (!session?.user?.id) {
+    if (!userIdStr) {
+      const session = await getServerSession(authOptions);
+
+      userIdStr = session?.user?.id;
+      userRole = (session?.user as any)?.role;
+    }
+
+    if (!userIdStr) {
       return NextResponse.json({ error: "未授权" }, { status: 401 });
     }
 
@@ -239,17 +248,11 @@ export async function PUT(
     }
 
     const sentence = existingSentence[0];
-    const currentUserId = parseInt(session.user.id);
+    const currentUserId = parseInt(userIdStr);
+    const isAdmin = userRole && ["admin", "owner"].includes(userRole);
 
-    // 检查用户是否为管理员
-    const user = session.user as any;
-    const isAdmin = user.role && ["admin", "owner"].includes(user.role);
-
-    // 检查权限：
-    // 1. 如果是共享句子，只有管理员可以编辑
-    // 2. 如果是私有句子，只有所有者可以编辑
+    // 检查权限：共享句子只有管理员可编辑，私有句子只有所有者可编辑
     if (sentence.isShared) {
-      // 共享句子只有管理员可以编辑
       if (!isAdmin) {
         return NextResponse.json(
           { error: "普通用户不能编辑共享库的句子" },
@@ -257,7 +260,6 @@ export async function PUT(
         );
       }
     } else {
-      // 私有句子只有所有者可以编辑
       if (sentence.userId !== currentUserId) {
         return NextResponse.json(
           { error: "您只能编辑自己创建的句子" },
@@ -291,9 +293,21 @@ export async function PUT(
       .where(eq(sentences.id, sentenceId))
       .returning();
 
+    // 查询 category 信息（iOS 客户端需要嵌套的 category 对象）
+    const categoryResult = await db
+      .select()
+      .from(categories)
+      .where(eq(categories.id, parseInt(categoryId)))
+      .limit(1);
+
+    const sentenceWithCategory = {
+      ...updatedSentence[0],
+      category: categoryResult[0] ?? null,
+    };
+
     return NextResponse.json({
       message: "句子更新成功",
-      sentence: updatedSentence[0],
+      sentence: sentenceWithCategory,
     });
   } catch (error) {
     return NextResponse.json({ error: "更新句子失败" }, { status: 500 });
@@ -306,9 +320,18 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
-    const session = await getServerSession(authOptions);
+    // 支持移动端（x-user-id header）和网页端（session）两种认证方式
+    let userIdStr = request.headers.get("x-user-id");
+    let userRole: string | undefined;
 
-    if (!session?.user?.id) {
+    if (!userIdStr) {
+      const session = await getServerSession(authOptions);
+
+      userIdStr = session?.user?.id;
+      userRole = (session?.user as any)?.role;
+    }
+
+    if (!userIdStr) {
       return NextResponse.json({ error: "未授权" }, { status: 401 });
     }
 
@@ -331,11 +354,8 @@ export async function DELETE(
     }
 
     const sentence = existingSentence[0];
-    const currentUserId = parseInt(session.user.id);
-
-    // 检查用户是否为管理员
-    const user = session.user as any;
-    const isAdmin = user.role && ["admin", "owner"].includes(user.role);
+    const currentUserId = parseInt(userIdStr);
+    const isAdmin = userRole && ["admin", "owner"].includes(userRole);
 
     // 检查权限：
     // 1. 句子所有者可以删除
