@@ -8,6 +8,13 @@
       "when": 1771008924397,
       "tag": "0000_cheerful_sway",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1771233193232,
+      "tag": "0001_special_imperial_guard",
+      "breakpoints": true
     }
   ]
 }

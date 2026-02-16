@@ -190,6 +190,25 @@ export const recordings = pgTable(
   }),
 );
 
+// 练习记录表
+export const practiceLogs = pgTable(
+  "practice_logs",
+  {
+    id: serial("id").primaryKey(),
+    userId: integer("user_id").notNull(),
+    sentenceId: integer("sentence_id").notNull(),
+    practicedAt: timestamp("practiced_at").notNull().defaultNow(),
+  },
+  (table) => ({
+    userIdIdx: index("practice_logs_user_id_idx").on(table.userId),
+    sentenceIdIdx: index("practice_logs_sentence_id_idx").on(table.sentenceId),
+    userSentenceIdx: index("practice_logs_user_sentence_idx").on(
+      table.userId,
+      table.sentenceId,
+    ),
+  }),
+);
+
 // 场景表
 export const scenes = pgTable(
   "scenes",
@@ -318,6 +337,7 @@ export const schema = {
   sentences,
   userSentenceFavorites,
   recordings,
+  practiceLogs,
   scenes,
   userSceneFavorites,
   sceneSentences,
