@@ -260,21 +260,19 @@ export async function PUT(
     const currentUserId = parseInt(userIdStr);
     const isAdmin = userRole && ["admin", "owner"].includes(userRole);
 
-    // 检查权限：共享句子只有管理员可编辑，私有句子只有所有者可编辑
-    if (sentence.isShared) {
-      if (!isAdmin) {
-        return NextResponse.json(
-          { error: "普通用户不能编辑共享库的句子" },
-          { status: 403 },
-        );
-      }
-    } else {
-      if (sentence.userId !== currentUserId) {
-        return NextResponse.json(
-          { error: "您只能编辑自己创建的句子" },
-          { status: 403 },
-        );
-      }
+    // admin/owner 可编辑所有句子；普通用户只能编辑自己的句子，不能编辑共享句子
+    if (isAdmin) {
+      // 有权限，继续
+    } else if (sentence.isShared) {
+      return NextResponse.json(
+        { error: "普通用户不能编辑共享库的句子" },
+        { status: 403 },
+      );
+    } else if (sentence.userId !== currentUserId) {
+      return NextResponse.json(
+        { error: "您只能编辑自己创建的句子" },
+        { status: 403 },
+      );
     }
 
     // 构建更新对象
@@ -375,17 +373,12 @@ export async function DELETE(
     const currentUserId = parseInt(userIdStr);
     const isAdmin = userRole && ["admin", "owner"].includes(userRole);
 
-    // 检查权限：
-    // 1. 句子所有者可以删除
-    // 2. 管理员可以删除共享句子
-    if (sentence.userId !== currentUserId) {
-      // 如果不是所有者，检查是否为管理员且句子是共享的
-      if (!isAdmin || !sentence.isShared) {
-        return NextResponse.json(
-          { error: "您只能删除自己创建的句子或管理员可删除共享句子" },
-          { status: 403 },
-        );
-      }
+    // admin/owner 可删除所有句子；普通用户只能删除自己的句子
+    if (!isAdmin && sentence.userId !== currentUserId) {
+      return NextResponse.json(
+        { error: "您只能删除自己创建的句子" },
+        { status: 403 },
+      );
     }
 
     // 如果有音频文件，尝试从R2删除
