@@ -12,6 +12,7 @@ export async function middleware(request: NextRequest) {
     "/sign-in",
     "/api/auth",
     "/api/auth/mobile-login",
+    "/api/health", // 健康检查端点
   ];
 
   const isPublicPath = publicPaths.some((publicPath) =>
